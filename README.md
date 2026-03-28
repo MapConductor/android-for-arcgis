@@ -16,7 +16,7 @@ fun MapView(modifier: Modififer = Modififer) {
         latitude = 35.0,
         logitude = 137.0,
     )
-    val mapViewState = ArcGISViewState(
+    val mapViewState = rememberArcGISMapViewState(
         position = center,
         zoom = 10.0,
     )
@@ -38,5 +38,10 @@ fun MapView(modifier: Modififer = Modififer) {
 )
 
 ```
+
+## Setup
+
+https://docs-android.mapconductor.com/setup/arcgis/
+
 
 
