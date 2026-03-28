@@ -7,41 +7,30 @@ You can use Google Maps view with Jetpack Compose, but you can also switch to ot
 
 Even you use the wrapper API, but you can still access to the native ArcGIS view if you want.
 
+## Setup
+
+https://docs-android.mapconductor.com/setup/arcgis/
+
 ## Usage
 
 ```kotlin
 @Composable
 fun MapView(modifier: Modififer = Modififer) {
-    val center = GeoPoint(
-        latitude = 35.0,
-        logitude = 137.0,
-    )
-    val mapViewState = rememberArcGISMapViewState(
-        position = center,
-        zoom = 10.0,
-    )
-    val markerState = MarkerState(
-        position = center,
-        icon = DefaultIcon.copy(
-            label = "Hello, World!",
-        ),
+    val state = rememberArcGISMapViewState(
+        cameraPosition =
+            MapCameraPosition(
+                position = GeoPoint.fromLatLong(0.0, 0.0),
+                zoom = 5.0,
+            ),
     )
 
     ArcGISMapView(
-        state = mapViewState,
-        modififer = modifier,
+        modifier = modifier,
+        state = state,
     ) {
-        Marker(
-            state = markerState,
-        )
+        // If this displays correctly, your setup is working
     }
-)
-
+}
 ```
 
-## Setup
-
-https://docs-android.mapconductor.com/setup/arcgis/
-
-
-
+![](docs/images/basic-setup-arcgis.png)
