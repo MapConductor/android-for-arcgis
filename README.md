@@ -6,7 +6,6 @@ MapConductor provides a unified API for Android Jetpack Compose.
 You can use Google Maps view with Jetpack Compose, but you can also switch to other Maps SDKs (such as Mapbox, HERE, and so on), anytimes.
 
 Even you use the wrapper API, but you can still access to the native ArcGIS view if you want.
-For example, StreetView is a semantic feature of Google Maps view, but MapConductor does not wrap it.
 
 ## Usage
 
