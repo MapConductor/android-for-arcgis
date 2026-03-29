@@ -25,12 +25,12 @@ dependencyResolutionManagement {
             name = "GithubPackages"
             url = uri("https://maven.pkg.github.com/mapconductor/android-for-arcgis")
             credentials {
-                username = System.getenv("GPR_USER")
-                password = System.getenv("GPR_TOKEN")
+                username = System.getenv("GPR_USER") ?: ""
+                password = System.getenv("GPR_TOKEN") ?: ""
             }
-            content { includeGroup("com.mapconductor") }
         }
     }
 }
 
 rootProject.name = "mapconductor-for-arcgis"
+include(":sample-app")

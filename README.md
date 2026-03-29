@@ -71,20 +71,19 @@ fun MapView(modifier: Modifier = Modifier) {
 @Composable
 fun MapExample() {
     val initCameraPosition = MapCameraPosition(
-        position = GeoPoint(
-            latitude = 35.6762,
-            longitude = 139.6503
-        ),
-        zoom = 17.0,
+        position = GeoPoint(34.057028, -117.196375),
+        zoom = 18.0,
         tilt = 60.0,
         bearing = 30.0,
     )
-
     val mapViewState = rememberArcGISMapViewState(
         cameraPosition = initCameraPosition,
     )
 
-    ArcGISMapView(mapViewState)
+    ArcGISMapView(
+        state = mapViewState,
+        modifier = modifier,
+    )
 }
 ```
 ![](docs/images/mapview.png)
@@ -131,10 +130,12 @@ fun InfoBubbleExample() {
 
     ArcGISMapView(...) {
         Marker(markerState)
-        InfoBubble(
-            marker = it,
-        ) {
-            Text("Hello, world!")
+        selectedMarker?.let {
+            InfoBubble(
+                marker = it,
+            ) {
+                Text("Hello, world!")
+            }
         }
     }
 }
@@ -176,6 +177,7 @@ fun PolylineExample() {
     val polylineState = remember { PolylineState(
             points = airports,
             strokeColor = Color.Blue.copy(alpha = 0.5f),
+            geodesic = true,
         ) }
 
     ArcGISMapView(...) {
