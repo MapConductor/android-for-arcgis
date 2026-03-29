@@ -32,5 +32,5 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "mapconductor-for-arcgis"
+rootProject.name = "android-for-arcgis"
 include(":sample-app")

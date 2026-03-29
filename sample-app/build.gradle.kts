@@ -59,7 +59,7 @@ kotlin {
 }
 
 dependencies {
-    implementation(findProject(":mapconductor-for-arcgis") ?: project(":"))
+    implementation(findproject(":android-for-arcgis") ?: project(":"))
     implementation(libs.arcgis.maps.kotlin)
     implementation(platform(libs.arcgis.maps.kotlin.toolkit.bom))
     implementation(libs.arcgis.maps.kotlin.toolkit.geoview.compose)
