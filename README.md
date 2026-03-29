@@ -28,7 +28,7 @@ fun MapView(modifier: Modifier = Modifier) {
             cameraPosition =
                 MapCameraPosition(
                     position = center,
-                    zoom = 11.0,
+                    zoom = 2.0,
                 ),
         )
 
