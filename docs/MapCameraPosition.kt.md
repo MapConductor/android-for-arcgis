@@ -23,7 +23,7 @@ compensating for differences in camera Field of View (FOV).
 #### Returns
 
 - Type: `Double`
-- The calculated camera altitude in meters.
+- Description: The calculated camera altitude in meters.
 
 
 #### Example
@@ -66,9 +66,8 @@ enabling the ArcGIS map to reflect the state of the `MapCameraPosition`.
 
 #### Returns
 
-| Type     | Description               |
-| :------- |:--------------------------|
-| `Camera` | The ArcGIS Camera object. |
+- Type: `Camera`
+- Description: The ArcGIS Camera object.
 
 #### Example
 
