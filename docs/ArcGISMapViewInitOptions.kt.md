@@ -1,6 +1,8 @@
 # ArcGISMapViewInitOptions
 
-A data class that holds configuration options for initializing an `ArcGISMapView`. It allows for the customization of the map's initial appearance and 3D capabilities, such as the basemap style and elevation data sources.
+A data class that holds configuration options for initializing an `ArcGISMapView`.
+It allows for the customization of the map's initial appearance and 3D capabilities,
+such as the basemap style and elevation data sources.
 
 ## Signature
 
@@ -13,10 +15,16 @@ data class ArcGISMapViewInitOptions(
 
 ## Parameters
 
-| Parameter          | Type                  | Description                                                                                                                            |
-| :----------------- | :-------------------- | :------------------------------------------------------------------------------------------------------------------------------------- |
-| `basemapStyle`     | `BasemapStyle`        | The initial style for the map's basemap. This determines the visual theme, such as imagery, streets, or topography.                      |
-| `elevationSources` | `List<String>`        | A list of URLs pointing to elevation services. These sources are used to create a 3D surface for the map, enabling terrain visualization. |
+- `basemapStyle`
+    - Type: `BasemapStyle`
+    - Description:
+       The initial style for the map's basemap.
+       This determines the visual theme, such as imagery, streets, or topography.
+- `elevationSources`
+    - Type: `List<String>`
+    - Description:
+      A list of URLs pointing to elevation services.
+      These sources are used to create a 3D surface for the map, enabling terrain visualization.
 
 ## Example
 
