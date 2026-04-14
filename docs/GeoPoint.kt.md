@@ -1,5 +1,3 @@
-Of course! Here is the high-quality SDK documentation for the provided Kotlin code snippet, formatted in Markdown.
-
 # ArcGIS Geometry Converters
 
 This document provides detailed information on a set of Kotlin extension and factory functions designed for seamless conversion between a custom `GeoPoint` type and the ArcGIS Maps SDK for Kotlin `Point` type.
@@ -16,17 +14,22 @@ fun GeoPoint.toPoint(spatialReference: SpatialReference? = null): Point
 ```
 
 ### Description
-This extension function transforms a `GeoPoint` into an ArcGIS `Point`. It maps the `longitude`, `latitude`, and `altitude` properties of the `GeoPoint` to the `x`, `y`, and `z` coordinates of the resulting `Point`, respectively. You can optionally assign a `SpatialReference` to the new `Point`.
+This extension function transforms a `GeoPoint` into an ArcGIS `Point`.
+It maps the `longitude`, `latitude`, and `altitude` properties of the `GeoPoint` to
+the `x`, `y`, and `z` coordinates of the resulting `Point`, respectively.
+You can optionally assign a `SpatialReference` to the new `Point`.
 
 ### Parameters
-| Parameter          | Type                  | Description                                                  |
-|--------------------|-----------------------|--------------------------------------------------------------|
-| `spatialReference` | `SpatialReference?`   | (Optional) The spatial reference to assign to the created `Point`. Defaults to `null`. |
+
+- `spatialReference`
+    - Type: `SpatialReference?`
+    - Description: (Optional) The spatial reference to assign to the created `Point`. Defaults to `null`.
 
 ### Returns
-| Type    | Description                               |
-|---------|-------------------------------------------|
-| `Point` | An ArcGIS `Point` object.                 |
+
+- Type: `Point`
+- Description: An ArcGIS `Point` object.
+
 
 ### Example
 ```kotlin
@@ -63,19 +66,26 @@ fun GeoPoint.Companion.fromLatLongAltitude(
 ```
 
 ### Description
-Creates a new `GeoPoint` instance from the provided latitude, longitude, and altitude values. This is a convenience factory method that follows the standard `latitude, longitude` ordering.
+Creates a new `GeoPoint` instance from the provided latitude, longitude, and altitude values.
+This is a convenience factory method that follows the standard `latitude, longitude` ordering.
 
 ### Parameters
-| Parameter   | Type     | Description                |
-|-------------|----------|----------------------------|
-| `latitude`  | `Double` | The latitude coordinate.   |
-| `longitude` | `Double` | The longitude coordinate.  |
-| `altitude`  | `Double` | The altitude value.        |
+
+- `latitude`
+    - Type: `Double`
+    - Description:  The latitude coordinate.
+- `longitude`
+    - Type: `Double`
+    - Description:  The longitude coordinate.
+- `altitude`
+    - Type: `Double`
+    - Description:  The altitude value.
 
 ### Returns
-| Type       | Description                               |
-|------------|-------------------------------------------|
-| `GeoPoint` | A new `GeoPoint` instance.                |
+
+- Type: `GeoPoint`
+- Description: A new `GeoPoint` instance.
+
 
 ### Example
 ```kotlin
@@ -105,19 +115,26 @@ fun GeoPoint.Companion.fromLongLat(
 ```
 
 ### Description
-Creates a new `GeoPoint` instance from the provided longitude, latitude, and altitude values. This is a convenience factory method for cases where coordinates are provided in `longitude, latitude` order.
+
+Creates a new `GeoPoint` instance from the provided longitude, latitude, and altitude values.
+This is a convenience factory method for cases where coordinates are provided in `longitude, latitude` order.
 
 ### Parameters
-| Parameter   | Type     | Description                |
-|-------------|----------|----------------------------|
-| `longitude` | `Double` | The longitude coordinate.  |
-| `latitude`  | `Double` | The latitude coordinate.   |
-| `altitude`  | `Double` | The altitude value.        |
+- `longitude`
+    - Type: `Double`
+    - Description:  The longitude coordinate.
+- `latitude`
+    - Type: `Double`
+    - Description:  The latitude coordinate.
+- `altitude`
+    - Type: `Double`
+    - Description:  The altitude value.
+
 
 ### Returns
-| Type       | Description                               |
-|------------|-------------------------------------------|
-| `GeoPoint` | A new `GeoPoint` instance.                |
+
+- Type: `GeoPoint`
+- Description: A new `GeoPoint` instance.
 
 ### Example
 ```kotlin
@@ -143,14 +160,20 @@ fun Point.toGeoPoint(): GeoPoint
 ```
 
 ### Description
-This extension function transforms an ArcGIS `Point` into a `GeoPoint`. It directly maps the `x`, `y`, and `z` coordinates of the `Point` to the `longitude`, `latitude`, and `altitude` properties of the `GeoPoint`. If the `Point`'s `z` value is `null` (i.e., it is a 2D point), the resulting `GeoPoint`'s altitude will be set to `0.0`.
+This extension function transforms an ArcGIS `Point` into a `GeoPoint`.
+It directly maps the `x`, `y`, and `z` coordinates of the `Point` to
+the `longitude`, `latitude`, and `altitude` properties of the `GeoPoint`.
+If the `Point`'s `z` value is `null` (i.e., it is a 2D point), the resulting `GeoPoint`'s altitude will be set to `0.0`.
 
-**Note:** This function performs a direct coordinate mapping (`x` -> `longitude`, `y` -> `latitude`). It does **not** perform any spatial reference projection. For accurate conversion, ensure the source `Point` is in a geographic coordinate system (like WGS84) where the x-coordinate represents longitude and the y-coordinate represents latitude.
+**Note:** This function performs a direct coordinate mapping (`x` -> `longitude`, `y` -> `latitude`).
+It does **not** perform any spatial reference projection.
+For accurate conversion, ensure the source `Point` is in a geographic coordinate system (like WGS84)
+where the x-coordinate represents longitude and the y-coordinate represents latitude.
 
-### Returns
-| Type       | Description                               |
-|------------|-------------------------------------------|
-| `GeoPoint` | A `GeoPoint` instance.                    |
+### Return
+
+- Type: `GeoPoint`
+- Description: A new `GeoPoint` instance.
 
 ### Example
 ```kotlin
