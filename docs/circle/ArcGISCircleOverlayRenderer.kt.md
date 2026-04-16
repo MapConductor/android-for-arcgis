@@ -1,10 +1,16 @@
 # ArcGISCircleOverlayRenderer
 
-The `ArcGISCircleOverlayRenderer` class is a concrete implementation for rendering and managing circle graphics on an ArcGIS map. It extends `AbstractCircleOverlayRenderer` and is responsible for translating abstract `CircleState` data into tangible ArcGIS `Graphic` objects on a specified `GraphicsOverlay`.
+The `ArcGISCircleOverlayRenderer` class is a concrete implementation for rendering and managing
+circle graphics on an ArcGIS map. It extends `AbstractCircleOverlayRenderer` and is responsible for
+translating abstract `CircleState` data into tangible ArcGIS `Graphic` objects on a specified
+`GraphicsOverlay`.
 
-This renderer handles the entire lifecycle of a circle graphic, including its creation, removal, and property updates. It supports both geodesic (more accurate on a globe) and planar (simpler, faster) circles.
+This renderer handles the entire lifecycle of a circle graphic, including its creation, removal, and
+property updates. It supports both geodesic (more accurate on a globe) and planar (simpler, faster)
+circles.
 
-**Note:** The type `ArcGISActualCircle` is an alias for the ArcGIS `Graphic` class (`com.arcgismaps.mapping.view.Graphic`).
+**Note:** The type `ArcGISActualCircle` is an alias for the ArcGIS `Graphic` class
+(`com.arcgismaps.mapping.view.Graphic`).
 
 ## Constructor
 
@@ -24,11 +30,17 @@ Initializes a new instance of the `ArcGISCircleOverlayRenderer`.
 
 ### Parameters
 
-| Parameter | Type | Description |
-| :--- | :--- | :--- |
-| `circleLayer` | `GraphicsOverlay` | The ArcGIS graphics layer where the circle graphics will be added and managed. |
-| `holder` | `ArcGISMapViewHolder` | A view holder that provides access to the map view and its context, such as the spatial reference. |
-| `coroutine` | `CoroutineScope` | The coroutine scope used for executing asynchronous operations. Defaults to `CoroutineScope(Dispatchers.Main)`. |
+- `circleLayer`
+    - Type: `GraphicsOverlay`
+    - Description: The ArcGIS graphics layer where the circle graphics will be added and managed.
+- `holder`
+    - Type: `ArcGISMapViewHolder`
+    - Description: A view holder that provides access to the map view and its context, such as the
+      spatial reference.
+- `coroutine`
+    - Type: `CoroutineScope`
+    - Description: The coroutine scope used for executing asynchronous operations. Defaults to
+      `CoroutineScope(Dispatchers.Main)`.
 
 ---
 
@@ -44,19 +56,23 @@ override suspend fun createCircle(state: CircleState): ArcGISActualCircle?
 
 #### Description
 
-Creates a new circle graphic based on the provided `CircleState` and adds it to the `GraphicsOverlay`. This function can create either a geodesic or a planar circle. The geometry is generated using `GeometryEngine.bufferGeodeticOrNull` for geodesic circles or `GeometryEngine.bufferOrNull` for planar circles.
+Creates a new circle graphic based on the provided `CircleState` and adds it to the
+`GraphicsOverlay`. This function can create either a geodesic or a planar circle. The geometry is
+generated using `GeometryEngine.bufferGeodeticOrNull` for geodesic circles or
+`GeometryEngine.bufferOrNull` for planar circles.
 
 #### Parameters
 
-| Parameter | Type | Description |
-| :--- | :--- | :--- |
-| `state` | `CircleState` | The state object defining the circle's properties, including its center, radius, colors, and whether it is geodesic. |
+- `state`
+    - Type: `CircleState`
+    - Description: The state object defining the circle's properties, including its center, radius,
+      colors, and whether it is geodesic.
 
 #### Returns
 
-| Type | Description |
-| :--- | :--- |
-| `ArcGISActualCircle?` | The newly created ArcGIS `Graphic` object representing the circle, or `null` if the creation process fails. |
+- Type: `ArcGISActualCircle?`
+- Description: The newly created ArcGIS `Graphic` object representing the circle, or `null` if the
+  creation process fails.
 
 ---
 
@@ -70,13 +86,14 @@ override suspend fun removeCircle(entity: CircleEntityInterface<ArcGISActualCirc
 
 #### Description
 
-Removes a specified circle graphic from the `GraphicsOverlay`. This operation is performed asynchronously on the provided coroutine scope.
+Removes a specified circle graphic from the `GraphicsOverlay`. This operation is performed
+asynchronously on the provided coroutine scope.
 
 #### Parameters
 
-| Parameter | Type | Description |
-| :--- | :--- | :--- |
-| `entity` | `CircleEntityInterface<ArcGISActualCircle>` | The circle entity that contains the `Graphic` to be removed from the map. |
+- `entity`
+    - Type: `CircleEntityInterface<ArcGISActualCircle>`
+    - Description: The circle entity that contains the `Graphic` to be removed from the map.
 
 #### Returns
 
@@ -98,27 +115,35 @@ override suspend fun updateCircleProperties(
 
 #### Description
 
-Updates the properties of an existing circle graphic. This method efficiently checks for changes between the `current` and `prev` states using their fingerprints. It updates the geometry (center, radius, geodesic type) or the symbol properties (fill color, stroke color, stroke width) only if they have changed, minimizing unnecessary rendering operations.
+Updates the properties of an existing circle graphic. This method efficiently checks for changes
+between the `current` and `prev` states using their fingerprints. It updates the geometry (center,
+radius, geodesic type) or the symbol properties (fill color, stroke color, stroke width) only if
+they have changed, minimizing unnecessary rendering operations.
 
 #### Parameters
 
-| Parameter | Type | Description |
-| :--- | :--- | :--- |
-| `circle` | `ArcGISActualCircle` | The actual ArcGIS `Graphic` object that needs to be updated. |
-| `current` | `CircleEntityInterface<ArcGISActualCircle>` | The entity representing the new, updated state of the circle. |
-| `prev` | `CircleEntityInterface<ArcGISActualCircle>` | The entity representing the previous state of the circle, used for comparison to detect changes. |
+- `circle`
+    - Type: `ArcGISActualCircle`
+    - Description: The actual ArcGIS `Graphic` object that needs to be updated.
+- `current`
+    - Type: `CircleEntityInterface<ArcGISActualCircle>`
+    - Description: The entity representing the new, updated state of the circle.
+- `prev`
+    - Type: `CircleEntityInterface<ArcGISActualCircle>`
+    - Description: The entity representing the previous state of the circle, used for comparison to
+      detect changes.
 
 #### Returns
 
-| Type | Description |
-| :--- | :--- |
-| `ArcGISActualCircle?` | The updated `Graphic` object, or `null` if the update fails. |
+- Type: `ArcGISActualCircle?`
+- Description: The updated `Graphic` object, or `null` if the update fails.
 
 ---
 
 ## Example
 
-Here is an example of how to instantiate `ArcGISCircleOverlayRenderer` and use it to draw a circle on the map.
+Here is an example of how to instantiate `ArcGISCircleOverlayRenderer` and use it to draw a circle
+on the map.
 
 ```kotlin
 import com.arcgismaps.mapping.view.GraphicsOverlay
