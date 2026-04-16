@@ -4,7 +4,8 @@ A custom `FrameLayout` that serves as a wrapper for the ArcGIS `SceneView`.
 This class is designed to integrate the `SceneView` into a view hierarchy and manage its lifecycle.
 
 The class provides standard Android `View` constructors
-and delegates lifecycle events from a `LifecycleOwner` (like an `Activity` or `Fragment`) to the underlying `SceneView`.
+and delegates lifecycle events from a `LifecycleOwner` (like an `Activity` or `Fragment`) to the
+underlying `SceneView`.
 
 ### Lifecycle Management
 
@@ -125,7 +126,8 @@ Cleans up and releases all resources used by the `SceneView`. This is a final cl
 ## ArcGISMapViewHolder
 
 An adapter class that implements the `MapViewHolderInterface`.
-It acts as a bridge between a generic map interface and the specific ArcGIS `SceneView` implementation,
+It acts as a bridge between a generic map interface and the specific ArcGIS `SceneView`
+implementation,
 providing methods for coordinate transformations.
 
 ### toScreenOffset(position)
@@ -183,7 +185,8 @@ Because this can be a computationally intensive operation, it is performed async
 
 - Type: `GeoPoint?`
 - Description
-  The corresponding `GeoPoint`, or `null` if the screen coordinate does not map to a location on the scene.
+  The corresponding `GeoPoint`, or `null` if the screen coordinate does not map to a location on the
+  scene.
 
 ---
 
@@ -202,18 +205,21 @@ It blocks the calling thread until the conversion is complete.
 It is useful when you need the result immediately and are not on the main thread.
 
 **Note:**
-Calling this on the main UI thread will cause it to freeze and may lead to an "Application Not Responding" (ANR) error.
+Calling this on the main UI thread will cause it to freeze and may lead to an "Application Not
+Responding" (ANR) error.
 
 **Parameters**
-| Parameter | Type | Description |
-| :--- | :--- | :--- |
-| `offset` | `Offset` | The screen offset (x, y pixel coordinates) to convert. |
+
+- `offset`
+    - Type: `Offset`
+    - Description: The screen offset (x, y pixel coordinates) to convert.
 
 **Returns**
 
 - Type: `GeoPoint?`
 - Description
-  The corresponding `GeoPoint`, or `null` if the screen coordinate does not map to a location on the scene.
+  The corresponding `GeoPoint`, or `null` if the screen coordinate does not map to a location on the
+  scene.
 
 ### Example
 
@@ -242,7 +248,8 @@ newGeoPoint?.let {
 
 ## getArcGisApiKey()
 
-An internal extension function on `Context` that retrieves the ArcGIS API key from the application's manifest metadata.
+An internal extension function on `Context` that retrieves the ArcGIS API key from the application's
+manifest metadata.
 
 **Signature**
 ```kotlin
@@ -251,7 +258,8 @@ internal fun Context.getArcGisApiKey(): String?
 
 **Description**
 This utility function simplifies retrieving the ArcGIS API key required for using ArcGIS services.
-It looks for a `<meta-data>` tag with the name `ARCGIS_API_KEY` within the `<application>` tag of your `AndroidManifest.xml`.
+It looks for a `<meta-data>` tag with the name `ARCGIS_API_KEY` within the `<application>` tag of
+your `AndroidManifest.xml`.
 
 **Returns**
 

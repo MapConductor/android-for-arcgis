@@ -61,7 +61,8 @@ Initializes a new instance of the `ArcGISMapViewController`.
 
 ## Properties
 
-These properties are inherited from `BaseMapViewController` and are used to set callbacks for various map events.
+These properties are inherited from `BaseMapViewController` and are used to set callbacks for
+various map events.
 
 
 - `mapClickCallback`
@@ -152,7 +153,8 @@ suspend fun animateCamera(
 
 #### clearOverlays
 
-Removes all overlays (markers, polylines, polygons, circles, ground images, and raster layers) from the map.
+Removes all overlays (markers, polylines, polygons, circles, ground images, and raster layers) from
+the map.
 
 **Signature**
 ```kotlin
@@ -263,7 +265,7 @@ suspend fun updatePolygon(state: PolygonState)
 **Parameters**
 
 - `state`
-    - Type: `PolylineState`
+    - Type: `PolygonState`
     - Description:
       The new state for the polygon to be updated.
 

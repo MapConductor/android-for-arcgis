@@ -1,16 +1,21 @@
-Of course! Here is the high-quality SDK documentation for the provided Kotlin code snippet.
-
----
-
 # ArcGISPolygonOverlayRenderer
 
 ## Description
 
-The `ArcGISPolygonOverlayRenderer` class is a concrete implementation of `AbstractPolygonOverlayRenderer` designed to render and manage polygon graphics on an ArcGIS map. It is responsible for translating abstract `PolygonState` objects into visible ArcGIS `Graphic` objects on a specified `GraphicsOverlay`.
+The `ArcGISPolygonOverlayRenderer` class is a concrete implementation of
+`AbstractPolygonOverlayRenderer` designed to render and manage polygon graphics on an ArcGIS map. It
+is responsible for translating abstract `PolygonState` objects into visible ArcGIS `Graphic` objects
+on a specified `GraphicsOverlay`.
 
-A key feature of this renderer is its advanced handling of polygons with holes. For simple polygons, it creates a standard `SimpleFillSymbol`. However, for complex polygons containing one or more holes, it employs a raster masking technique. It renders the outer polygon boundary with a transparent fill and dynamically generates a separate raster tile layer underneath. This raster layer provides the visible fill color, effectively "masking out" the hole areas, which allows for the correct visual representation of complex shapes.
+A key feature of this renderer is its advanced handling of polygons with holes. For simple polygons,
+it creates a standard `SimpleFillSymbol`. However, for complex polygons containing one or more
+holes, it employs a raster masking technique. It renders the outer polygon boundary with a
+transparent fill and dynamically generates a separate raster tile layer underneath. This raster
+layer provides the visible fill color, effectively "masking out" the hole areas, which allows for
+the correct visual representation of complex shapes.
 
-The renderer also manages polygon properties such as fill color, stroke color, stroke width, and Z-index, ensuring that graphics are updated efficiently and drawn in the correct order.
+The renderer also manages polygon properties such as fill color, stroke color, stroke width, and
+Z-index, ensuring that graphics are updated efficiently and drawn in the correct order.
 
 ## Constructor
 
@@ -28,13 +33,25 @@ class ArcGISPolygonOverlayRenderer(
 
 ### Parameters
 
-| Parameter             | Type                        | Description                                                                                                                            |
-| :-------------------- | :-------------------------- | :------------------------------------------------------------------------------------------------------------------------------------- |
-| `polygonLayer`        | `GraphicsOverlay`           | The ArcGIS `GraphicsOverlay` where the polygon graphics will be added and managed.                                                     |
-| `holder`              | `ArcGISMapViewHolder`       | The view holder that provides context and access to the map instance.                                                                  |
-| `rasterLayerController` | `ArcGISRasterLayerController` | The controller used to manage the raster mask layers, which are required for rendering polygons with holes.                            |
-| `tileServer`          | `LocalTileServer`           | *(Optional)* The local tile server instance used to generate and serve raster tiles for the polygon hole masks. Defaults to a new instance. |
-| `coroutine`           | `CoroutineScope`            | *(Optional)* The coroutine scope for executing asynchronous operations. Defaults to `CoroutineScope(Dispatchers.Default)`.                |
+- `polygonLayer`
+    - Type: `GraphicsOverlay`
+    - Description: The ArcGIS `GraphicsOverlay` where the polygon graphics will be added and
+      managed.
+- `holder`
+    - Type: `ArcGISMapViewHolder`
+    - Description: The view holder that provides context and access to the map instance.
+- `rasterLayerController`
+    - Type: `ArcGISRasterLayerController`
+    - Description: The controller used to manage the raster mask layers, which are required for
+      rendering polygons with holes.
+- `tileServer`
+    - Type: `LocalTileServer`
+    - Description: *(Optional)* The local tile server instance used to generate and serve raster
+      tiles for the polygon hole masks. Defaults to a new instance.
+- `coroutine`
+    - Type: `CoroutineScope`
+    - Description: *(Optional)* The coroutine scope for executing asynchronous operations. Defaults
+      to `CoroutineScope(Dispatchers.Default)`.
 
 ---
 
@@ -52,19 +69,22 @@ override suspend fun createPolygon(state: PolygonState): ArcGISActualPolygon?
 
 #### Description
 
-This function translates a `PolygonState` object into an ArcGIS `Graphic`. It configures the polygon's geometry, fill, and stroke properties. If the `state` includes holes, this method will also trigger the creation of a corresponding raster mask layer to render the fill correctly. The resulting graphic is added to the `polygonLayer`.
+This function translates a `PolygonState` object into an ArcGIS `Graphic`. It configures the
+polygon's geometry, fill, and stroke properties. If the `state` includes holes, this method will
+also trigger the creation of a corresponding raster mask layer to render the fill correctly. The
+resulting graphic is added to the `polygonLayer`.
 
 #### Parameters
 
-| Parameter | Type           | Description                                        |
-| :-------- | :------------- | :------------------------------------------------- |
-| `state`   | `PolygonState` | The state object defining the polygon's properties. |
+- `state`
+    - Type: `PolygonState`
+    - Description: The state object defining the polygon's properties.
 
 #### Returns
 
-| Type                  | Description                                                              |
-| :-------------------- | :----------------------------------------------------------------------- |
-| `ArcGISActualPolygon?` | The created ArcGIS `Graphic` object, or `null` if creation failed. `ArcGISActualPolygon` is a type alias for `Graphic`. |
+- Type: `ArcGISActualPolygon?`
+- Description: The created ArcGIS `Graphic` object, or `null` if creation failed.
+  `ArcGISActualPolygon` is a type alias for `Graphic`.
 
 ---
 
@@ -84,21 +104,27 @@ override suspend fun updatePolygonProperties(
 
 #### Description
 
-This function efficiently updates an existing polygon graphic by comparing the `current` and `prev` states. It modifies properties such as geometry, fill color, stroke, and Z-index only if they have changed. If holes are added to a polygon that previously had none, it will create the necessary raster mask layer. Conversely, if all holes are removed, it will clean up the mask layer.
+This function efficiently updates an existing polygon graphic by comparing the `current` and `prev`
+states. It modifies properties such as geometry, fill color, stroke, and Z-index only if they have
+changed. If holes are added to a polygon that previously had none, it will create the necessary
+raster mask layer. Conversely, if all holes are removed, it will clean up the mask layer.
 
 #### Parameters
 
-| Parameter | Type                                        | Description                                                              |
-| :-------- | :------------------------------------------ | :----------------------------------------------------------------------- |
-| `polygon` | `ArcGISActualPolygon`                       | The actual ArcGIS `Graphic` object to be updated.                        |
-| `current` | `PolygonEntityInterface<ArcGISActualPolygon>` | The wrapper entity containing the new state and the polygon graphic.     |
-| `prev`    | `PolygonEntityInterface<ArcGISActualPolygon>` | The wrapper entity containing the previous state for comparison.         |
+- `polygon`
+    - Type: `ArcGISActualPolygon`
+    - Description: The actual ArcGIS `Graphic` object to be updated.
+- `current`
+    - Type: `PolygonEntityInterface<ArcGISActualPolygon>`
+    - Description: The wrapper entity containing the new state and the polygon graphic.
+- `prev`
+    - Type: `PolygonEntityInterface<ArcGISActualPolygon>`
+    - Description: The wrapper entity containing the previous state for comparison.
 
 #### Returns
 
-| Type                  | Description                                                              |
-| :-------------------- | :----------------------------------------------------------------------- |
-| `ArcGISActualPolygon?` | The updated ArcGIS `Graphic` object, or `null` if the update failed. |
+- Type: `ArcGISActualPolygon?`
+- Description: The updated ArcGIS `Graphic` object, or `null` if the update failed.
 
 ---
 
@@ -114,13 +140,15 @@ override suspend fun removePolygon(entity: PolygonEntityInterface<ArcGISActualPo
 
 #### Description
 
-This function removes the specified polygon graphic from the `polygonLayer`. If the polygon had an associated raster mask layer (for rendering holes), that layer and its resources are also removed and cleaned up.
+This function removes the specified polygon graphic from the `polygonLayer`. If the polygon had an
+associated raster mask layer (for rendering holes), that layer and its resources are also removed
+and cleaned up.
 
 #### Parameters
 
-| Parameter | Type                                        | Description                                                        |
-| :-------- | :------------------------------------------ | :----------------------------------------------------------------- |
-| `entity`  | `PolygonEntityInterface<ArcGISActualPolygon>` | The wrapper entity containing the polygon graphic to be removed. |
+- `entity`
+    - Type: `PolygonEntityInterface<ArcGISActualPolygon>`
+    - Description: The wrapper entity containing the polygon graphic to be removed.
 
 ---
 
@@ -136,13 +164,17 @@ override suspend fun onPostProcess()
 
 #### Description
 
-This function is called after all create, update, and remove operations in a given cycle are complete. It ensures the correct visual stacking order of polygons by sorting the graphics in the `polygonLayer` based on their `zIndex` attribute. Polygons with higher `zIndex` values will be rendered on top of those with lower values.
+This function is called after all create, update, and remove operations in a given cycle are
+complete. It ensures the correct visual stacking order of polygons by sorting the graphics in the
+`polygonLayer` based on their `zIndex` attribute. Polygons with higher `zIndex` values will be
+rendered on top of those with lower values.
 
 ---
 
 ## Example
 
-The following example demonstrates how to instantiate `ArcGISPolygonOverlayRenderer` and use it to create, update, and remove polygons.
+The following example demonstrates how to instantiate `ArcGISPolygonOverlayRenderer` and use it to
+create, update, and remove polygons.
 
 ```kotlin
 import com.arcgismaps.mapping.view.GraphicsOverlay

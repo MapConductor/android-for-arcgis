@@ -1,6 +1,7 @@
 # ArcGISPolylineOverlayController
 
-The `ArcGISPolylineOverlayController` is a specialized controller that manages the display and lifecycle of polyline overlays on an ArcGIS map.
+The `ArcGISPolylineOverlayController` is a specialized controller that manages the display and
+lifecycle of polyline overlays on an ArcGIS map.
 
 ## Signature
 
@@ -13,20 +14,30 @@ class ArcGISPolylineOverlayController(
 
 ## Description
 
-This class acts as the primary component for managing polyline overlays within an ArcGIS environment. It connects the core polyline management logic (from `PolylineManager`) with the specific rendering implementation required for ArcGIS maps (`ArcGISPolylineOverlayRenderer`).
+This class acts as the primary component for managing polyline overlays within an ArcGIS
+environment. It connects the core polyline management logic (from `PolylineManager`) with the
+specific rendering implementation required for ArcGIS maps (`ArcGISPolylineOverlayRenderer`).
 
-The controller orchestrates the state of polyline data and delegates the responsibility of drawing the polylines on the map to the provided `renderer`. It inherits from the generic `PolylineController`, specializing it for `ArcGISActualPolyline` objects.
+The controller orchestrates the state of polyline data and delegates the responsibility of drawing
+the polylines on the map to the provided `renderer`. It inherits from the generic
+`PolylineController`, specializing it for `ArcGISActualPolyline` objects.
 
 ## Parameters
 
-| Parameter | Type | Description | Default |
-| :--- | :--- | :--- | :--- |
-| `polylineManager` | `PolylineManagerInterface<ArcGISActualPolyline>` | The manager responsible for handling the state and lifecycle of polyline data. It tracks all added, removed, and updated polylines. | `PolylineManager()` |
-| `renderer` | `ArcGISPolylineOverlayRenderer` | The renderer responsible for drawing the polylines onto the ArcGIS map view. This object handles the platform-specific drawing operations. | - |
+- `polylineManager`
+    - Type: `PolylineManagerInterface<ArcGISActualPolyline>`
+    - Default: `PolylineManager()`
+    - Description: The manager responsible for handling the state and lifecycle of polyline data. It
+      tracks all added, removed, and updated polylines.
+- `renderer`
+    - Type: `ArcGISPolylineOverlayRenderer`
+    - Description: The renderer responsible for drawing the polylines onto the ArcGIS map view. This
+      object handles the platform-specific drawing operations.
 
 ## Example
 
-The following example demonstrates how to initialize the `ArcGISPolylineOverlayController` to manage polylines on an ArcGIS map.
+The following example demonstrates how to initialize the `ArcGISPolylineOverlayController` to manage
+polylines on an ArcGIS map.
 
 ```kotlin
 import com.esri.arcgisruntime.mapping.view.MapView

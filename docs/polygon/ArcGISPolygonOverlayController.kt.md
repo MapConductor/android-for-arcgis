@@ -9,15 +9,26 @@ class ArcGISPolygonOverlayController(
 ```
 
 ### Description
-The `ArcGISPolygonOverlayController` is a specialized controller responsible for managing and rendering polygon overlays on an ArcGIS map. It acts as a bridge between the generic polygon management logic provided by `PolygonController` and the specific rendering implementation for ArcGIS maps, `ArcGISPolygonOverlayRenderer`.
+The `ArcGISPolygonOverlayController` is a specialized controller responsible for managing and
+rendering polygon overlays on an ArcGIS map. It acts as a bridge between the generic polygon
+management logic provided by `PolygonController` and the specific rendering implementation for
+ArcGIS maps, `ArcGISPolygonOverlayRenderer`.
 
-This class coordinates the state of polygons (e.g., adding, removing, updating) with their visual representation on the map, leveraging a `PolygonManager` for state handling and an `ArcGISPolygonOverlayRenderer` for drawing.
+This class coordinates the state of polygons (e.g., adding, removing, updating) with their visual
+representation on the map, leveraging a `PolygonManager` for state handling and an
+`ArcGISPolygonOverlayRenderer` for drawing.
 
 ### Parameters
-| Parameter | Type | Description | Default |
-|-----------|------|-------------|---------|
-| `polygonManager` | `PolygonManagerInterface<ArcGISActualPolygon>` | The manager responsible for handling the lifecycle and state of `ArcGISActualPolygon` objects. | `PolygonManager()` |
-| `renderer` | `ArcGISPolygonOverlayRenderer` | The renderer responsible for drawing the polygons onto the ArcGIS map view. This is a required parameter. | None |
+
+- `polygonManager`
+    - Type: `PolygonManagerInterface<ArcGISActualPolygon>`
+    - Default: `PolygonManager()`
+    - Description: The manager responsible for handling the lifecycle and state of
+      `ArcGISActualPolygon` objects.
+- `renderer`
+    - Type: `ArcGISPolygonOverlayRenderer`
+    - Description: The renderer responsible for drawing the polygons onto the ArcGIS map view. This
+      is a required parameter.
 
 ### Example
 Here is an example of how to instantiate and use the `ArcGISPolygonOverlayController`.

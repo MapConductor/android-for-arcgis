@@ -23,13 +23,15 @@ fun rememberArcGISMapViewState(
 ### Description
 Creates an `ArcGISMapViewState` instance that is remembered across recompositions.
 The state is automatically saved and restored, making it robust against configuration changes.
-The returned `ArcGISMapViewState` object is the main handle used to interact with and control the map programmatically.
+The returned `ArcGISMapViewState` object is the main handle used to interact with and control the
+map programmatically.
 
 ### Parameters
 
 - `mapDesign`
     - Type: `ArcGISDesign`
-    - Description:  The initial base map style to be applied to the map. Defaults to `ArcGISDesign.Streets`.
+    - Description:  The initial base map style to be applied to the map. Defaults to
+      `ArcGISDesign.Streets`.
 - `cameraPosition`
     - Type: `MapCameraPositionInterface`
     - Description:
@@ -81,7 +83,8 @@ fun MyMapScreen() {
 
 A stateful class that holds and manages the properties of an ArcGIS map,
 such as its camera position and visual style.
-It serves as the primary interface for programmatically controlling the map's behavior and appearance.
+It serves as the primary interface for programmatically controlling the map's behavior and
+appearance.
 An instance of this class is typically created using the `rememberArcGISMapViewState` composable.
 
 ### Properties
@@ -93,12 +96,14 @@ An instance of this class is typically created using the `rememberArcGISMapViewS
     - Type: `MapCameraPosition`
     - Description:
       The current position of the map's camera.
-      This property is updated as the user interacts with the map or when camera movements are initiated programmatically.
+      This property is updated as the user interacts with the map or when camera movements are
+      initiated programmatically.
 - `mapDesignType`
     - Type: `ArcGISDesignTypeInterface`
     - Description:
       The current visual style (basemap) of the map.
-      This property can be set to a new `ArcGISDesignTypeInterface` to dynamically change the map's appearance.
+      This property can be set to a new `ArcGISDesignTypeInterface` to dynamically change the map's
+      appearance.
 - `padding`
     - Type: `StateFlow<MapPaddingsInterface>`
     - Description:
@@ -133,7 +138,8 @@ over the specified duration. Otherwise, the camera moves instantly.
 - `durationMillis`
     - Type: `Long?`
     - Description:
-      The duration of the camera animation in milliseconds. If `null` or `0`, the camera moves instantly.
+      The duration of the camera animation in milliseconds. If `null` or `0`, the camera moves
+      instantly.
 
 ---
 
@@ -144,7 +150,8 @@ An interface that defines the public contract for an ArcGIS map view state objec
 ### Description
 This interface extends the generic `MapViewStateInterface` and
 specifies `ArcGISDesignTypeInterface` as the design type.
-It ensures a consistent API for map state management across different map providers within the MapConductor ecosystem.
+It ensures a consistent API for map state management across different map providers within the
+MapConductor ecosystem.
 
 ---
 

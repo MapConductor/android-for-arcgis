@@ -1,14 +1,17 @@
-Of course! Here is the high-quality SDK documentation for the provided code snippet, formatted in Markdown.
-
 # ArcGIS Marker Event Controllers
 
-This document provides detailed documentation for the marker event controller interfaces and their implementations within the ArcGIS module. These controllers are responsible for handling and dispatching user interactions with markers on the map, such as clicks and drags.
+This document provides detailed documentation for the marker event controller interfaces and their
+implementations within the ArcGIS module. These controllers are responsible for handling and
+dispatching user interactions with markers on the map, such as clicks and drags.
 
-**Note:** The components documented here are marked as `internal`, suggesting they are intended for use within the library's ecosystem.
+**Note:** The components documented here are marked as `internal`, suggesting they are intended for
+use within the library's ecosystem.
 
 ## `ArcGISMarkerEventControllerInterface`
 
-An interface that defines the contract for handling marker-related events in an ArcGIS map context. It extends the generic `MarkerEventControllerInterface` and adds functionalities specific to the ArcGIS environment.
+An interface that defines the contract for handling marker-related events in an ArcGIS map context.
+It extends the generic `MarkerEventControllerInterface` and adds functionalities specific to the
+ArcGIS environment.
 
 ### Methods
 
@@ -25,14 +28,15 @@ fun find(position: GeoPoint): MarkerEntityInterface<ArcGISActualMarker>?
 Searches for a marker entity that corresponds to the given geographic coordinates.
 
 **Parameters**
-| Parameter  | Type       | Description                                      |
-|------------|------------|--------------------------------------------------|
-| `position` | `GeoPoint` | The geographic coordinate to search for a marker. |
+
+- `position`
+    - Type: `GeoPoint`
+    - Description: The geographic coordinate to search for a marker.
 
 **Returns**
-| Type                                           | Description                                                              |
-|------------------------------------------------|--------------------------------------------------------------------------|
-| `MarkerEntityInterface<ArcGISActualMarker>?` | The found marker entity, or `null` if no marker exists at the given position. |
+
+- Type: `MarkerEntityInterface<ArcGISActualMarker>?`
+- Description: The found marker entity, or `null` if no marker exists at the given position.
 
 ---
 
@@ -46,12 +50,13 @@ fun getSelectedState(): MarkerState?
 ```
 
 **Description**
-Returns the `MarkerState` of the marker that is currently selected, typically during a drag operation.
+Returns the `MarkerState` of the marker that is currently selected, typically during a drag
+operation.
 
 **Returns**
-| Type          | Description                                                      |
-|---------------|------------------------------------------------------------------|
-| `MarkerState?`| The state of the selected marker, or `null` if no marker is selected. |
+
+- Type: `MarkerState?`
+- Description: The state of the selected marker, or `null` if no marker is selected.
 
 ---
 
@@ -65,12 +70,14 @@ fun startDrag(entity: MarkerEntityInterface<ArcGISActualMarker>)
 ```
 
 **Description**
-Marks the beginning of a drag sequence for the given marker entity. This method sets the provided entity as the currently selected marker for subsequent drag updates.
+Marks the beginning of a drag sequence for the given marker entity. This method sets the provided
+entity as the currently selected marker for subsequent drag updates.
 
 **Parameters**
-| Parameter | Type                                         | Description                          |
-|-----------|----------------------------------------------|--------------------------------------|
-| `entity`  | `MarkerEntityInterface<ArcGISActualMarker>` | The marker entity to start dragging. |
+
+- `entity`
+    - Type: `MarkerEntityInterface<ArcGISActualMarker>`
+    - Description: The marker entity to start dragging.
 
 ---
 
@@ -84,13 +91,17 @@ fun updateDrag(point: Point, position: GeoPoint)
 ```
 
 **Description**
-This method is called continuously during a drag gesture to update the visual position of the marker on the map and its underlying geographic coordinates.
+This method is called continuously during a drag gesture to update the visual position of the marker
+on the map and its underlying geographic coordinates.
 
 **Parameters**
-| Parameter  | Type       | Description                                                              |
-|------------|------------|--------------------------------------------------------------------------|
-| `point`    | `Point`    | The new map coordinate (`com.arcgismaps.geometry.Point`) of the marker.   |
-| `position` | `GeoPoint` | The new geographic coordinate (`com.mapconductor.core.features.GeoPoint`). |
+
+- `point`
+    - Type: `Point`
+    - Description: The new map coordinate (`com.arcgismaps.geometry.Point`) of the marker.
+- `position`
+    - Type: `GeoPoint`
+    - Description: The new geographic coordinate (`com.mapconductor.core.features.GeoPoint`).
 
 ---
 
@@ -104,13 +115,17 @@ fun endDrag(point: Point, position: GeoPoint)
 ```
 
 **Description**
-This method is called at the end of a drag gesture. It sets the marker's final position and clears the "selected" state, concluding the drag operation.
+This method is called at the end of a drag gesture. It sets the marker's final position and clears
+the "selected" state, concluding the drag operation.
 
 **Parameters**
-| Parameter  | Type       | Description                                                              |
-|------------|------------|--------------------------------------------------------------------------|
-| `point`    | `Point`    | The final map coordinate (`com.arcgismaps.geometry.Point`) of the marker. |
-| `position` | `GeoPoint` | The final geographic coordinate (`com.mapconductor.core.features.GeoPoint`). |
+
+- `point`
+    - Type: `Point`
+    - Description: The final map coordinate (`com.arcgismaps.geometry.Point`) of the marker.
+- `position`
+    - Type: `GeoPoint`
+    - Description: The final geographic coordinate (`com.mapconductor.core.features.GeoPoint`).
 
 ---
 
@@ -127,9 +142,10 @@ fun dispatchClick(state: MarkerState)
 Invokes the `onMarkerClick` handler if a click listener has been set.
 
 **Parameters**
-| Parameter | Type          | Description                          |
-|-----------|---------------|--------------------------------------|
-| `state`   | `MarkerState` | The state of the marker that was clicked. |
+
+- `state`
+    - Type: `MarkerState`
+    - Description: The state of the marker that was clicked.
 
 ---
 
@@ -146,9 +162,10 @@ fun dispatchDragStart(state: MarkerState)
 Invokes the `onMarkerDragStart` handler if a drag start listener has been set.
 
 **Parameters**
-| Parameter | Type          | Description                                       |
-|-----------|---------------|---------------------------------------------------|
-| `state`   | `MarkerState` | The state of the marker at the start of the drag. |
+
+- `state`
+    - Type: `MarkerState`
+    - Description: The state of the marker at the start of the drag.
 
 ---
 
@@ -162,12 +179,14 @@ fun dispatchDrag(state: MarkerState)
 ```
 
 **Description**
-Invokes the `onMarkerDrag` handler if a drag listener has been set. This is typically called repeatedly as the marker is being moved.
+Invokes the `onMarkerDrag` handler if a drag listener has been set. This is typically called
+repeatedly as the marker is being moved.
 
 **Parameters**
-| Parameter | Type          | Description                                 |
-|-----------|---------------|---------------------------------------------|
-| `state`   | `MarkerState` | The current state of the marker being dragged. |
+
+- `state`
+    - Type: `MarkerState`
+    - Description: The current state of the marker being dragged.
 
 ---
 
@@ -184,9 +203,10 @@ fun dispatchDragEnd(state: MarkerState)
 Invokes the `onMarkerDragEnd` handler if a drag end listener has been set.
 
 **Parameters**
-| Parameter | Type          | Description                                   |
-|-----------|---------------|-----------------------------------------------|
-| `state`   | `MarkerState` | The final state of the marker after dragging. |
+
+- `state`
+    - Type: `MarkerState`
+    - Description: The final state of the marker after dragging.
 
 ---
 
@@ -200,9 +220,10 @@ fun setClickListener(listener: OnMarkerEventHandler?)
 ```
 
 **Parameters**
-| Parameter  | Type                   | Description                                                              |
-|------------|------------------------|--------------------------------------------------------------------------|
-| `listener` | `OnMarkerEventHandler?`| The listener to handle click events, or `null` to remove the current listener. |
+
+- `listener`
+    - Type: `OnMarkerEventHandler?`
+    - Description: The listener to handle click events, or `null` to remove the current listener.
 
 ---
 
@@ -216,9 +237,11 @@ fun setDragStartListener(listener: OnMarkerEventHandler?)
 ```
 
 **Parameters**
-| Parameter  | Type                   | Description                                                                    |
-|------------|------------------------|--------------------------------------------------------------------------------|
-| `listener` | `OnMarkerEventHandler?`| The listener to handle drag start events, or `null` to remove the current listener. |
+
+- `listener`
+    - Type: `OnMarkerEventHandler?`
+    - Description: The listener to handle drag start events, or `null` to remove the current
+      listener.
 
 ---
 
@@ -232,9 +255,10 @@ fun setDragListener(listener: OnMarkerEventHandler?)
 ```
 
 **Parameters**
-| Parameter  | Type                   | Description                                                              |
-|------------|------------------------|--------------------------------------------------------------------------|
-| `listener` | `OnMarkerEventHandler?`| The listener to handle drag events, or `null` to remove the current listener. |
+
+- `listener`
+    - Type: `OnMarkerEventHandler?`
+    - Description: The listener to handle drag events, or `null` to remove the current listener.
 
 ---
 
@@ -248,9 +272,10 @@ fun setDragEndListener(listener: OnMarkerEventHandler?)
 ```
 
 **Parameters**
-| Parameter  | Type                   | Description                                                                  |
-|------------|------------------------|------------------------------------------------------------------------------|
-| `listener` | `OnMarkerEventHandler?`| The listener to handle drag end events, or `null` to remove the current listener. |
+
+- `listener`
+    - Type: `OnMarkerEventHandler?`
+    - Description: The listener to handle drag end events, or `null` to remove the current listener.
 
 ---
 
@@ -264,9 +289,11 @@ fun setAnimateStartListener(listener: OnMarkerEventHandler?)
 ```
 
 **Parameters**
-| Parameter  | Type                   | Description                                                                        |
-|------------|------------------------|------------------------------------------------------------------------------------|
-| `listener` | `OnMarkerEventHandler?`| The listener to handle animation start events, or `null` to remove the current listener. |
+
+- `listener`
+    - Type: `OnMarkerEventHandler?`
+    - Description: The listener to handle animation start events, or `null` to remove the current
+      listener.
 
 ---
 
@@ -280,15 +307,19 @@ fun setAnimateEndListener(listener: OnMarkerEventHandler?)
 ```
 
 **Parameters**
-| Parameter  | Type                   | Description                                                                      |
-|------------|------------------------|----------------------------------------------------------------------------------|
-| `listener` | `OnMarkerEventHandler?`| The listener to handle animation end events, or `null` to remove the current listener. |
+
+- `listener`
+    - Type: `OnMarkerEventHandler?`
+    - Description: The listener to handle animation end events, or `null` to remove the current
+      listener.
 
 <br/>
 
 ## `DefaultArcGISMarkerEventController`
 
-A default implementation of `ArcGISMarkerEventControllerInterface`. It acts as a proxy, delegating event handling and state management logic to an underlying `ArcGISMarkerController`. This class bridges raw map interactions with the core marker management system.
+A default implementation of `ArcGISMarkerEventControllerInterface`. It acts as a proxy, delegating
+event handling and state management logic to an underlying `ArcGISMarkerController`. This class
+bridges raw map interactions with the core marker management system.
 
 ### Constructor
 
@@ -303,15 +334,19 @@ DefaultArcGISMarkerEventController(
 Creates an instance of `DefaultArcGISMarkerEventController`.
 
 **Parameters**
-| Parameter    | Type                   | Description                                                              |
-|--------------|------------------------|--------------------------------------------------------------------------|
-| `controller` | `ArcGISMarkerController` | The main marker controller that manages marker state and dispatches events. |
+
+- `controller`
+    - Type: `ArcGISMarkerController`
+    - Description: The main marker controller that manages marker state and dispatches events.
 
 <br/>
 
 ## `StrategyArcGISMarkerEventController`
 
-An alternative implementation of `ArcGISMarkerEventControllerInterface` designed to work with a `StrategyMarkerController`. Unlike `DefaultArcGISMarkerEventController`, this class manages the state of the selected marker internally during a drag operation. It delegates event dispatching and marker lookups to the provided `StrategyMarkerController`.
+An alternative implementation of `ArcGISMarkerEventControllerInterface` designed to work with a
+`StrategyMarkerController`. Unlike `DefaultArcGISMarkerEventController`, this class manages the
+state of the selected marker internally during a drag operation. It delegates event dispatching and
+marker lookups to the provided `StrategyMarkerController`.
 
 ### Constructor
 
@@ -326,6 +361,7 @@ StrategyArcGISMarkerEventController(
 Creates an instance of `StrategyArcGISMarkerEventController`.
 
 **Parameters**
-| Parameter    | Type                                          | Description                                                                      |
-|--------------|-----------------------------------------------|----------------------------------------------------------------------------------|
-| `controller` | `StrategyMarkerController<ArcGISActualMarker>`| The strategy-based marker controller for event dispatching and marker lookups. |
+
+- `controller`
+    - Type: `StrategyMarkerController<ArcGISActualMarker>`
+    - Description: The strategy-based marker controller for event dispatching and marker lookups.

@@ -1,11 +1,13 @@
 This document provides detailed documentation for the ArcGIS MapConductor SDK extensions,
-which facilitate interoperability between MapConductor's core mapping abstractions and the ArcGIS Maps SDK for Kotlin.
+which facilitate interoperability between MapConductor's core mapping abstractions and the ArcGIS
+Maps SDK for Kotlin.
 
 ## Extension Functions
 
 ### `MapCameraPosition.getAltitudeForArcGIS()`
 
-Calculates the appropriate camera altitude for the ArcGIS map view based on the `MapCameraPosition` properties.
+Calculates the appropriate camera altitude for the ArcGIS map view based on the `MapCameraPosition`
+properties.
 
 #### Signature
 
@@ -242,7 +244,8 @@ println("  - Tilt: ${mapPosition.tilt}")
 
 ### `calculateDestinationPoint()`
 
-Calculates the geographic coordinates of a destination point given a starting point, bearing, and distance.
+Calculates the geographic coordinates of a destination point given a starting point, bearing, and
+distance.
 
 #### Signature
 
@@ -258,7 +261,8 @@ fun calculateDestinationPoint(
 #### Description
 
 This utility function determines a new geographical point
-by projecting a specified distance along a given bearing (azimuth) from a starting latitude and longitude.
+by projecting a specified distance along a given bearing (azimuth) from a starting latitude and
+longitude.
 It is based on a spherical model of the Earth and is useful for geospatial calculations,
 such as determining a camera's location relative to its target.
 
@@ -283,7 +287,8 @@ such as determining a camera's location relative to its target.
 
 - Type: `GeoPoint`
 - Description
-  A new `GeoPoint` object representing the calculated destination coordinates (latitude and longitude).
+  A new `GeoPoint` object representing the calculated destination coordinates (latitude and
+  longitude).
 
 #### Example
 
@@ -324,9 +329,11 @@ fun calculateCameraForOrbitParameters(
 
 #### Description
 
-This function is designed to compute the properties of a `Camera` that orbits a central `targetPoint`.
+This function is designed to compute the properties of a `Camera` that orbits a central
+`targetPoint`.
 It positions the camera at a specified `distance` from the target, with a given heading and pitch.
-This is essential for implementing "orbit" or "look-at" camera behaviors where the camera always faces a point of interest.
+This is essential for implementing "orbit" or "look-at" camera behaviors where the camera always
+faces a point of interest.
 
 #### Parameters
 
@@ -344,7 +351,8 @@ This is essential for implementing "orbit" or "look-at" camera behaviors where t
 - `cameraPitchOffset`
     - Type: `Double`
     - Description:
-      The pitch (tilt) of the camera in degrees. 0 is a top-down view, and 90 is a view from the horizon.
+      The pitch (tilt) of the camera in degrees. 0 is a top-down view, and 90 is a view from the
+      horizon.
 
 
 #### Returns
@@ -388,7 +396,8 @@ println("  - Pitch: ${camera.pitch}")
 
 ### `MapCameraPosition.Companion.from()`
 
-A factory function that creates a `MapCameraPosition` from any object that implements the `MapCameraPositionInterface`.
+A factory function that creates a `MapCameraPosition` from any object that implements the
+`MapCameraPositionInterface`.
 
 #### Signature
 
@@ -403,7 +412,8 @@ fun MapCameraPosition.Companion.from(
 This function acts as a safe and convenient constructor.
 If the provided `position` is already a `MapCameraPosition`, it is returned directly.
 Otherwise, it constructs a new `MapCameraPosition` by extracting the necessary properties
-from the `MapCameraPositionInterface` object, ensuring a consistent object type for further processing.
+from the `MapCameraPositionInterface` object, ensuring a consistent object type for further
+processing.
 
 #### Parameters
 
@@ -416,7 +426,8 @@ from the `MapCameraPositionInterface` object, ensuring a consistent object type 
 - Type: `MapCameraPosition`
 - Description
   A `MapCameraPosition` instance.
-  If the input was already a `MapCameraPosition`, it is returned directly; otherwise, a new instance is created.
+  If the input was already a `MapCameraPosition`, it is returned directly; otherwise, a new instance
+  is created.
 
 #### Example
 

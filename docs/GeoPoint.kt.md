@@ -1,6 +1,8 @@
 # ArcGIS Geometry Converters
 
-This document provides detailed information on a set of Kotlin extension and factory functions designed for seamless conversion between a custom `GeoPoint` type and the ArcGIS Maps SDK for Kotlin `Point` type.
+This document provides detailed information on a set of Kotlin extension and factory functions
+designed for seamless conversion between a custom `GeoPoint` type and the ArcGIS Maps SDK for Kotlin
+`Point` type.
 
 ---
 
@@ -23,7 +25,8 @@ You can optionally assign a `SpatialReference` to the new `Point`.
 
 - `spatialReference`
     - Type: `SpatialReference?`
-    - Description: (Optional) The spatial reference to assign to the created `Point`. Defaults to `null`.
+    - Description: (Optional) The spatial reference to assign to the created `Point`. Defaults to
+      `null`.
 
 ### Returns
 
@@ -117,7 +120,8 @@ fun GeoPoint.Companion.fromLongLat(
 ### Description
 
 Creates a new `GeoPoint` instance from the provided longitude, latitude, and altitude values.
-This is a convenience factory method for cases where coordinates are provided in `longitude, latitude` order.
+This is a convenience factory method for cases where coordinates are provided in `longitude,
+latitude` order.
 
 ### Parameters
 - `longitude`
@@ -163,9 +167,11 @@ fun Point.toGeoPoint(): GeoPoint
 This extension function transforms an ArcGIS `Point` into a `GeoPoint`.
 It directly maps the `x`, `y`, and `z` coordinates of the `Point` to
 the `longitude`, `latitude`, and `altitude` properties of the `GeoPoint`.
-If the `Point`'s `z` value is `null` (i.e., it is a 2D point), the resulting `GeoPoint`'s altitude will be set to `0.0`.
+If the `Point`'s `z` value is `null` (i.e., it is a 2D point), the resulting `GeoPoint`'s altitude
+will be set to `0.0`.
 
-**Note:** This function performs a direct coordinate mapping (`x` -> `longitude`, `y` -> `latitude`).
+**Note:** This function performs a direct coordinate mapping (`x` -> `longitude`, `y` ->
+`latitude`).
 It does **not** perform any spatial reference projection.
 For accurate conversion, ensure the source `Point` is in a geographic coordinate system (like WGS84)
 where the x-coordinate represents longitude and the y-coordinate represents latitude.

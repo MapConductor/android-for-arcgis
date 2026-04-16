@@ -1,10 +1,7 @@
-Of course! Here is the high-quality SDK documentation for the provided code snippet.
-
-***
-
 ### `toArcGISColor()`
 
-An internal extension function that converts a Jetpack Compose `Color` object into its equivalent ArcGIS Maps SDK `Color` representation.
+An internal extension function that converts a Jetpack Compose `Color` object into its equivalent
+ArcGIS Maps SDK `Color` representation.
 
 ### Signature
 
@@ -14,21 +11,25 @@ internal fun Color.toArcGISColor(): com.arcgismaps.Color
 
 ### Description
 
-This function provides a convenient way to convert a `androidx.compose.ui.graphics.Color` instance to a `com.arcgismaps.Color`. It maps the float-based RGBA channel values (ranging from 0.0f to 1.0f) of the Compose `Color` to the integer-based RGBA values (ranging from 0 to 255) used by the ArcGIS `Color`.
+This function provides a convenient way to convert a `androidx.compose.ui.graphics.Color` instance
+to a `com.arcgismaps.Color`. It maps the float-based RGBA channel values (ranging from 0.0f to 1.0f)
+of the Compose `Color` to the integer-based RGBA values (ranging from 0 to 255) used by the ArcGIS
+`Color`.
 
-As an `internal` function, it is designed for use only within its containing module and is not part of the public API.
+As an `internal` function, it is designed for use only within its containing module and is not part
+of the public API.
 
 ### Parameters
 
-| Parameter | Type                                  | Description                                           |
-|-----------|---------------------------------------|-------------------------------------------------------|
-| `this`    | `androidx.compose.ui.graphics.Color`  | The source Jetpack Compose `Color` instance to convert. |
+- `this`
+    - Type: `androidx.compose.ui.graphics.Color`
+    - Description: The source Jetpack Compose `Color` instance to convert.
 
 ### Returns
 
-**Type:** `com.arcgismaps.Color`
-
-A new `com.arcgismaps.Color` object that is visually identical to the source Compose `Color`.
+- Type: `com.arcgismaps.Color`
+- Description: A new `com.arcgismaps.Color` object that is visually identical to the source Compose
+  `Color`.
 
 ### Example
 

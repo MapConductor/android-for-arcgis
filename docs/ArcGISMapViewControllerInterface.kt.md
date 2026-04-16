@@ -5,7 +5,8 @@ The primary interface for controlling and interacting with an ArcGIS map view.
 ## Description
 
 `ArcGISMapViewControllerInterface` serves as the main controller for an ArcGIS map instance.
-It extends the generic `MapViewControllerInterface` and incorporates a comprehensive set of capabilities
+It extends the generic `MapViewControllerInterface` and incorporates a comprehensive set of
+capabilities
 for managing various map features and overlays.
 
 This interface allows you to:
@@ -29,7 +30,8 @@ It inherits functionality from the following interfaces:
 
 ### ArcGISDesignTypeChangeHandler
 
-A function type that defines the signature for a listener that is invoked when the map's design type changes.
+A function type that defines the signature for a listener that is invoked when the map's design type
+changes.
 
 **Signature**
 ```kotlin

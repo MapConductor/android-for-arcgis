@@ -1,9 +1,11 @@
 # Type Aliases
 
 This document outlines the core type aliases used within the `com.mapconductor.arcgis` package.
-These aliases provide a consistent and abstracted interface over the underlying ArcGIS Maps SDK for Kotlin types,
+These aliases provide a consistent and abstracted interface over the underlying ArcGIS Maps SDK for
+Kotlin types,
 simplifying development and improving code readability.
-They map common map concepts (like markers, polylines, etc.) to their specific ArcGIS implementation classes.
+They map common map concepts (like markers, polylines, etc.) to their specific ArcGIS implementation
+classes.
 
 ---
 
@@ -32,7 +34,8 @@ typealias ArcGISActualCircle = com.arcgismaps.mapping.view.Graphic
 **Description**
 An alias for the `com.arcgismaps.mapping.view.Graphic` class.
 This type represents a circle shape drawn on the map.
-In the ArcGIS SDK, shapes like circles are typically implemented as `Graphic` objects with a specific geometry.
+In the ArcGIS SDK, shapes like circles are typically implemented as `Graphic` objects with a
+specific geometry.
 This alias provides a standardized "Circle" type within the MapConductor SDK.
 
 ---
@@ -46,7 +49,8 @@ typealias ArcGISActualPolyline = com.arcgismaps.mapping.view.Graphic
 
 **Description**
 An alias for the `com.arcgismaps.mapping.view.Graphic` class.
-It is used to represent a polyline, which consists of a series of connected line segments, on the map.
+It is used to represent a polyline, which consists of a series of connected line segments, on the
+map.
 
 ---
 

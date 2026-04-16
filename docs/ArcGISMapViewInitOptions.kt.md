@@ -28,7 +28,8 @@ data class ArcGISMapViewInitOptions(
 
 ## Example
 
-The following example demonstrates how to create an instance of `ArcGISMapViewInitOptions` to configure a map with an imagery basemap and a 3D terrain surface.
+The following example demonstrates how to create an instance of `ArcGISMapViewInitOptions` to
+configure a map with an imagery basemap and a 3D terrain surface.
 
 ```kotlin
 import com.arcgismaps.mapping.BasemapStyle

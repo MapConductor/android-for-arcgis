@@ -11,20 +11,30 @@ class ArcGISRasterLayerController(
 
 ### Description
 
-The `ArcGISRasterLayerController` is a specialized controller responsible for managing and displaying raster data as layers within an ArcGIS map environment. It extends the generic `RasterLayerController`, bridging the core raster layer management logic with an ArcGIS-specific rendering implementation (`ArcGISRasterLayerOverlayRenderer`).
+The `ArcGISRasterLayerController` is a specialized controller responsible for managing and
+displaying raster data as layers within an ArcGIS map environment. It extends the generic
+`RasterLayerController`, bridging the core raster layer management logic with an ArcGIS-specific
+rendering implementation (`ArcGISRasterLayerOverlayRenderer`).
 
-This controller coordinates the state of raster layers, managed by the `rasterLayerManager`, with their visual representation on the map, handled by the `renderer`. It is the primary component for integrating raster layer functionality into an ArcGIS map application.
+This controller coordinates the state of raster layers, managed by the `rasterLayerManager`, with
+their visual representation on the map, handled by the `renderer`. It is the primary component for
+integrating raster layer functionality into an ArcGIS map application.
 
 ### Parameters
 
-| Parameter | Type | Description |
-| :--- | :--- | :--- |
-| `rasterLayerManager` | `RasterLayerManagerInterface<Layer>` | The manager responsible for handling the collection of raster layers. If not provided, a default `RasterLayerManager` instance is created. (Optional) |
-| `renderer` | `ArcGISRasterLayerOverlayRenderer` | The ArcGIS-specific renderer responsible for drawing the raster layers onto the map view. (Required) |
+- `rasterLayerManager`
+    - Type: `RasterLayerManagerInterface<Layer>`
+    - Description: The manager responsible for handling the collection of raster layers. If not
+      provided, a default `RasterLayerManager` instance is created. (Optional)
+- `renderer`
+    - Type: `ArcGISRasterLayerOverlayRenderer`
+    - Description: The ArcGIS-specific renderer responsible for drawing the raster layers onto the
+      map view. (Required)
 
 ### Example
 
-The following example demonstrates how to create an instance of `ArcGISRasterLayerController` and associate it with an ArcGIS `MapView`.
+The following example demonstrates how to create an instance of `ArcGISRasterLayerController` and
+associate it with an ArcGIS `MapView`.
 
 ```kotlin
 import com.arcgismaps.mapping.view.MapView
