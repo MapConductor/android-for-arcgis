@@ -193,9 +193,3 @@ signing {
     }
 }
 
-nmcp {
-    publishAllPublicationsToCentralPortal {
-        username = findProperty("ossrh_username") as String? ?: System.getenv("OSSRH_USERNAME") ?: ""
-        password = findProperty("ossrh_password") as String? ?: System.getenv("OSSRH_PASSWORD") ?: ""
-    }
-}
