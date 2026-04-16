@@ -14,19 +14,35 @@ data class ArcGISGroundImageHandle(
 
 ## Description
 
-The `ArcGISGroundImageHandle` is a data class that serves as a container for all the components and metadata associated with a specific ground imagery layer displayed on an ArcGIS map.
+The `ArcGISGroundImageHandle` is a data class that serves as a container for all the components and
+metadata associated with a specific ground imagery layer displayed on an ArcGIS map.
 
-This handle conveniently groups the identifying information (such as `routeId` and `generation`), the caching key, the custom tile provider, and the actual ArcGIS `WebTiledLayer` object. It is typically returned when a ground imagery layer is created and added to the map, allowing for easy management and reference to the layer and its related resources.
+This handle conveniently groups the identifying information (such as `routeId` and `generation`),
+the caching key, the custom tile provider, and the actual ArcGIS `WebTiledLayer` object. It is
+typically returned when a ground imagery layer is created and added to the map, allowing for easy
+management and reference to the layer and its related resources.
 
 ## Parameters
 
-| Parameter      | Type                      | Description                                                                                                |
-| :------------- | :------------------------ | :--------------------------------------------------------------------------------------------------------- |
-| `routeId`      | `String`                  | The unique identifier for the route to which the ground imagery belongs.                                   |
-| `generation`   | `Long`                    | A version number for the imagery data. This can be used to manage updates and invalidate caches.           |
-| `cacheKey`     | `String`                  | A unique key used for caching the ground imagery tiles, ensuring efficient retrieval.                       |
-| `tileProvider` | `GroundImageTileProvider` | The custom tile provider instance responsible for fetching and supplying the ground image tiles.             |
-| `layer`        | `WebTiledLayer`           | The ArcGIS `WebTiledLayer` instance that is added to the map to render the ground imagery.                 |
+- `routeId`
+    - Type: `String`
+    - Description: The unique identifier for the route to which the ground imagery belongs.
+- `generation`
+    - Type: `Long`
+    - Description: A version number for the imagery data. This can be used to manage updates and
+      invalidate caches.
+- `cacheKey`
+    - Type: `String`
+    - Description: A unique key used for caching the ground imagery tiles, ensuring efficient
+      retrieval.
+- `tileProvider`
+    - Type: `GroundImageTileProvider`
+    - Description: The custom tile provider instance responsible for fetching and supplying the
+      ground image tiles.
+- `layer`
+    - Type: `WebTiledLayer`
+    - Description: The ArcGIS `WebTiledLayer` instance that is added to the map to render the ground
+      imagery.
 
 ## Example
 
