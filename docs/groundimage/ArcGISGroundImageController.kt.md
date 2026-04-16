@@ -1,7 +1,3 @@
-Of course! Here is the high-quality SDK documentation for the provided code snippet.
-
----
-
 ### `ArcGISGroundImageController`
 
 #### Signature
@@ -14,21 +10,27 @@ class ArcGISGroundImageController(
 
 #### Description
 
-The `ArcGISGroundImageController` is the primary class for managing and displaying ground-level imagery on an ArcGIS map. It serves as the main entry point for developers to add, remove, and control ground images within an ArcGIS environment.
+The `ArcGISGroundImageController` is the primary class for managing and displaying ground-level
+imagery on an ArcGIS map. It serves as the main entry point for developers to add, remove, and
+control ground images within an ArcGIS environment.
 
-This controller acts as a bridge, connecting the generic `GroundImageManager` (which handles the core logic and state of all ground images) with the platform-specific `ArcGISGroundImageOverlayRenderer` (which handles the actual drawing of images on the map). It is specialized to work with `ArcGISGroundImageHandle` objects, which represent individual ground images added to the map.
+This controller acts as a bridge, connecting the generic `GroundImageManager` (which handles the
+core logic and state of all ground images) with the platform-specific
+`ArcGISGroundImageOverlayRenderer` (which handles the actual drawing of images on the map). It is
+specialized to work with `ArcGISGroundImageHandle` objects, which represent individual ground images
+added to the map.
 
 #### Parameters
 
-This section describes the parameters for the `ArcGISGroundImageController` constructor.
-
-| Parameter  | Type                               | Description                                                                                             |
-| :--------- | :--------------------------------- | :------------------------------------------------------------------------------------------------------ |
-| `renderer` | `ArcGISGroundImageOverlayRenderer` | The renderer instance responsible for drawing the ground image overlays onto the ArcGIS map. This object handles all platform-specific rendering tasks. |
+- `renderer`
+    - Type: `ArcGISGroundImageOverlayRenderer`
+    - Description: The renderer instance responsible for drawing the ground image overlays onto the
+      ArcGIS map. This object handles all platform-specific rendering tasks.
 
 #### Example
 
-The following example demonstrates how to initialize the `ArcGISGroundImageController` and use it to add a ground image to an ArcGIS map.
+The following example demonstrates how to initialize the `ArcGISGroundImageController` and use it to
+add a ground image to an ArcGIS map.
 
 ```kotlin
 import android.graphics.Bitmap
