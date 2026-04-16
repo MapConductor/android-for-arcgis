@@ -74,6 +74,11 @@ kotlin {
     }
 }
 
+// Publishing configuration
+val libraryGroupId = project.findProperty("libraryGroupId") as String? ?: "com.mapconductor"
+val libraryArtifactId = "for-arcgis"
+val libraryVersion = project.findProperty("libraryVersion") as String? ?: "1.0.0"
+
 dependencies {
 
     implementation(libs.androidx.compose.runtime)
@@ -102,11 +107,6 @@ dependencies {
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
 }
-
-// Publishing configuration
-val libraryGroupId = project.findProperty("libraryGroupId") as String? ?: "com.mapconductor"
-val libraryArtifactId = "for-arcgis"
-val libraryVersion = project.findProperty("libraryVersion") as String? ?: "1.0.0"
 
 // Set project version for NMCP plugin
 version = libraryVersion
