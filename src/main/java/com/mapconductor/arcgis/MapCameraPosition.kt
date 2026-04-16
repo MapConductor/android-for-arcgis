@@ -12,8 +12,6 @@ import kotlin.math.atan2
 import kotlin.math.cos
 import kotlin.math.sin
 
-const val ZOOM0_ALTITUDE = 5_000_000.0
-
 // ArcGIS needs its own calibration constant so that the same "Google-like zoom" yields a similar visible region.
 // (ArcGIS camera FOV differs from Google/Mapbox; using DEFAULT_ZOOM0_ALTITUDE drifts the visible scale.)
 private val converter = ZoomAltitudeConverter()
