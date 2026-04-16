@@ -86,10 +86,10 @@ dependencies {
     implementation(libs.androidx.lifecycle.common.java8)
 
     // ArcGIS SDK
-    compileOnly(libs.arcgis.maps.kotlin)
-    compileOnly(platform(libs.arcgis.maps.kotlin.toolkit.bom))
-    compileOnly(libs.arcgis.maps.kotlin.toolkit.geoview.compose)
-    compileOnly(libs.arcgis.maps.kotlin.toolkit.authentication)
+    implementation(libs.arcgis.maps.kotlin)
+    implementation(platform(libs.arcgis.maps.kotlin.toolkit.bom))
+    implementation(libs.arcgis.maps.kotlin.toolkit.geoview.compose)
+    implementation(libs.arcgis.maps.kotlin.toolkit.authentication)
 
     if (findProject(":android-sdk-core") != null) {
         implementation(project(":android-sdk-core"))
