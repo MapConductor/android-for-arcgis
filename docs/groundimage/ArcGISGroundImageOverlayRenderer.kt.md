@@ -1,6 +1,9 @@
 # ArcGISGroundImageOverlayRenderer
 
-Manages the lifecycle of ground image overlays on an ArcGIS map. This class is a concrete implementation of `AbstractGroundImageOverlayRenderer` tailored for the ArcGIS Maps SDK for Kotlin. It translates abstract `GroundImageState` objects into tangible `WebTiledLayer` instances on the map, handling their creation, updates, and removal by interacting with a `LocalTileServer`.
+Manages the lifecycle of ground image overlays on an ArcGIS map. This class is a concrete
+implementation of `AbstractGroundImageOverlayRenderer` tailored for the ArcGIS Maps SDK for Kotlin.
+It translates abstract `GroundImageState` objects into tangible `WebTiledLayer` instances on the
+map, handling their creation, updates, and removal by interacting with a `LocalTileServer`.
 
 ## Constructor
 
@@ -20,11 +23,18 @@ Initializes a new instance of the `ArcGISGroundImageOverlayRenderer`.
 
 ### Parameters
 
-| Parameter | Type | Description |
-| :--- | :--- | :--- |
-| `holder` | `ArcGISMapViewHolder` | The view holder that manages the ArcGIS map instance where overlays will be rendered. |
-| `tileServer` | `LocalTileServer` | The local tile server responsible for generating and serving image tiles for the ground overlays. |
-| `coroutine` | `CoroutineScope` | The coroutine scope for executing asynchronous operations. Defaults to `CoroutineScope(Dispatchers.Default)`. |
+- `holder`
+    - Type: `ArcGISMapViewHolder`
+    - Description: The view holder that manages the ArcGIS map instance where overlays will be
+      rendered.
+- `tileServer`
+    - Type: `LocalTileServer`
+    - Description: The local tile server responsible for generating and serving image tiles for the
+      ground overlays.
+- `coroutine`
+    - Type: `CoroutineScope`
+    - Description: The coroutine scope for executing asynchronous operations. Defaults to
+      `CoroutineScope(Dispatchers.Default)`.
 
 ---
 
@@ -40,21 +50,26 @@ override suspend fun createGroundImage(state: GroundImageState): ArcGISGroundIma
 
 #### Description
 
-Asynchronously creates and displays a new ground image overlay on the map based on the provided state.
+Asynchronously creates and displays a new ground image overlay on the map based on the provided
+state.
 
-This function generates tiles for the image, registers them with the `LocalTileServer`, creates an ArcGIS `WebTiledLayer`, and adds it to the map's operational layers. Opacity is handled by the native `WebTiledLayer.opacity` property for efficient updates, rather than being baked into the image tiles.
+This function generates tiles for the image, registers them with the `LocalTileServer`, creates an
+ArcGIS `WebTiledLayer`, and adds it to the map's operational layers. Opacity is handled by the
+native `WebTiledLayer.opacity` property for efficient updates, rather than being baked into the
+image tiles.
 
 #### Parameters
 
-| Parameter | Type | Description |
-| :--- | :--- | :--- |
-| `state` | `GroundImageState` | An object defining the properties of the ground image, such as the image bitmap, geographical bounds, tile size, and opacity. |
+- `state`
+    - Type: `GroundImageState`
+    - Description: An object defining the properties of the ground image, such as the image bitmap,
+      geographical bounds, tile size, and opacity.
 
 #### Returns
 
-| Type | Description |
-| :--- | :--- |
-| `ArcGISGroundImageHandle?` | A handle to the newly created ground image overlay, or `null` if creation fails (e.g., the map scene is not available or the layer fails to load). |
+- Type: `ArcGISGroundImageHandle?`
+- Description: A handle to the newly created ground image overlay, or `null` if creation fails
+  (e.g., the map scene is not available or the layer fails to load).
 
 ---
 
@@ -72,25 +87,34 @@ override suspend fun updateGroundImageProperties(
 
 #### Description
 
-Asynchronously updates an existing ground image overlay by comparing the `current` and `prev` states.
+Asynchronously updates an existing ground image overlay by comparing the `current` and `prev`
+states.
 
 The method performs efficient updates:
-- If only the opacity has changed, it updates the `opacity` property on the existing `WebTiledLayer` directly.
-- If the image, bounds, or tile size have changed, it regenerates the underlying tile set, creates a new `WebTiledLayer` to ensure the cache is invalidated, and seamlessly swaps it with the old layer on the map.
+- If only the opacity has changed, it updates the `opacity` property on the existing `WebTiledLayer`
+  directly.
+- If the image, bounds, or tile size have changed, it regenerates the underlying tile set, creates a
+  new `WebTiledLayer` to ensure the cache is invalidated, and seamlessly swaps it with the old layer
+  on the map.
 
 #### Parameters
 
-| Parameter | Type | Description |
-| :--- | :--- | :--- |
-| `groundImage` | `ArcGISGroundImageHandle` | The handle for the existing ground image overlay to be updated. |
-| `current` | `GroundImageEntityInterface<ArcGISGroundImageHandle>` | An entity wrapper for the new, desired state of the ground image. |
-| `prev` | `GroundImageEntityInterface<ArcGISGroundImageHandle>` | An entity wrapper for the previous state, used to determine which properties have changed. |
+- `groundImage`
+    - Type: `ArcGISGroundImageHandle`
+    - Description: The handle for the existing ground image overlay to be updated.
+- `current`
+    - Type: `GroundImageEntityInterface<ArcGISGroundImageHandle>`
+    - Description: An entity wrapper for the new, desired state of the ground image.
+- `prev`
+    - Type: `GroundImageEntityInterface<ArcGISGroundImageHandle>`
+    - Description: An entity wrapper for the previous state, used to determine which properties have
+      changed.
 
 #### Returns
 
-| Type | Description |
-| :--- | :--- |
-| `ArcGISGroundImageHandle?` | A handle representing the updated overlay. This may be a new instance if the underlying tiles were regenerated. Returns `null` if the update fails. |
+- Type: `ArcGISGroundImageHandle?`
+- Description: A handle representing the updated overlay. This may be a new instance if the
+  underlying tiles were regenerated. Returns `null` if the update fails.
 
 ---
 
@@ -104,13 +128,15 @@ override suspend fun removeGroundImage(entity: GroundImageEntityInterface<ArcGIS
 
 #### Description
 
-Asynchronously removes a ground image overlay from the map. It removes the corresponding `WebTiledLayer` from the scene's operational layers and unregisters its tile provider from the `LocalTileServer` to free up resources.
+Asynchronously removes a ground image overlay from the map. It removes the corresponding
+`WebTiledLayer` from the scene's operational layers and unregisters its tile provider from the
+`LocalTileServer` to free up resources.
 
 #### Parameters
 
-| Parameter | Type | Description |
-| :--- | :--- | :--- |
-| `entity` | `GroundImageEntityInterface<ArcGISGroundImageHandle>` | The entity containing the handle of the ground image to remove. |
+- `entity`
+    - Type: `GroundImageEntityInterface<ArcGISGroundImageHandle>`
+    - Description: The entity containing the handle of the ground image to remove.
 
 #### Returns
 
@@ -120,7 +146,8 @@ This function does not return a value.
 
 ## Example
 
-The following example demonstrates the full lifecycle (create, update, remove) of a ground image using `ArcGISGroundImageOverlayRenderer`.
+The following example demonstrates the full lifecycle (create, update, remove) of a ground image
+using `ArcGISGroundImageOverlayRenderer`.
 
 ```kotlin
 import kotlinx.coroutines.CoroutineScope
