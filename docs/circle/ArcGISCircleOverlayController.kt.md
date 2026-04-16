@@ -1,12 +1,11 @@
-Of course! Here is the high-quality SDK documentation for the provided code snippet.
-
----
-
 ### `ArcGISCircleOverlayController`
 
-The `ArcGISCircleOverlayController` is a specialized controller responsible for managing and rendering circle overlays on an ArcGIS map. It integrates the generic circle management logic from `CircleController` with the specific rendering capabilities of `ArcGISCircleOverlayRenderer`.
+The `ArcGISCircleOverlayController` is a specialized controller responsible for managing and
+rendering circle overlays on an ArcGIS map. It integrates the generic circle management logic from
+`CircleController` with the specific rendering capabilities of `ArcGISCircleOverlayRenderer`.
 
-This class serves as the primary entry point for developers to programmatically add, remove, and update circles on the map.
+This class serves as the primary entry point for developers to programmatically add, remove, and
+update circles on the map.
 
 ### Signature
 
@@ -19,16 +18,20 @@ class ArcGISCircleOverlayController(
 
 ### Parameters
 
-This class is initialized with the following parameters:
-
-| Parameter | Type | Description | Default |
-|---|---|---|---|
-| `circleManager` | `CircleManagerInterface<ArcGISActualCircle>` | The manager responsible for handling the lifecycle and state of all circle objects. It tracks additions, removals, and updates. | `CircleManager()` |
-| `renderer` | `ArcGISCircleOverlayRenderer` | The renderer responsible for drawing the circles on the ArcGIS map view. It translates circle data into visual representations. | - |
+- `circleManager`
+    - Type: `CircleManagerInterface<ArcGISActualCircle>`
+    - Default: `CircleManager()`
+    - Description: The manager responsible for handling the lifecycle and state of all circle
+      objects. It tracks additions, removals, and updates.
+- `renderer`
+    - Type: `ArcGISCircleOverlayRenderer`
+    - Description: The renderer responsible for drawing the circles on the ArcGIS map view. It
+      translates circle data into visual representations.
 
 ### Example
 
-The following example demonstrates how to initialize the `ArcGISCircleOverlayController` and use it to add a circle to an ArcGIS map.
+The following example demonstrates how to initialize the `ArcGISCircleOverlayController` and use it
+to add a circle to an ArcGIS map.
 
 ```kotlin
 import com.esri.arcgisruntime.geometry.Point
