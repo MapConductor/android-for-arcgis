@@ -5,6 +5,7 @@
     alias(libs.plugins.jlleitschuh.ktlint)
     id("maven-publish")
     id("signing")
+    id("com.gradleup.nmcp") version "0.0.8"
 }
 
 ktlint {
@@ -180,16 +181,6 @@ publishing {
             }
         }
 
-        maven {
-            name = "OSSRH"
-            val releasesRepoUrl = "https://oss.sonatype.org/service/local/staging/deploy/maven2/"
-            val snapshotsRepoUrl = "https://oss.sonatype.org/content/repositories/snapshots/"
-            setUrl(if (version.toString().endsWith("SNAPSHOT")) snapshotsRepoUrl else releasesRepoUrl)
-            credentials {
-                username = project.findProperty("ossrh.username") as String? ?: System.getenv("OSSRH_USERNAME")
-                password = project.findProperty("ossrh.password") as String? ?: System.getenv("OSSRH_PASSWORD")
-            }
-        }
     }
 }
 
@@ -199,5 +190,12 @@ signing {
     if (signingKey != null && signingPassword != null) {
         useInMemoryPgpKeys(signingKey, signingPassword)
         sign(publishing.publications["release"])
+    }
+}
+
+nmcp {
+    publishAllPublicationsToCentralPortal {
+        username = findProperty("ossrh_username") as String? ?: System.getenv("OSSRH_USERNAME") ?: ""
+        password = findProperty("ossrh_password") as String? ?: System.getenv("OSSRH_PASSWORD") ?: ""
     }
 }
