@@ -2,33 +2,33 @@ This document provides detailed documentation for the ArcGIS MapConductor SDK ex
 which facilitate interoperability between MapConductor's core mapping abstractions and the ArcGIS
 Maps SDK for Kotlin.
 
-## Extension Functions
+# Extension Functions
 
-### `MapCameraPosition.getAltitudeForArcGIS()`
+## `MapCameraPosition.getAltitudeForArcGIS()`
 
 Calculates the appropriate camera altitude for the ArcGIS map view based on the `MapCameraPosition`
 properties.
 
-#### Signature
+### Signature
 
 ```kotlin
 fun MapCameraPosition.getAltitudeForArcGIS(): Double
 ```
 
-#### Description
+### Description
 
 This function converts a platform-agnostic `MapCameraPosition` into an ArcGIS-specific altitude.
 It takes into account the zoom level, latitude, and tilt to produce an altitude value
 that results in a visually similar map scale on ArcGIS as on other platforms like Google Maps,
 compensating for differences in camera Field of View (FOV).
 
-#### Returns
+### Returns
 
 - Type: `Double`
 - Description: The calculated camera altitude in meters.
 
 
-#### Example
+### Example
 
 ```kotlin
 // Assuming a MapCameraPosition instance
@@ -47,17 +47,17 @@ println("Calculated ArcGIS Altitude: $arcgisAltitude meters")
 
 ---
 
-### `MapCameraPosition.toCamera()`
+## `MapCameraPosition.toCamera()`
 
 Converts a `MapCameraPosition` object to an ArcGIS `Camera` object.
 
-#### Signature
+### Signature
 
 ```kotlin
 fun MapCameraPosition.toCamera(): Camera
 ```
 
-#### Description
+### Description
 
 This function provides a direct conversion from the abstract `MapCameraPosition`
 to a concrete `com.arcgismaps.mapping.view.Camera` instance.
@@ -66,12 +66,12 @@ It translates properties like zoom, bearing, and tilt
 into the corresponding ArcGIS camera parameters (altitude, heading, and pitch),
 enabling the ArcGIS map to reflect the state of the `MapCameraPosition`.
 
-#### Returns
+### Returns
 
 - Type: `Camera`
 - Description: The ArcGIS Camera object.
 
-#### Example
+### Example
 
 ```kotlin
 val mapPosition = MapCameraPosition(
@@ -93,29 +93,29 @@ println("  - Pitch: ${arcgisCamera.pitch}")
 
 ---
 
-### `Camera.getZoomLevel()`
+## `Camera.getZoomLevel()`
 
 Calculates the "Google-like" zoom level from the properties of an ArcGIS `Camera`.
 
-#### Signature
+### Signature
 
 ```kotlin
 fun Camera.getZoomLevel(): Double
 ```
 
-#### Description
+### Description
 
 This function performs the reverse operation of `getAltitudeForArcGIS`.
 It takes an ArcGIS `Camera`'s altitude, latitude, and pitch to calculate an equivalent zoom level
 that is consistent with the scaling used by providers like Google Maps.
 This is useful for synchronizing state or displaying a zoom level value to the user.
 
-#### Returns
+### Returns
 
 - Type: `Double`
 - Description: The calculated zoom level, typically ranging from 0 to 22.
 
-#### Example
+### Example
 
 ```kotlin
 // An existing ArcGIS Camera instance
@@ -136,37 +136,37 @@ println("Calculated Zoom Level: $zoomLevel")
 
 ---
 
-### `Camera.withZoomLevel()`
+## `Camera.withZoomLevel()`
 
 Creates a new `Camera` instance by applying a new zoom level to an existing camera.
 
-#### Signature
+### Signature
 
 ```kotlin
 fun Camera.withZoomLevel(zoomLevel: Double): Camera
 ```
 
-#### Description
+### Description
 
 This function provides an immutable way to change a camera's zoom level.
 It calculates the new altitude required to match the specified `zoomLevel`
 while preserving the camera's current latitude, longitude, heading, pitch, and roll.
 It returns a new `Camera` object with the updated altitude.
 
-#### Parameters
+### Parameters
 
 - zoomLevel
   - Type: `Double`
   - Description: The target zoom level to apply to the new camera.
 
-#### Returns
+### Returns
 
 - Type: `Camera`
 - Description
     A new `Camera` instance with the same properties as the original,
     except for the altitude, which is adjusted for the new zoom level.
 
-#### Example
+### Example
 
 ```kotlin
 val initialCamera = Camera(
@@ -190,17 +190,17 @@ println("New Altitude for Zoom 14: ${zoomedCamera.location.z}")
 
 ---
 
-### `Camera.toMapCameraPosition()`
+## `Camera.toMapCameraPosition()`
 
 Converts an ArcGIS `Camera` object to a `MapCameraPosition`.
 
-#### Signature
+### Signature
 
 ```kotlin
 fun Camera.toMapCameraPosition(): MapCameraPosition
 ```
 
-#### Description
+### Description
 
 This function translates the properties of a platform-specific ArcGIS `Camera`
 into the platform-agnostic `MapCameraPosition` format.
@@ -210,13 +210,13 @@ and normalizes the heading to a bearing value (0-360 degrees).
 This allows the state of the ArcGIS map to be represented in a common format
 that can be used across different parts of an application.
 
-#### Returns
+### Returns
 
 - Type: `MapCameraPosition`
 - Description
   A new `MapCameraPosition` instance representing the state of the `Camera`.
 
-#### Example
+### Example
 
 ```kotlin
 val camera = Camera(
@@ -240,14 +240,14 @@ println("  - Tilt: ${mapPosition.tilt}")
 
 ---
 
-## Utility Functions
+# Utility Functions
 
-### `calculateDestinationPoint()`
+## `calculateDestinationPoint()`
 
 Calculates the geographic coordinates of a destination point given a starting point, bearing, and
 distance.
 
-#### Signature
+### Signature
 
 ```kotlin
 fun calculateDestinationPoint(
@@ -258,7 +258,7 @@ fun calculateDestinationPoint(
 ): GeoPoint
 ```
 
-#### Description
+### Description
 
 This utility function determines a new geographical point
 by projecting a specified distance along a given bearing (azimuth) from a starting latitude and
@@ -266,7 +266,7 @@ longitude.
 It is based on a spherical model of the Earth and is useful for geospatial calculations,
 such as determining a camera's location relative to its target.
 
-#### Parameters
+### Parameters
 
 - `lat`
     - Type: `Double`
@@ -283,14 +283,14 @@ such as determining a camera's location relative to its target.
     - Type: `Double`
     - Description: The distance to travel from the starting point, in meters. - |
 
-#### Returns
+### Returns
 
 - Type: `GeoPoint`
 - Description
   A new `GeoPoint` object representing the calculated destination coordinates (latitude and
   longitude).
 
-#### Example
+### Example
 
 ```kotlin
 // Starting point: Los Angeles, CA
@@ -312,11 +312,11 @@ println("Destination Point: ${destination.latitude}, ${destination.longitude}")
 
 ---
 
-### `calculateCameraForOrbitParameters()`
+## `calculateCameraForOrbitParameters()`
 
 Calculates the camera position and orientation for an `OrbitLocationCameraController`.
 
-#### Signature
+### Signature
 
 ```kotlin
 fun calculateCameraForOrbitParameters(
@@ -327,7 +327,7 @@ fun calculateCameraForOrbitParameters(
 ): Camera
 ```
 
-#### Description
+### Description
 
 This function is designed to compute the properties of a `Camera` that orbits a central
 `targetPoint`.
@@ -335,7 +335,7 @@ It positions the camera at a specified `distance` from the target, with a given 
 This is essential for implementing "orbit" or "look-at" camera behaviors where the camera always
 faces a point of interest.
 
-#### Parameters
+### Parameters
 
 - `targetPoint`
     - Type: `com.arcgismaps.geometry.Point`
@@ -355,13 +355,13 @@ faces a point of interest.
       horizon.
 
 
-#### Returns
+### Returns
 
 - Type: `Camera`
 - Description
   A new `Camera` object positioned and oriented according to the specified orbit parameters.
 
-#### Example
+### Example
 
 ```kotlin
 // Import Point for clarity
@@ -392,14 +392,14 @@ println("  - Pitch: ${camera.pitch}")
 
 ---
 
-## Companion Object Functions
+# Companion Object Functions
 
-### `MapCameraPosition.Companion.from()`
+## `MapCameraPosition.Companion.from()`
 
 A factory function that creates a `MapCameraPosition` from any object that implements the
 `MapCameraPositionInterface`.
 
-#### Signature
+### Signature
 
 ```kotlin
 fun MapCameraPosition.Companion.from(
@@ -407,7 +407,7 @@ fun MapCameraPosition.Companion.from(
 ): MapCameraPosition
 ```
 
-#### Description
+### Description
 
 This function acts as a safe and convenient constructor.
 If the provided `position` is already a `MapCameraPosition`, it is returned directly.
@@ -415,13 +415,13 @@ Otherwise, it constructs a new `MapCameraPosition` by extracting the necessary p
 from the `MapCameraPositionInterface` object, ensuring a consistent object type for further
 processing.
 
-#### Parameters
+### Parameters
 
 - `position`
     - Type: `MapCameraPositionInterface`
     - Description: An object conforming to the `MapCameraPositionInterface`.
 
-#### Returns
+### Returns
 
 - Type: `MapCameraPosition`
 - Description
@@ -429,7 +429,7 @@ processing.
   If the input was already a `MapCameraPosition`, it is returned directly; otherwise, a new instance
   is created.
 
-#### Example
+### Example
 
 ```kotlin
 // 1. Example with a custom implementation of MapCameraPositionInterface

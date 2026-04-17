@@ -1,6 +1,6 @@
-### `ArcGISGroundImageController`
+# `ArcGISGroundImageController`
 
-#### Signature
+## Signature
 
 ```kotlin
 class ArcGISGroundImageController(
@@ -8,7 +8,7 @@ class ArcGISGroundImageController(
 ) : GroundImageController<ArcGISGroundImageHandle>
 ```
 
-#### Description
+## Description
 
 The `ArcGISGroundImageController` is the primary class for managing and displaying ground-level
 imagery on an ArcGIS map. It serves as the main entry point for developers to add, remove, and
@@ -20,14 +20,14 @@ core logic and state of all ground images) with the platform-specific
 specialized to work with `ArcGISGroundImageHandle` objects, which represent individual ground images
 added to the map.
 
-#### Parameters
+## Parameters
 
 - `renderer`
     - Type: `ArcGISGroundImageOverlayRenderer`
     - Description: The renderer instance responsible for drawing the ground image overlays onto the
       ArcGIS map. This object handles all platform-specific rendering tasks.
 
-#### Example
+## Example
 
 The following example demonstrates how to initialize the `ArcGISGroundImageController` and use it to
 add a ground image to an ArcGIS map.

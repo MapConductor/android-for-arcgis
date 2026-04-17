@@ -1,4 +1,4 @@
-### `ArcGISCircleOverlayController`
+# `ArcGISCircleOverlayController`
 
 The `ArcGISCircleOverlayController` is a specialized controller responsible for managing and
 rendering circle overlays on an ArcGIS map. It integrates the generic circle management logic from
@@ -7,7 +7,7 @@ rendering circle overlays on an ArcGIS map. It integrates the generic circle man
 This class serves as the primary entry point for developers to programmatically add, remove, and
 update circles on the map.
 
-### Signature
+# Signature
 
 ```kotlin
 class ArcGISCircleOverlayController(
@@ -16,7 +16,7 @@ class ArcGISCircleOverlayController(
 ) : CircleController<ArcGISActualCircle>(circleManager, renderer)
 ```
 
-### Parameters
+# Parameters
 
 - `circleManager`
     - Type: `CircleManagerInterface<ArcGISActualCircle>`
@@ -28,7 +28,7 @@ class ArcGISCircleOverlayController(
     - Description: The renderer responsible for drawing the circles on the ArcGIS map view. It
       translates circle data into visual representations.
 
-### Example
+# Example
 
 The following example demonstrates how to initialize the `ArcGISCircleOverlayController` and use it
 to add a circle to an ArcGIS map.

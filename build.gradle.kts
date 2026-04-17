@@ -94,8 +94,10 @@ dependencies {
     // ArcGIS SDK
     implementation(libs.arcgis.maps.kotlin)
     implementation(platform(libs.arcgis.maps.kotlin.toolkit.bom))
-    implementation(libs.arcgis.maps.kotlin.toolkit.geoview.compose)
-    implementation(libs.arcgis.maps.kotlin.toolkit.authentication)
+    // BOM管理の依存関係はPOMにバージョンが出力されないためMaven Central検証エラーになる
+    // BOMと同じバージョンを明示することで解決
+    implementation("com.esri:arcgis-maps-kotlin-toolkit-geoview-compose:${libs.versions.arcgisMapsKotlin.get()}")
+    implementation("com.esri:arcgis-maps-kotlin-toolkit-authentication:${libs.versions.arcgisMapsKotlin.get()}")
 
     if (findProject(":android-sdk-core") != null) {
         implementation(project(":android-sdk-core"))
@@ -187,7 +189,7 @@ publishing {
 signing {
     val signingKey = findProperty("signingKey") as String?
     val signingPassword = findProperty("signingPassword") as String?
-    if (signingKey != null && signingPassword != null) {
+    if (!signingKey.isNullOrEmpty() && !signingPassword.isNullOrEmpty()) {
         useInMemoryPgpKeys(signingKey, signingPassword)
         sign(publishing.publications["release"])
     }

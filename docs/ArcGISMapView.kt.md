@@ -1,4 +1,4 @@
-### `ArcGISMapView`
+# `ArcGISMapView`
 
 A Jetpack Compose composable that displays an interactive 3D ArcGIS map. This component is built
 upon the ArcGIS Maps SDK for Android `SceneView` and provides a declarative, Compose-native way to
@@ -8,7 +8,7 @@ The `ArcGISMapView` is the root component for all ArcGIS map-related UI. You can
 composables like `Marker`, `Polygon`, `Polyline`, etc., within its `content` lambda to render
 objects on the map.
 
-### Signature
+# Signature
 
 ```kotlin
 @Composable
@@ -26,7 +26,7 @@ fun ArcGISMapView(
 )
 ```
 
-### Description
+# Description
 
 This composable function renders an ArcGIS map and manages its lifecycle within a Compose
 application. It takes a `ArcGISMapViewState` to control properties like camera position and map
@@ -35,7 +35,7 @@ style. It also provides callbacks for various map events, such as map loading an
 Map overlays and other UI elements are added declaratively within the trailing `content` lambda,
 which provides an `ArcGISMapViewScope`.
 
-### Parameters
+# Parameters
 
 - `state`
     - Type: `ArcGISMapViewState`
@@ -79,12 +79,12 @@ which provides an `ArcGISMapViewScope`.
     - Description: A composable lambda within the `ArcGISMapViewScope` where you can declaratively
       add map overlays like `Marker`, `Polygon`, `Polyline`, `Circle`, etc.
 
-### Returns
+# Returns
 
 This is a `@Composable` function and does not have a return value. It emits the ArcGIS map view UI
 into the composition.
 
-### Deprecated Overload
+# Deprecated Overload
 
 An older version of `ArcGISMapView` exists that accepts click handlers for individual overlay types
 (`onMarkerClick`, `onPolygonClick`, etc.). This overload is deprecated.
@@ -107,7 +107,7 @@ object associated with each overlay (e.g., `rememberMarkerState(onClick = { ... 
 a more granular and idiomatic Compose API, associating the event handling logic directly with the
 state of the UI element.
 
-### Example
+# Example
 
 Here is a complete example of how to use `ArcGISMapView` in a Jetpack Compose screen.
 

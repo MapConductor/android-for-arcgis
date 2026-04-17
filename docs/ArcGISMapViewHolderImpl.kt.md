@@ -1,4 +1,4 @@
-## WrapSceneView
+# WrapSceneView
 
 A custom `FrameLayout` that serves as a wrapper for the ArcGIS `SceneView`.
 This class is designed to integrate the `SceneView` into a view hierarchy and manage its lifecycle.
@@ -7,12 +7,12 @@ The class provides standard Android `View` constructors
 and delegates lifecycle events from a `LifecycleOwner` (like an `Activity` or `Fragment`) to the
 underlying `SceneView`.
 
-### Lifecycle Management
+## Lifecycle Management
 
 The following methods must be called from the corresponding lifecycle callbacks of
 the hosting `Activity` or `Fragment` to ensure the proper functioning of the `SceneView`.
 
-#### onCreate(owner)
+### onCreate(owner)
 
 Forwards the `onCreate` lifecycle event to the `SceneView`.
 This should be called within the `onCreate` method of the hosting `Activity` or `Fragment`.
@@ -34,7 +34,7 @@ Initializes the `SceneView` and prepares it for use.
 
 ---
 
-#### onPause(owner)
+### onPause(owner)
 
 Forwards the `onPause` lifecycle event to the `SceneView`.
 This should be called within the `onPause` method of the hosting `Activity` or `Fragment`.
@@ -57,7 +57,7 @@ to conserve resources when the view is not in the foreground.
 
 ---
 
-#### onResume(owner)
+### onResume(owner)
 
 Forwards the `onResume` lifecycle event to the `SceneView`.
 This should be called within the `onResume` method of the hosting `Activity` or `Fragment`.
@@ -79,7 +79,7 @@ Resumes the `SceneView` after it has been paused, restarting rendering and other
 
 ---
 
-#### onStop(owner)
+### onStop(owner)
 
 Forwards the `onStop` lifecycle event to the `SceneView`.
 This should be called within the `onStop` method of the hosting `Activity` or `Fragment`.
@@ -101,7 +101,7 @@ Stops the `SceneView` when it is no longer visible to the user.
 
 ---
 
-#### onDestroy(owner)
+### onDestroy(owner)
 
 Forwards the `onDestroy` lifecycle event to the `SceneView`.
 This should be called within the `onDestroy` method of the hosting `Activity` or `Fragment`.
@@ -123,14 +123,14 @@ Cleans up and releases all resources used by the `SceneView`. This is a final cl
 
 ***
 
-## ArcGISMapViewHolder
+# ArcGISMapViewHolder
 
 An adapter class that implements the `MapViewHolderInterface`.
 It acts as a bridge between a generic map interface and the specific ArcGIS `SceneView`
 implementation,
 providing methods for coordinate transformations.
 
-### toScreenOffset(position)
+## toScreenOffset(position)
 
 Converts a geographic coordinate (`GeoPointInterface`) to a screen coordinate (`Offset`).
 
@@ -159,7 +159,7 @@ returning the corresponding pixel coordinates.
 
 ---
 
-### fromScreenOffset(offset)
+## fromScreenOffset(offset)
 
 Asynchronously converts a screen coordinate (`Offset`) to a geographic coordinate (`GeoPoint`).
 
@@ -190,7 +190,7 @@ Because this can be a computationally intensive operation, it is performed async
 
 ---
 
-### fromScreenOffsetSync(offset)
+## fromScreenOffsetSync(offset)
 
 Synchronously converts a screen coordinate (`Offset`) to a geographic coordinate (`GeoPoint`).
 
@@ -221,7 +221,7 @@ Responding" (ANR) error.
   The corresponding `GeoPoint`, or `null` if the screen coordinate does not map to a location on the
   scene.
 
-### Example
+## Example
 
 ```kotlin
 // Assuming 'mapViewHolder' is an instance of ArcGISMapViewHolder
@@ -246,7 +246,7 @@ newGeoPoint?.let {
 
 ***
 
-## getArcGisApiKey()
+# getArcGisApiKey()
 
 An internal extension function on `Context` that retrieves the ArcGIS API key from the application's
 manifest metadata.
@@ -268,7 +268,7 @@ your `AndroidManifest.xml`.
   The ArcGIS API key if found in the manifest's metadata, otherwise `null`.
 
 
-### Example
+## Example
 
 To use this function, you must first add your API key to the `AndroidManifest.xml` file.
 
