@@ -50,7 +50,10 @@ class ArcGISMapViewState(
 
     internal fun setController(controller: ArcGISMapViewControllerInterface) {
         this.controller = controller
-        controller.setMapDesignType(_mapDesignType)
+        // setMapDesignType is intentionally omitted here: the Scene was already created
+        // with the correct basemap style in holderProvider. Replacing the Basemap while
+        // the Scene is loading causes viewpointChanged to fire with zoom~0, overwriting
+        // the intended initial camera position.
     }
 
     internal fun clearController() {

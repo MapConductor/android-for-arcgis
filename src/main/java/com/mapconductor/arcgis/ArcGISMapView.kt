@@ -171,7 +171,6 @@ fun ArcGISMapView(
                     scene.loadStatus.collect {
                         when (it) {
                             is LoadStatus.Loaded -> {
-                                wrapView.sceneView.scene = scene
                                 val holder =
                                     ArcGISMapViewHolder(
                                         mapView = wrapView,

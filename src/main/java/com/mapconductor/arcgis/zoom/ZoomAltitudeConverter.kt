@@ -12,10 +12,10 @@ class ZoomAltitudeConverter(
     companion object {
         // ArcGIS-specific calibrated zoom0 altitude.
         const val ARCGIS_OPTIMIZED_ZOOM0_ALTITUDE = 124000000.0
-        // Reference viewport height (in dp) used for calibration.
+        // Reference map view height in dp, calibrated to match a standard modern phone.
         // Google Maps displays geographic range proportional to screen pixel count,
-        // so we scale altitude based on viewport height to match that behavior.
-        private const val REFERENCE_HEIGHT_DP = 577.0
+        // so we scale altitude linearly with viewport height to match that behavior.
+        private const val REFERENCE_HEIGHT_DP = 720.0
     }
 
     private fun cosLatitudeFactor(latitudeDeg: Double): Double {
@@ -36,16 +36,9 @@ class ZoomAltitudeConverter(
         if (height <= 0) return zoom0Altitude
 
         // Google Maps displays geographic range proportional to screen size.
-        // At the same zoom level, a smaller screen shows a smaller geographic area.
-        // In ArcGIS SceneView with fixed vertical FOV, altitude determines visible range.
-        // Scale altitude based on viewport height to match Google Maps behavior:
-        // - Smaller screen (less height) → lower altitude → smaller visible area
-        // - Larger screen (more height) → higher altitude → larger visible area
-        //
-        // Use a fractional exponent (0.42) to dampen the scaling effect, as ArcGIS's 3D
-        // perspective projection doesn't scale linearly with viewport size like Google Maps' 2D tiles.
-        // Empirically calibrated across multiple device sizes.
-        val heightScale = (height.toDouble() / REFERENCE_HEIGHT_DP).pow(0.42)
+        // ArcGIS SceneView has a fixed vertical FOV, so visible ground height = 2 * altitude * tan(FOV/2).
+        // For Google Maps match: altitude ∝ viewport height (linear).
+        val heightScale = height.toDouble() / REFERENCE_HEIGHT_DP
         return zoom0Altitude * heightScale
     }
 
