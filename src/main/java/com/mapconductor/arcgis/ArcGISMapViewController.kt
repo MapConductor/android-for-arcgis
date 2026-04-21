@@ -22,6 +22,7 @@ import com.mapconductor.arcgis.polygon.ArcGISPolygonOverlayController
 import com.mapconductor.arcgis.polyline.ArcGISPolylineOverlayController
 import com.mapconductor.arcgis.raster.ArcGISRasterLayerController
 import com.mapconductor.arcgis.toGeoPoint
+import com.mapconductor.arcgis.toMapCameraPosition
 import com.mapconductor.arcgis.toPoint
 import com.mapconductor.arcgis.zoom.ZoomAltitudeConverter
 import com.mapconductor.core.circle.CircleEvent
@@ -155,9 +156,16 @@ class ArcGISMapViewController(
     override fun hasRasterLayer(state: RasterLayerState): Boolean =
         this.rasterLayerController.rasterLayerManager.hasEntity(state.id)
 
+    private fun getFastMapCameraPosition(): MapCameraPosition? =
+        try {
+            holder.map.getCurrentViewpointCamera().toMapCameraPosition()
+        } catch (_: Exception) {
+            null
+        }
+
     private suspend fun invokeCameraMoveStartCallback() {
         cameraMoveStartCallback?.let { cb ->
-            getMapCameraPosition()?.let { mapCameraPosition ->
+            getFastMapCameraPosition()?.let { mapCameraPosition ->
                 cb(mapCameraPosition)
             }
         }
@@ -165,7 +173,7 @@ class ArcGISMapViewController(
 
     private suspend fun invokeCameraMoveCallback() {
         cameraMoveCallback?.let { cb ->
-            getMapCameraPosition()?.let { mapCameraPosition ->
+            getFastMapCameraPosition()?.let { mapCameraPosition ->
                 cb(mapCameraPosition)
             }
         }
@@ -201,7 +209,7 @@ class ArcGISMapViewController(
         mapLoadedCallback?.invoke()
         mapLoadedCallback = null
 
-        getMapCameraPosition()?.let { mapCameraPosition ->
+        getFastMapCameraPosition()?.let { mapCameraPosition ->
             notifyMapCameraPosition(mapCameraPosition)
             scheduleCameraMoveEndCallback()
         }
