@@ -36,6 +36,7 @@ import com.mapconductor.core.groundimage.GroundImageState
 import com.mapconductor.core.groundimage.OnGroundImageEventHandler
 import com.mapconductor.core.map.MapCameraPosition
 import com.mapconductor.core.map.MapPaddings
+import com.mapconductor.core.map.OnMapInitializedHandler
 import com.mapconductor.core.map.VisibleRegion
 import com.mapconductor.core.marker.MarkerEventControllerInterface
 import com.mapconductor.core.marker.MarkerOverlayRendererInterface
@@ -206,8 +207,8 @@ class ArcGISMapViewController(
     }
 
     private suspend fun onViewpointChange() {
-        mapLoadedCallback?.invoke()
-        mapLoadedCallback = null
+        mapInitializedCallback?.invoke()
+        mapInitializedCallback = null
 
         getFastMapCameraPosition()?.let { mapCameraPosition ->
             notifyMapCameraPosition(mapCameraPosition)
@@ -430,6 +431,10 @@ class ArcGISMapViewController(
         holder.map.screenToLocation(screenPoint).getOrNull()?.also {
             mapClickCallback?.invoke(it.toGeoPoint())
         }
+    }
+
+    override fun setMapInitializedListener(listener: OnMapInitializedHandler?) {
+        mapInitializedCallback = listener
     }
 
     override suspend fun clearOverlays() {
