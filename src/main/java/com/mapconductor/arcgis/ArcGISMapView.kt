@@ -57,7 +57,6 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.suspendCancellableCoroutine
 
-@OptIn(ExperimentalCoroutinesApi::class)
 @Composable
 fun ArcGISMapView(
     state: ArcGISMapViewState,
@@ -69,53 +68,7 @@ fun ArcGISMapView(
     onCameraMove: OnCameraMoveHandler? = null,
     onCameraMoveEnd: OnCameraMoveHandler? = null,
     onMapClick: OnMapEventHandler? = null,
-    content: (@Composable ArcGISMapViewScope.() -> Unit)? = null,
-) {
-    @Suppress("DEPRECATION")
-    ArcGISMapView(
-        state = state,
-        markerTiling = markerTiling,
-        modifier = modifier,
-        sdkInitialize = sdkInitialize,
-        onMapLoaded = onMapLoaded,
-        onCameraMoveStart = onCameraMoveStart,
-        onCameraMove = onCameraMove,
-        onCameraMoveEnd = onCameraMoveEnd,
-        onMapClick = onMapClick,
-        onMarkerClick = null,
-        onMarkerDragStart = null,
-        onMarkerDrag = null,
-        onMarkerDragEnd = null,
-        onMarkerAnimateStart = null,
-        onMarkerAnimateEnd = null,
-        onCircleClick = null,
-        onPolylineClick = null,
-        onPolygonClick = null,
-        content = content,
-    )
-}
-
-@Deprecated("Use CircleState/PolylineState/PolygonState onClick instead.")
-@Composable
-fun ArcGISMapView(
-    state: ArcGISMapViewState,
-    modifier: Modifier = Modifier,
-    markerTiling: MarkerTilingOptions? = null,
-    sdkInitialize: (suspend (android.content.Context) -> Boolean)? = null,
-    onMapLoaded: OnMapLoadedHandler? = null,
-    onCameraMoveStart: OnCameraMoveHandler? = null,
-    onCameraMove: OnCameraMoveHandler? = null,
-    onCameraMoveEnd: OnCameraMoveHandler? = null,
-    onMapClick: OnMapEventHandler? = null,
-    onMarkerClick: OnMarkerEventHandler?,
-    onMarkerDragStart: OnMarkerEventHandler? = null,
-    onMarkerDrag: OnMarkerEventHandler? = null,
-    onMarkerDragEnd: OnMarkerEventHandler? = null,
-    onMarkerAnimateStart: OnMarkerEventHandler? = null,
-    onMarkerAnimateEnd: OnMarkerEventHandler? = null,
-    onCircleClick: OnCircleEventHandler? = null,
-    onPolylineClick: OnPolylineEventHandler? = null,
-    onPolygonClick: OnPolygonEventHandler? = null,
+    onMapLongClick: OnMapEventHandler? = null,
     content: (@Composable ArcGISMapViewScope.() -> Unit)? = null,
 ) {
     val scope = remember { ArcGISMapViewScope() } // Use specific scope
@@ -242,15 +195,7 @@ fun ArcGISMapView(
 
                 controllerRef.value = mapController
                 mapController.setMapClickListener(onMapClick)
-                mapController.setOnCircleClickListener(onCircleClick)
-                mapController.setOnPolylineClickListener(onPolylineClick)
-                mapController.setOnPolygonClickListener(onPolygonClick)
-                mapController.setOnMarkerClickListener(onMarkerClick)
-                mapController.setOnMarkerDragStart(onMarkerDragStart)
-                mapController.setOnMarkerDrag(onMarkerDrag)
-                mapController.setOnMarkerDragEnd(onMarkerDragEnd)
-                mapController.setOnMarkerAnimateStart(onMarkerAnimateStart)
-                mapController.setOnMarkerAnimateEnd(onMarkerAnimateEnd)
+                mapController.setMapLongClickListener(onMapLongClick)
                 mapController.setMapDesignTypeChangeListener(state::onMapDesignTypeChange)
                 state.setController(mapController)
 
