@@ -11,7 +11,7 @@ class ZoomAltitudeConverter(
 ) : AbstractZoomAltitudeConverter(zoom0Altitude) {
     companion object {
         // ArcGIS-specific calibrated zoom0 altitude.
-        const val ARCGIS_OPTIMIZED_ZOOM0_ALTITUDE = 124000000.0
+        const val ARCGIS_OPTIMIZED_ZOOM0_ALTITUDE = 136500000.0
         // Reference map view height in dp, calibrated to match a standard modern phone.
         // Google Maps displays geographic range proportional to screen pixel count,
         // so we scale altitude linearly with viewport height to match that behavior.
