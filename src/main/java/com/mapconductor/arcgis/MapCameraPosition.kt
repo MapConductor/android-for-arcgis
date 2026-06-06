@@ -7,6 +7,7 @@ import com.mapconductor.core.map.MapCameraPosition
 import com.mapconductor.core.map.MapCameraPositionInterface
 import com.mapconductor.core.map.MapPaddings
 import kotlin.math.PI
+import kotlin.math.abs
 import kotlin.math.asin
 import kotlin.math.atan2
 import kotlin.math.cos
@@ -79,30 +80,42 @@ fun calculateCameraForOrbitParameters(
     cameraHeadingOffset: Double,
     cameraPitchOffset: Double,
 ): Camera {
-    val finalPitch = cameraPitchOffset.coerceIn(MIN_ANGLE, ARCGIS_MAX_PITCH)
-    val pitchRad = finalPitch.toRadians()
-
-    val altitude = distance * cos(pitchRad)
     val bearingToTarget = (cameraHeadingOffset + 180.0) % 360.0
     val finalHeading = bearingToTarget
-    val horizontalDistance = distance * sin(pitchRad)
 
-    val cameraCoordinates =
-        calculateDestinationPoint(
-            lat = targetPoint.y,
-            lon = targetPoint.x,
-            bearing = cameraHeadingOffset,
-            distance = horizontalDistance,
+    if (cameraPitchOffset >= 0) {
+        val finalPitch = cameraPitchOffset.coerceIn(MIN_ANGLE, ARCGIS_MAX_PITCH)
+        val pitchRad = finalPitch.toRadians()
+        val altitude = distance * cos(pitchRad)
+        val horizontalDistance = distance * sin(pitchRad)
+        val cameraCoordinates =
+            calculateDestinationPoint(
+                lat = targetPoint.y,
+                lon = targetPoint.x,
+                bearing = cameraHeadingOffset,
+                distance = horizontalDistance,
+            )
+        return Camera(
+            latitude = cameraCoordinates.latitude,
+            longitude = cameraCoordinates.longitude,
+            altitude = altitude,
+            heading = finalHeading,
+            pitch = finalPitch,
+            roll = 0.0,
         )
-
-    return Camera(
-        latitude = cameraCoordinates.latitude,
-        longitude = cameraCoordinates.longitude,
-        altitude = altitude,
-        heading = finalHeading,
-        pitch = finalPitch,
-        roll = 0.0,
-    )
+    } else {
+        val finalPitch = abs(cameraPitchOffset).coerceIn(MIN_ANGLE, ARCGIS_MAX_PITCH)
+        // Keep the altitude if cameraPitchOffset < 0.
+        val altitude = distance
+        return Camera(
+            latitude = targetPoint.y,
+            longitude = targetPoint.x,
+            altitude = altitude,
+            heading = finalHeading,
+            pitch = finalPitch,
+            roll = 0.0,
+        )
+    }
 }
 
 fun MapCameraPosition.Companion.from(position: MapCameraPositionInterface): MapCameraPosition =
