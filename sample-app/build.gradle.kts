@@ -48,15 +48,6 @@ android {
     }
 }
 
-kotlin {
-    compilerOptions {
-        jvmTarget.set(
-            org.jetbrains.kotlin.gradle.dsl.JvmTarget.fromTarget(
-                project.property("jvmTarget").toString(),
-            ),
-        )
-    }
-}
 
 dependencies {
     implementation(findProject(":android-for-arcgis") ?: project(":"))
