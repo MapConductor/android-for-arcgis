@@ -20,6 +20,7 @@ import com.mapconductor.core.marker.MarkerState
 import com.mapconductor.core.marker.MarkerTileRasterLayerCallback
 import com.mapconductor.core.marker.MarkerTileRenderer
 import com.mapconductor.core.marker.MarkerTilingOptions
+import com.mapconductor.core.marker.TileRenderWasmEngine
 import com.mapconductor.core.raster.RasterLayerSource
 import com.mapconductor.core.raster.RasterLayerState
 import com.mapconductor.core.raster.TileScheme
@@ -28,8 +29,10 @@ import com.mapconductor.settings.Settings
 import java.util.UUID
 import kotlin.math.floor
 import android.os.SystemClock
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.withPermit
+import kotlinx.coroutines.withContext
 
 internal data class SelectedMarker(
     val state: MarkerState,
@@ -118,15 +121,17 @@ class ArcGISMarkerController private constructor(
             val tilingEnabled =
                 markerTiling.enabled && data.size >= markerManager.minMarkerCount
             val result =
-                MarkerIngestionEngine.ingest(
-                    data = data,
-                    markerManager = markerManager,
-                    renderer = renderer,
-                    defaultMarkerIcon = defaultMarkerIcon,
-                    tilingEnabled = tilingEnabled,
-                    tiledMarkerIds = tiledMarkerIds,
-                    shouldTile = { state -> !state.draggable && state.getAnimation() == null },
-                )
+                withContext(Dispatchers.Default) {
+                    MarkerIngestionEngine.ingest(
+                        data = data,
+                        markerManager = markerManager,
+                        renderer = renderer,
+                        defaultMarkerIcon = defaultMarkerIcon,
+                        tilingEnabled = tilingEnabled,
+                        tiledMarkerIds = tiledMarkerIds,
+                        shouldTile = { state -> !state.draggable && state.getAnimation() == null },
+                    )
+                }
 
             if (result.tiledDataChanged) {
                 syncTiledOverlay(currentZoom)
@@ -250,6 +255,7 @@ class ArcGISMarkerController private constructor(
         val tileRenderer = markerTileRenderer ?: return
         val oldState = markerTileRasterLayerState ?: return
         cacheVersion = (cacheVersion + 1) and 0x7fffffff
+        tileRenderer.invalidate()
         val cacheBuster = "${cacheVersion}_${SystemClock.elapsedRealtime()}"
 
         val newState =
@@ -298,6 +304,7 @@ class ArcGISMarkerController private constructor(
                 cacheSizeBytes = markerTiling.cacheSize,
                 debugTileOverlay = markerTiling.debugTileOverlay,
                 iconScaleCallback = markerTiling.iconScaleCallback,
+                wasmEngine = TileRenderWasmEngine.createOrNull(ResourceProvider.getAppContext(), markerTiling.enableWasmAcceleration),
             )
         markerTileRenderer = tileRenderer
 
