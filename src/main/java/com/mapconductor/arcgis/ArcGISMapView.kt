@@ -49,6 +49,7 @@ import android.util.Log
 import android.widget.FrameLayout
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.suspendCancellableCoroutine
 
@@ -115,6 +116,7 @@ fun ArcGISMapView(
             val coroutine = CoroutineScope(Dispatchers.Default)
 
             suspendCancellableCoroutine<ArcGISMapViewHolder> { cont ->
+                cont.invokeOnCancellation { coroutine.cancel() }
                 coroutine.launch {
                     scene.loadStatus.collect {
                         when (it) {
@@ -127,7 +129,18 @@ fun ArcGISMapView(
                                 cont.resume(holder, onCancellation = {})
                             }
                             is LoadStatus.FailedToLoad -> {
-                                cont.cancel(it.error)
+                                // Offline or network error: resume with a holder anyway so
+                                // the scene view is displayed (possibly with cached tiles)
+                                // without crashing. The ArcGIS view may be blank but usable.
+                                if (cont.isActive) {
+                                    cont.resume(
+                                        ArcGISMapViewHolder(
+                                            mapView = wrapView,
+                                            map = wrapView.sceneView,
+                                        ),
+                                        onCancellation = {},
+                                    )
+                                }
                             }
                             else -> {
                                 // Do nothing here
