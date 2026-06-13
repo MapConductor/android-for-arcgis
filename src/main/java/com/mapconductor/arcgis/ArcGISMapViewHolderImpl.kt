@@ -2,8 +2,12 @@ package com.mapconductor.arcgis.map
 
 import androidx.compose.ui.geometry.Offset
 import androidx.lifecycle.LifecycleOwner
+import com.arcgismaps.geometry.SpatialReference
+import com.arcgismaps.mapping.layers.Layer
+import com.arcgismaps.mapping.view.DoubleXY
+import com.arcgismaps.mapping.view.GeoView
+import com.arcgismaps.mapping.view.MapView
 import com.arcgismaps.mapping.view.SceneView
-import com.arcgismaps.mapping.view.ScreenCoordinate
 import com.mapconductor.arcgis.toGeoPoint
 import com.mapconductor.arcgis.toPoint
 import com.mapconductor.core.features.GeoPoint
@@ -14,6 +18,20 @@ import android.content.pm.PackageManager
 import android.util.AttributeSet
 import android.widget.FrameLayout
 import kotlinx.coroutines.runBlocking
+
+interface ArcGISGeoViewHolder<ActualMapView : FrameLayout, ActualMap : GeoView> :
+    MapViewHolderInterface<ActualMapView, ActualMap> {
+    val rootView: FrameLayout
+    val geoView: GeoView
+    val spatialReference: SpatialReference?
+    val operationalLayers: MutableList<Layer>?
+
+    fun setNavigationEnabled(enabled: Boolean) {
+        geoView.interactionOptions.isPanEnabled = enabled
+        geoView.interactionOptions.isRotateEnabled = enabled
+        geoView.interactionOptions.isZoomEnabled = enabled
+    }
+}
 
 class WrapSceneView : FrameLayout {
     lateinit var sceneView: SceneView
@@ -43,14 +61,51 @@ class WrapSceneView : FrameLayout {
     }
 }
 
+class WrapMapView : FrameLayout {
+    lateinit var arcGISMapView: MapView
+
+    constructor(context: Context) : super(context)
+    constructor(context: Context, attrs: AttributeSet?) : super(context, attrs)
+    constructor(context: Context, attrs: AttributeSet?, defStyleAttr: Int) : super(context, attrs, defStyleAttr)
+
+    fun onCreate(owner: LifecycleOwner) {
+        this.arcGISMapView.onCreate(owner)
+    }
+
+    fun onPause(owner: LifecycleOwner) {
+        this.arcGISMapView.onPause(owner)
+    }
+
+    fun onResume(owner: LifecycleOwner) {
+        this.arcGISMapView.onResume(owner)
+    }
+
+    fun onStop(owner: LifecycleOwner) {
+        // MapView does not expose onStop; keep this wrapper symmetrical with WrapSceneView.
+    }
+
+    fun onDestroy(owner: LifecycleOwner) {
+        this.arcGISMapView.onDestroy(owner)
+    }
+}
+
 class ArcGISMapViewHolder(
     override val mapView: WrapSceneView,
     override val map: SceneView,
-) : MapViewHolderInterface<WrapSceneView, SceneView> {
+) : ArcGISGeoViewHolder<WrapSceneView, SceneView> {
+    override val rootView: FrameLayout
+        get() = mapView
+    override val geoView: GeoView
+        get() = map
+    override val spatialReference: SpatialReference?
+        get() = map.scene?.spatialReference
+    override val operationalLayers: MutableList<Layer>?
+        get() = map.scene?.operationalLayers
+
     override fun toScreenOffset(position: GeoPointInterface): Offset? {
         val result =
             mapView.sceneView.locationToScreen(
-                point = GeoPoint.from(position).toPoint(map.scene?.spatialReference),
+                point = GeoPoint.from(position).toPoint(spatialReference),
             )
         return result?.let {
             Offset(it.screenPoint.x.toFloat(), it.screenPoint.y.toFloat())
@@ -61,7 +116,7 @@ class ArcGISMapViewHolder(
         val result =
             mapView.sceneView.screenToLocation(
                 screenCoordinate =
-                    ScreenCoordinate(
+                    DoubleXY(
                         x = offset.x.toDouble(),
                         y = offset.y.toDouble(),
                     ),
@@ -73,6 +128,44 @@ class ArcGISMapViewHolder(
         runBlocking {
             fromScreenOffset(offset)
         }
+}
+
+class ArcGISMapView2DHolder(
+    override val mapView: WrapMapView,
+    override val map: MapView,
+) : ArcGISGeoViewHolder<WrapMapView, MapView> {
+    override val rootView: FrameLayout
+        get() = mapView
+    override val geoView: GeoView
+        get() = map
+    override val spatialReference: SpatialReference?
+        get() = map.map?.spatialReference
+    override val operationalLayers: MutableList<Layer>?
+        get() = map.map?.operationalLayers
+
+    override fun toScreenOffset(position: GeoPointInterface): Offset? {
+        val result =
+            map.locationToScreen(
+                mapPoint = GeoPoint.from(position).toPoint(spatialReference),
+            )
+        return Offset(result.x.toFloat(), result.y.toFloat())
+    }
+
+    override suspend fun fromScreenOffset(offset: Offset): GeoPoint? =
+        map.screenToLocation(
+            DoubleXY(
+                x = offset.x.toDouble(),
+                y = offset.y.toDouble(),
+            ),
+        )?.toGeoPoint()
+
+    override fun fromScreenOffsetSync(offset: Offset): GeoPoint? =
+        map.screenToLocation(
+            DoubleXY(
+                x = offset.x.toDouble(),
+                y = offset.y.toDouble(),
+            ),
+        )?.toGeoPoint()
 }
 
 internal fun Context.getArcGisApiKey(): String? =

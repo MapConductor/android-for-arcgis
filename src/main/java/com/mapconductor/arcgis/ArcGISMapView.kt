@@ -268,12 +268,17 @@ fun ArcGISMapView(
     )
 }
 
-private fun getCircleController(holder: ArcGISMapViewHolder): ArcGISCircleOverlayController {
+internal fun getCircleController(
+    holder: ArcGISGeoViewHolder<*, *>,
+    useScenePlacement: Boolean = true,
+): ArcGISCircleOverlayController {
     val circleLayer: GraphicsOverlay =
         GraphicsOverlay().apply {
-            sceneProperties.surfacePlacement = SurfacePlacement.DrapedFlat
+            if (useScenePlacement) {
+                sceneProperties.surfacePlacement = SurfacePlacement.DrapedFlat
+            }
         }
-    holder.map.graphicsOverlays.add(circleLayer)
+    holder.geoView.graphicsOverlays.add(circleLayer)
 
     val renderer =
         ArcGISCircleOverlayRenderer(
@@ -288,12 +293,17 @@ private fun getCircleController(holder: ArcGISMapViewHolder): ArcGISCircleOverla
     return controller
 }
 
-private fun getPolylineController(holder: ArcGISMapViewHolder): ArcGISPolylineOverlayController {
+internal fun getPolylineController(
+    holder: ArcGISGeoViewHolder<*, *>,
+    useScenePlacement: Boolean = true,
+): ArcGISPolylineOverlayController {
     val polylineLayer: GraphicsOverlay =
         GraphicsOverlay().apply {
-            sceneProperties.surfacePlacement = SurfacePlacement.DrapedBillboarded
+            if (useScenePlacement) {
+                sceneProperties.surfacePlacement = SurfacePlacement.DrapedBillboarded
+            }
         }
-    holder.map.graphicsOverlays.add(polylineLayer)
+    holder.geoView.graphicsOverlays.add(polylineLayer)
 
     val renderer =
         ArcGISPolylineOverlayRenderer(
@@ -308,15 +318,18 @@ private fun getPolylineController(holder: ArcGISMapViewHolder): ArcGISPolylineOv
     return controller
 }
 
-private fun getPolygonController(
-    holder: ArcGISMapViewHolder,
+internal fun getPolygonController(
+    holder: ArcGISGeoViewHolder<*, *>,
     rasterLayerController: ArcGISRasterLayerController,
+    useScenePlacement: Boolean = true,
 ): ArcGISPolygonOverlayController {
     val polygonLayer: GraphicsOverlay =
         GraphicsOverlay().apply {
-            sceneProperties.surfacePlacement = SurfacePlacement.DrapedBillboarded
+            if (useScenePlacement) {
+                sceneProperties.surfacePlacement = SurfacePlacement.DrapedBillboarded
+            }
         }
-    holder.map.graphicsOverlays.add(polygonLayer)
+    holder.geoView.graphicsOverlays.add(polygonLayer)
 
     val renderer =
         ArcGISPolygonOverlayRenderer(
@@ -332,15 +345,17 @@ private fun getPolygonController(
     return controller
 }
 
-private fun getMarkerController(
-    holder: ArcGISMapViewHolder,
+internal fun getMarkerController(
+    holder: ArcGISGeoViewHolder<*, *>,
     markerTiling: MarkerTilingOptions,
+    useScenePlacement: Boolean = true,
 ) = ArcGISMarkerController.create(
     holder = holder,
     markerTiling = markerTiling,
+    useScenePlacement = useScenePlacement,
 )
 
-private fun getRasterLayerController(holder: ArcGISMapViewHolder): ArcGISRasterLayerController {
+internal fun getRasterLayerController(holder: ArcGISGeoViewHolder<*, *>): ArcGISRasterLayerController {
     val renderer =
         ArcGISRasterLayerOverlayRenderer(
             holder = holder,
@@ -350,7 +365,7 @@ private fun getRasterLayerController(holder: ArcGISMapViewHolder): ArcGISRasterL
     )
 }
 
-private fun getGroundImageController(holder: ArcGISMapViewHolder): ArcGISGroundImageController {
+internal fun getGroundImageController(holder: ArcGISGeoViewHolder<*, *>): ArcGISGroundImageController {
     val tileServer = TileServerRegistry.get()
     val renderer =
         ArcGISGroundImageOverlayRenderer(
@@ -369,7 +384,7 @@ private fun getGroundImageController(holder: ArcGISMapViewHolder): ArcGISGroundI
  * @param context Application context
  * @return true if initialization succeeded, false otherwise
  */
-private suspend fun defaultArcGISInitialize(context: android.content.Context): Boolean {
+internal suspend fun defaultArcGISInitialize(context: android.content.Context): Boolean {
     if (ArcGISEnvironment.authenticationManager.arcGISCredentialStore
             .getCredentials()
             .isEmpty()

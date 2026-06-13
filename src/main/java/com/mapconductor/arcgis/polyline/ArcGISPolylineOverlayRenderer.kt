@@ -7,7 +7,7 @@ import com.arcgismaps.mapping.symbology.SimpleLineSymbolStyle
 import com.arcgismaps.mapping.view.Graphic
 import com.arcgismaps.mapping.view.GraphicsOverlay
 import com.mapconductor.arcgis.ArcGISActualPolyline
-import com.mapconductor.arcgis.map.ArcGISMapViewHolder
+import com.mapconductor.arcgis.map.ArcGISGeoViewHolder
 import com.mapconductor.arcgis.toArcGISColor
 import com.mapconductor.arcgis.toPoint
 import com.mapconductor.core.ResourceProvider
@@ -24,7 +24,7 @@ import kotlinx.coroutines.withContext
 
 class ArcGISPolylineOverlayRenderer(
     val polylineLayer: GraphicsOverlay,
-    override val holder: ArcGISMapViewHolder,
+    override val holder: ArcGISGeoViewHolder<*, *>,
     override val coroutine: CoroutineScope = CoroutineScope(Dispatchers.Default),
 ) : AbstractPolylineOverlayRenderer<ArcGISActualPolyline>() {
     override suspend fun createPolyline(state: PolylineState): ArcGISActualPolyline? =

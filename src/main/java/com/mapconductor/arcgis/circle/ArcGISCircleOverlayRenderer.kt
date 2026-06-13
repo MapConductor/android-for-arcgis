@@ -11,7 +11,7 @@ import com.arcgismaps.mapping.symbology.SimpleLineSymbolStyle
 import com.arcgismaps.mapping.view.Graphic
 import com.arcgismaps.mapping.view.GraphicsOverlay
 import com.mapconductor.arcgis.ArcGISActualCircle
-import com.mapconductor.arcgis.map.ArcGISMapViewHolder
+import com.mapconductor.arcgis.map.ArcGISGeoViewHolder
 import com.mapconductor.arcgis.toArcGISColor
 import com.mapconductor.arcgis.toPoint
 import com.mapconductor.core.circle.AbstractCircleOverlayRenderer
@@ -25,14 +25,12 @@ import kotlinx.coroutines.withContext
 
 class ArcGISCircleOverlayRenderer(
     val circleLayer: GraphicsOverlay,
-    override val holder: ArcGISMapViewHolder,
+    override val holder: ArcGISGeoViewHolder<*, *>,
     override val coroutine: CoroutineScope = CoroutineScope(Dispatchers.Main),
 ) : AbstractCircleOverlayRenderer<ArcGISActualCircle>() {
     override suspend fun createCircle(state: CircleState): ArcGISActualCircle? =
         withContext(coroutine.coroutineContext) {
-            val spec =
-                holder.mapView.sceneView.scene
-                    ?.spatialReference
+            val spec = holder.spatialReference
             val centerPoint = GeoPoint.from(state.center).toPoint(spec)
             val circleGeometry =
                 if (state.geodesic) {
@@ -81,9 +79,7 @@ class ArcGISCircleOverlayRenderer(
         prev: CircleEntityInterface<ArcGISActualCircle>,
     ): ArcGISActualCircle? =
         withContext(coroutine.coroutineContext) {
-            val spec =
-                holder.mapView.sceneView.scene
-                    ?.spatialReference
+            val spec = holder.spatialReference
             val finger = current.fingerPrint
             val prevFinger = prev.fingerPrint
             val graphic = current.circle

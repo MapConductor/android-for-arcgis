@@ -13,6 +13,7 @@ import com.mapconductor.core.map.MapPaddings
 import com.mapconductor.core.map.MapPaddingsInterface
 import com.mapconductor.core.map.MapViewState
 import com.mapconductor.core.map.MapViewStateInterface
+import com.mapconductor.core.map.MapViewHolderInterface
 import java.util.UUID
 import android.app.Activity
 import android.content.Context
@@ -28,6 +29,7 @@ class ArcGISMapViewState(
     override val id: String,
     mapDesignType: ArcGISDesignTypeInterface,
     cameraPosition: MapCameraPosition = MapCameraPosition.Default,
+    useMapView: Boolean = false,
 ) : MapViewState<ArcGISDesignTypeInterface>(),
     ArcGISMapViewStateInterface {
     private var _cameraPosition: MapCameraPosition = cameraPosition
@@ -92,8 +94,7 @@ class ArcGISMapViewState(
         this.moveCameraTo(newPosition, durationMillis)
     }
 
-    @Suppress("UNCHECKED_CAST")
-    override fun getMapViewHolder(): ArcGISMapViewHolder? = controller?.holder as? ArcGISMapViewHolder
+    override fun getMapViewHolder(): MapViewHolderInterface<*, *>? = controller?.holder
 
     internal fun updateCameraPosition(cameraPosition: MapCameraPosition) {
         this._cameraPosition = cameraPosition
@@ -129,6 +130,7 @@ class ArcGISMapViewSaver : BaseMapViewSaver<ArcGISMapViewState>() {
 fun rememberArcGISMapViewState(
     mapDesign: ArcGISDesign = ArcGISDesign.Streets,
     cameraPosition: MapCameraPositionInterface = MapCameraPosition.Default,
+    useMapView: Boolean = false,
 ): ArcGISMapViewState {
     val stateId by rememberSaveable {
         val uuid = UUID.randomUUID().toString()
@@ -143,6 +145,7 @@ fun rememberArcGISMapViewState(
                     id = stateId,
                     mapDesignType = mapDesign,
                     cameraPosition = MapCameraPosition.from(cameraPosition),
+                    useMapView = useMapView,
                 ),
             )
         }

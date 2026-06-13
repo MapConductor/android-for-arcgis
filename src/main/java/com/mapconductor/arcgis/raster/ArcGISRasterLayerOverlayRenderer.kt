@@ -9,7 +9,7 @@ import com.arcgismaps.mapping.layers.Layer
 import com.arcgismaps.mapping.layers.TileImageFormat
 import com.arcgismaps.mapping.layers.TileInfo
 import com.arcgismaps.mapping.layers.WebTiledLayer
-import com.mapconductor.arcgis.map.ArcGISMapViewHolder
+import com.mapconductor.arcgis.map.ArcGISGeoViewHolder
 import com.mapconductor.core.raster.RasterLayerEntityInterface
 import com.mapconductor.core.raster.RasterLayerOverlayRendererInterface
 import com.mapconductor.core.raster.RasterLayerSource
@@ -22,7 +22,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 
 class ArcGISRasterLayerOverlayRenderer(
-    private val holder: ArcGISMapViewHolder,
+    private val holder: ArcGISGeoViewHolder<*, *>,
     override val coroutine: CoroutineScope = CoroutineScope(Dispatchers.Main),
 ) : RasterLayerOverlayRendererInterface<Layer> {
     override suspend fun onAdd(data: List<RasterLayerOverlayRendererInterface.AddParamsInterface>): List<Layer?> {
@@ -63,7 +63,7 @@ class ArcGISRasterLayerOverlayRenderer(
     override suspend fun onPostProcess() {}
 
     private suspend fun addLayer(state: RasterLayerState): Layer? {
-        val scene = holder.map.scene ?: return null
+        val operationalLayers = holder.operationalLayers ?: return null
         val layer =
             when (val source = state.source) {
                 is RasterLayerSource.ArcGisService -> ArcGISTiledLayer(source.serviceUrl)
@@ -84,7 +84,7 @@ class ArcGISRasterLayerOverlayRenderer(
 
         // Add to scene only after successful initialization
         updateLayer(layer, state)
-        scene.operationalLayers.add(layer)
+        operationalLayers.add(layer)
         return layer
     }
 
@@ -97,8 +97,7 @@ class ArcGISRasterLayerOverlayRenderer(
     }
 
     private fun removeLayer(entity: RasterLayerEntityInterface<Layer>) {
-        val scene = holder.map.scene ?: return
-        scene.operationalLayers.remove(entity.layer)
+        holder.operationalLayers?.remove(entity.layer)
     }
 
     private fun buildWebTiledLayer(

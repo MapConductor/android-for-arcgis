@@ -5,7 +5,7 @@ import com.arcgismaps.mapping.symbology.PictureMarkerSymbol
 import com.arcgismaps.mapping.view.Graphic
 import com.arcgismaps.mapping.view.GraphicsOverlay
 import com.mapconductor.arcgis.ArcGISActualMarker
-import com.mapconductor.arcgis.map.ArcGISMapViewHolder
+import com.mapconductor.arcgis.map.ArcGISGeoViewHolder
 import com.mapconductor.arcgis.toPoint
 import com.mapconductor.core.ResourceProvider
 import com.mapconductor.core.features.GeoPoint
@@ -19,9 +19,9 @@ import kotlinx.coroutines.withContext
 
 class ArcGISMarkerRenderer(
     val markerLayer: GraphicsOverlay,
-    holder: ArcGISMapViewHolder,
+    holder: ArcGISGeoViewHolder<*, *>,
     coroutine: CoroutineScope = CoroutineScope(Dispatchers.Main),
-) : AbstractMarkerOverlayRenderer<ArcGISMapViewHolder, ArcGISActualMarker>(
+) : AbstractMarkerOverlayRenderer<ArcGISGeoViewHolder<*, *>, ArcGISActualMarker>(
         holder = holder,
         coroutine = coroutine,
     ) {
@@ -30,7 +30,7 @@ class ArcGISMarkerRenderer(
         position: GeoPoint,
     ) {
         coroutine.launch {
-            markerEntity.marker?.geometry = position.toPoint(holder.map.scene?.spatialReference)
+            markerEntity.marker?.geometry = position.toPoint(holder.spatialReference)
         }
     }
 
@@ -59,7 +59,7 @@ class ArcGISMarkerRenderer(
                                 geometry =
                                     GeoPoint
                                         .from(params.state.position)
-                                        .toPoint(holder.map.scene?.spatialReference),
+                                        .toPoint(holder.spatialReference),
                                 symbol = pictureSymbolFuture,
                             ).also {
                                 it.attributes.set("id", params.state.id)
@@ -112,7 +112,7 @@ class ArcGISMarkerRenderer(
                                 geometry =
                                     GeoPoint
                                         .from(params.current.state.position)
-                                        .toPoint(holder.map.scene?.spatialReference),
+                                        .toPoint(holder.spatialReference),
                                 symbol = pictureSymbolFuture,
                             ).also {
                                 it.attributes.set("id", params.current.state.id)

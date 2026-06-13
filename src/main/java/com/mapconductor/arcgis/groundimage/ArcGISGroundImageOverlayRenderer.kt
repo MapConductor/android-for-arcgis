@@ -7,7 +7,7 @@ import com.arcgismaps.geometry.SpatialReference
 import com.arcgismaps.mapping.layers.TileImageFormat
 import com.arcgismaps.mapping.layers.TileInfo
 import com.arcgismaps.mapping.layers.WebTiledLayer
-import com.mapconductor.arcgis.map.ArcGISMapViewHolder
+import com.mapconductor.arcgis.map.ArcGISGeoViewHolder
 import com.mapconductor.core.groundimage.AbstractGroundImageOverlayRenderer
 import com.mapconductor.core.groundimage.GroundImageEntityInterface
 import com.mapconductor.core.groundimage.GroundImageState
@@ -22,13 +22,13 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 class ArcGISGroundImageOverlayRenderer(
-    override val holder: ArcGISMapViewHolder,
+    override val holder: ArcGISGeoViewHolder<*, *>,
     private val tileServer: LocalTileServer,
     override val coroutine: CoroutineScope = CoroutineScope(Dispatchers.Default),
 ) : AbstractGroundImageOverlayRenderer<ArcGISGroundImageHandle>() {
     override suspend fun createGroundImage(state: GroundImageState): ArcGISGroundImageHandle? =
         withContext(coroutine.coroutineContext) {
-            val scene = holder.map.scene ?: return@withContext null
+            val operationalLayers = holder.operationalLayers ?: return@withContext null
             val routeId = buildSafeRouteId(state.id)
             val provider = GroundImageTileProvider(tileSize = state.tileSize)
             // ArcGIS WebTiledLayer has a native opacity property, so avoid baking opacity into tiles.
@@ -47,7 +47,7 @@ class ArcGISGroundImageOverlayRenderer(
                 return@withContext null
             }
             updateLayer(handle.layer, state)
-            scene.operationalLayers.add(handle.layer)
+            operationalLayers.add(handle.layer)
             handle
         }
 
@@ -57,7 +57,7 @@ class ArcGISGroundImageOverlayRenderer(
         prev: GroundImageEntityInterface<ArcGISGroundImageHandle>,
     ): ArcGISGroundImageHandle? =
         withContext(coroutine.coroutineContext) {
-            val scene = holder.map.scene ?: return@withContext null
+            val operationalLayers = holder.operationalLayers ?: return@withContext null
             val finger = current.fingerPrint
             val prevFinger = prev.fingerPrint
 
@@ -106,17 +106,16 @@ class ArcGISGroundImageOverlayRenderer(
             }
 
             // Swap layers to ensure cache busting via generation query.
-            scene.operationalLayers.remove(groundImage.layer)
-            scene.operationalLayers.add(nextHandle.layer)
+            operationalLayers.remove(groundImage.layer)
+            operationalLayers.add(nextHandle.layer)
             updateLayer(nextHandle.layer, current.state)
             nextHandle
         }
 
     override suspend fun removeGroundImage(entity: GroundImageEntityInterface<ArcGISGroundImageHandle>) {
         coroutine.launch {
-            val scene = holder.map.scene ?: return@launch
             val handle = entity.groundImage
-            scene.operationalLayers.remove(handle.layer)
+            holder.operationalLayers?.remove(handle.layer)
             tileServer.unregister(handle.routeId)
         }
     }

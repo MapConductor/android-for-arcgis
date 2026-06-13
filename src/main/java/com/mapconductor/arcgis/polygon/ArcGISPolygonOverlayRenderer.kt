@@ -10,7 +10,7 @@ import com.arcgismaps.mapping.symbology.SimpleLineSymbolStyle
 import com.arcgismaps.mapping.view.Graphic
 import com.arcgismaps.mapping.view.GraphicsOverlay
 import com.mapconductor.arcgis.ArcGISActualPolygon
-import com.mapconductor.arcgis.map.ArcGISMapViewHolder
+import com.mapconductor.arcgis.map.ArcGISGeoViewHolder
 import com.mapconductor.arcgis.raster.ArcGISRasterLayerController
 import com.mapconductor.arcgis.toArcGISColor
 import com.mapconductor.arcgis.toPoint
@@ -37,7 +37,7 @@ import kotlinx.coroutines.withContext
 
 class ArcGISPolygonOverlayRenderer(
     val polygonLayer: GraphicsOverlay,
-    override val holder: ArcGISMapViewHolder,
+    override val holder: ArcGISGeoViewHolder<*, *>,
     private val rasterLayerController: ArcGISRasterLayerController,
     private val tileServer: LocalTileServer = TileServerRegistry.get(forceNoStoreCache = true),
     override val coroutine: CoroutineScope = CoroutineScope(Dispatchers.Default),

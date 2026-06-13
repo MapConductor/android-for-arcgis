@@ -4,7 +4,7 @@ import com.arcgismaps.mapping.view.Graphic
 import com.arcgismaps.mapping.view.GraphicsOverlay
 import com.arcgismaps.mapping.view.SurfacePlacement
 import com.mapconductor.arcgis.ArcGISActualMarker
-import com.mapconductor.arcgis.map.ArcGISMapViewHolder
+import com.mapconductor.arcgis.map.ArcGISGeoViewHolder
 import com.mapconductor.core.ResourceProvider
 import com.mapconductor.core.features.GeoPointInterface
 import com.mapconductor.core.map.MapCameraPosition
@@ -20,7 +20,6 @@ import com.mapconductor.core.marker.MarkerState
 import com.mapconductor.core.marker.MarkerTileRasterLayerCallback
 import com.mapconductor.core.marker.MarkerTileRenderer
 import com.mapconductor.core.marker.MarkerTilingOptions
-import com.mapconductor.core.marker.TileRenderWasmEngine
 import com.mapconductor.core.raster.RasterLayerSource
 import com.mapconductor.core.raster.RasterLayerState
 import com.mapconductor.core.raster.TileScheme
@@ -304,7 +303,6 @@ class ArcGISMarkerController private constructor(
                 cacheSizeBytes = markerTiling.cacheSize,
                 debugTileOverlay = markerTiling.debugTileOverlay,
                 iconScaleCallback = markerTiling.iconScaleCallback,
-                wasmEngine = TileRenderWasmEngine.createOrNull(ResourceProvider.getAppContext(), markerTiling.enableWasmAcceleration),
             )
         markerTileRenderer = tileRenderer
 
@@ -340,12 +338,15 @@ class ArcGISMarkerController private constructor(
 
     companion object {
         fun create(
-            holder: ArcGISMapViewHolder,
+            holder: ArcGISGeoViewHolder<*, *>,
             markerTiling: MarkerTilingOptions = MarkerTilingOptions.Default,
+            useScenePlacement: Boolean = true,
         ): ArcGISMarkerController {
             val markerLayer: GraphicsOverlay =
                 GraphicsOverlay().apply {
-                    sceneProperties.surfacePlacement = SurfacePlacement.Relative
+                    if (useScenePlacement) {
+                        sceneProperties.surfacePlacement = SurfacePlacement.Relative
+                    }
                 }
 
             val renderer =
