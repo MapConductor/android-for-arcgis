@@ -200,7 +200,9 @@ class ArcGISMapViewController(
     }
 
     private fun currentViewportSizeInDp(): Pair<Int, Int> {
-        val density = holder.mapView.resources.displayMetrics.density.coerceAtLeast(0.1f)
+        val density =
+            holder.mapView.resources.displayMetrics.density
+                .coerceAtLeast(0.1f)
         val widthDp = (holder.map.width / density).toInt().coerceAtLeast(1)
         val heightDp = (holder.map.height / density).toInt().coerceAtLeast(1)
         return Pair(widthDp, heightDp)

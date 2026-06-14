@@ -11,9 +11,9 @@ import com.mapconductor.core.map.MapCameraPosition
 import com.mapconductor.core.map.MapCameraPositionInterface
 import com.mapconductor.core.map.MapPaddings
 import com.mapconductor.core.map.MapPaddingsInterface
+import com.mapconductor.core.map.MapViewHolderInterface
 import com.mapconductor.core.map.MapViewState
 import com.mapconductor.core.map.MapViewStateInterface
-import com.mapconductor.core.map.MapViewHolderInterface
 import java.util.UUID
 import android.app.Activity
 import android.content.Context

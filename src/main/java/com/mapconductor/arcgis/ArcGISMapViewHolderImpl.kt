@@ -152,20 +152,22 @@ class ArcGISMapView2DHolder(
     }
 
     override suspend fun fromScreenOffset(offset: Offset): GeoPoint? =
-        map.screenToLocation(
-            DoubleXY(
-                x = offset.x.toDouble(),
-                y = offset.y.toDouble(),
-            ),
-        )?.toGeoPoint()
+        map
+            .screenToLocation(
+                DoubleXY(
+                    x = offset.x.toDouble(),
+                    y = offset.y.toDouble(),
+                ),
+            )?.toGeoPoint()
 
     override fun fromScreenOffsetSync(offset: Offset): GeoPoint? =
-        map.screenToLocation(
-            DoubleXY(
-                x = offset.x.toDouble(),
-                y = offset.y.toDouble(),
-            ),
-        )?.toGeoPoint()
+        map
+            .screenToLocation(
+                DoubleXY(
+                    x = offset.x.toDouble(),
+                    y = offset.y.toDouble(),
+                ),
+            )?.toGeoPoint()
 }
 
 internal fun Context.getArcGisApiKey(): String? =
