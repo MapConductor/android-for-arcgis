@@ -20,6 +20,7 @@ import com.mapconductor.arcgis.marker.StrategyArcGISMarkerEventController
 import com.mapconductor.arcgis.polygon.ArcGISPolygonOverlayController
 import com.mapconductor.arcgis.polyline.ArcGISPolylineOverlayController
 import com.mapconductor.arcgis.raster.ArcGISRasterLayerController
+import com.mapconductor.arcgis.toEnvelope
 import com.mapconductor.arcgis.toGeoPoint
 import com.mapconductor.arcgis.toPoint
 import com.mapconductor.core.circle.CircleEvent
@@ -392,6 +393,20 @@ class ArcGISMapView2DController(
                 )
             }
             scheduleCameraMoveEndCallback()
+        }
+    }
+
+    override fun fitBounds(
+        bounds: GeoRectBounds,
+        padding: Int,
+    ) {
+        val envelope = bounds.toEnvelope() ?: return
+
+        coroutine.launch {
+            withContext(kotlinx.coroutines.Dispatchers.Main) {
+                if (!holder.mapView.isAttachedToWindow) return@withContext
+                holder.map.setViewpoint(com.arcgismaps.mapping.Viewpoint(envelope))
+            }
         }
     }
 

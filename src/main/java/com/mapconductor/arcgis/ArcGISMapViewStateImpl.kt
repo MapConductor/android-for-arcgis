@@ -6,6 +6,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import com.mapconductor.arcgis.from
 import com.mapconductor.core.features.GeoPoint
+import com.mapconductor.core.features.GeoRectBounds
 import com.mapconductor.core.map.BaseMapViewSaver
 import com.mapconductor.core.map.MapCameraPosition
 import com.mapconductor.core.map.MapCameraPositionInterface
@@ -80,6 +81,13 @@ class ArcGISMapViewState(
             return@let
         }
         this._cameraPosition = cameraPosition
+    }
+
+    override fun fitBounds(
+        bounds: GeoRectBounds,
+        padding: Int,
+    ) {
+        controller?.fitBounds(bounds, padding)
     }
 
     override fun moveCameraTo(
