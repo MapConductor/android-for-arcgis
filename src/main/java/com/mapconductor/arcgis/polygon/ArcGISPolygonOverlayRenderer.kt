@@ -32,7 +32,6 @@ import com.mapconductor.core.tileserver.TileServerRegistry
 import kotlin.collections.set
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 class ArcGISPolygonOverlayRenderer(
@@ -40,7 +39,7 @@ class ArcGISPolygonOverlayRenderer(
     override val holder: ArcGISGeoViewHolder<*, *>,
     private val rasterLayerController: ArcGISRasterLayerController,
     private val tileServer: LocalTileServer = TileServerRegistry.get(forceNoStoreCache = true),
-    override val coroutine: CoroutineScope = CoroutineScope(Dispatchers.Default),
+    override val coroutine: CoroutineScope = CoroutineScope(Dispatchers.Main),
 ) : AbstractPolygonOverlayRenderer<ArcGISActualPolygon>() {
     companion object {
         private const val MASK_TILE_SIZE_PX = 256
@@ -146,8 +145,12 @@ class ArcGISPolygonOverlayRenderer(
         }
 
     override suspend fun removePolygon(entity: PolygonEntityInterface<ArcGISActualPolygon>) {
-        coroutine.launch {
-            polygonLayer.graphics.remove(entity.polygon)
+        withContext(coroutine.coroutineContext) {
+            val currentGraphics = polygonLayer.graphics.toList()
+            if (currentGraphics.contains(entity.polygon)) {
+                polygonLayer.graphics.clear()
+                polygonLayer.graphics.addAll(currentGraphics.filterNot { it == entity.polygon })
+            }
         }
         removeMaskLayer(entity.state.id)
     }
