@@ -1,6 +1,6 @@
 package com.mapconductor.arcgis.map
 
-import androidx.compose.ui.geometry.Offset
+import android.graphics.PointF
 import androidx.lifecycle.LifecycleOwner
 import com.arcgismaps.geometry.SpatialReference
 import com.arcgismaps.mapping.layers.Layer
@@ -102,17 +102,17 @@ class ArcGISMapViewHolder(
     override val operationalLayers: MutableList<Layer>?
         get() = map.scene?.operationalLayers
 
-    override fun toScreenOffset(position: GeoPointInterface): Offset? {
+    override fun toScreenOffset(position: GeoPointInterface): PointF? {
         val result =
             mapView.sceneView.locationToScreen(
                 point = GeoPoint.from(position).toPoint(spatialReference),
             )
         return result?.let {
-            Offset(it.screenPoint.x.toFloat(), it.screenPoint.y.toFloat())
+            PointF(it.screenPoint.x.toFloat(), it.screenPoint.y.toFloat())
         }
     }
 
-    override suspend fun fromScreenOffset(offset: Offset): GeoPoint? {
+    override suspend fun fromScreenOffset(offset: PointF): GeoPoint? {
         val result =
             mapView.sceneView.screenToLocation(
                 screenCoordinate =
@@ -124,7 +124,7 @@ class ArcGISMapViewHolder(
         return result.getOrNull()?.toGeoPoint()
     }
 
-    override fun fromScreenOffsetSync(offset: Offset): GeoPoint? =
+    override fun fromScreenOffsetSync(offset: PointF): GeoPoint? =
         runBlocking {
             fromScreenOffset(offset)
         }
@@ -143,15 +143,15 @@ class ArcGISMapView2DHolder(
     override val operationalLayers: MutableList<Layer>?
         get() = map.map?.operationalLayers
 
-    override fun toScreenOffset(position: GeoPointInterface): Offset? {
+    override fun toScreenOffset(position: GeoPointInterface): PointF? {
         val result =
             map.locationToScreen(
                 mapPoint = GeoPoint.from(position).toPoint(spatialReference),
             )
-        return Offset(result.x.toFloat(), result.y.toFloat())
+        return PointF(result.x.toFloat(), result.y.toFloat())
     }
 
-    override suspend fun fromScreenOffset(offset: Offset): GeoPoint? =
+    override suspend fun fromScreenOffset(offset: PointF): GeoPoint? =
         map
             .screenToLocation(
                 DoubleXY(
@@ -160,7 +160,7 @@ class ArcGISMapView2DHolder(
                 ),
             )?.toGeoPoint()
 
-    override fun fromScreenOffsetSync(offset: Offset): GeoPoint? =
+    override fun fromScreenOffsetSync(offset: PointF): GeoPoint? =
         map
             .screenToLocation(
                 DoubleXY(

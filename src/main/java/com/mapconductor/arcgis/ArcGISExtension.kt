@@ -1,11 +1,11 @@
 package com.mapconductor.arcgis
 
-import androidx.compose.ui.graphics.Color
+import android.graphics.Color
 
-internal fun Color.toArcGISColor(): com.arcgismaps.Color =
+internal fun Int.toArcGISColor(): com.arcgismaps.Color =
     com.arcgismaps.Color.fromRgba(
-        r = (this.red * 255).toInt(),
-        g = (this.green * 255).toInt(),
-        b = (this.blue * 255).toInt(),
-        a = (this.alpha * 255).toInt(),
+        r = Color.red(this),
+        g = Color.green(this),
+        b = Color.blue(this),
+        a = Color.alpha(this),
     )

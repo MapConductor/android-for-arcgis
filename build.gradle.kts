@@ -88,10 +88,10 @@ dependencies {
     api("com.esri:arcgis-maps-kotlin-toolkit-geoview-compose:${libs.versions.arcgisMapsKotlin.get()}")
     api("com.esri:arcgis-maps-kotlin-toolkit-authentication:${libs.versions.arcgisMapsKotlin.get()}")
 
-    if (findProject(":android-sdk-core") != null) {
-        api(project(":android-sdk-core"))
+    if (findProject(":android-sdk-compose") != null) {
+        api(project(":android-sdk-compose"))
     } else {
-        api("com.mapconductor:core:$libraryVersion")
+        api("com.mapconductor:compose:$libraryVersion")
     }
 
     testImplementation(libs.junit)

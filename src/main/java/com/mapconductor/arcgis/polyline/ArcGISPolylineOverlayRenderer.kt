@@ -35,7 +35,7 @@ class ArcGISPolylineOverlayRenderer(
                 SimpleLineSymbol().apply {
                     style = SimpleLineSymbolStyle.Solid
                     color = state.strokeColor.toArcGISColor()
-                    width = state.strokeWidth.value.toFloat()
+                    width = state.strokeWidth.toFloat()
                 }
 
             val graphic =

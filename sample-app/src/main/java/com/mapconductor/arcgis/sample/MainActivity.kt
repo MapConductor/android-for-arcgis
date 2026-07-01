@@ -31,18 +31,18 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import com.mapconductor.arcgis.map.ArcGISMapView
 import com.mapconductor.arcgis.map.rememberArcGISMapViewState
-import com.mapconductor.core.circle.Circle
+import com.mapconductor.compose.circle.Circle
 import com.mapconductor.core.circle.CircleState
 import com.mapconductor.core.features.GeoPoint
-import com.mapconductor.core.info.InfoBubble
+import com.mapconductor.compose.info.InfoBubble
 import com.mapconductor.core.map.MapCameraPosition
 import com.mapconductor.core.marker.DefaultMarkerIcon
-import com.mapconductor.core.marker.Marker
+import com.mapconductor.compose.marker.Marker
 import com.mapconductor.core.marker.MarkerAnimation
 import com.mapconductor.core.marker.MarkerState
-import com.mapconductor.core.polygon.Polygon
+import com.mapconductor.compose.polygon.Polygon
 import com.mapconductor.core.polygon.PolygonState
-import com.mapconductor.core.polyline.Polyline
+import com.mapconductor.compose.polyline.Polyline
 import com.mapconductor.core.polyline.PolylineState
 
 // Optional: set an ArcGIS API key before showing the map.

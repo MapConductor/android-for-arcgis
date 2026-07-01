@@ -52,7 +52,7 @@ class ArcGISCircleOverlayRenderer(
                 SimpleLineSymbol(
                     style = SimpleLineSymbolStyle.Solid,
                     color = state.strokeColor.toArcGISColor(),
-                    width = state.strokeWidth.value,
+                    width = state.strokeWidth,
                 )
             val fillSymbol =
                 SimpleFillSymbol(
@@ -120,7 +120,7 @@ class ArcGISCircleOverlayRenderer(
                             current.state.strokeColor.toArcGISColor()
                     }
                     if (finger.strokeWidth != prevFinger.strokeWidth) {
-                        outline.width = current.state.strokeWidth.value
+                        outline.width = current.state.strokeWidth
                     }
                 }
             }

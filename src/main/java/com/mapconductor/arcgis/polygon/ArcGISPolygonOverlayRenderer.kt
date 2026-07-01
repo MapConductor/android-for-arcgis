@@ -1,6 +1,5 @@
 package com.mapconductor.arcgis.polygon
 
-import androidx.compose.ui.graphics.toArgb
 import com.arcgismaps.geometry.Geometry
 import com.arcgismaps.geometry.PolygonBuilder
 import com.arcgismaps.mapping.symbology.SimpleFillSymbol
@@ -68,7 +67,7 @@ class ArcGISPolygonOverlayRenderer(
                 SimpleLineSymbol().apply {
                     style = SimpleLineSymbolStyle.Solid
                     color = state.strokeColor.toArcGISColor()
-                    width = state.strokeWidth.value.toFloat()
+                    width = state.strokeWidth.toFloat()
                 }
 
             val fillSymbol =
@@ -308,7 +307,7 @@ class ArcGISPolygonOverlayRenderer(
     ) {
         provider.points = state.points
         provider.holes = state.holes
-        provider.fillColor = state.fillColor.toArgb()
+        provider.fillColor = state.fillColor
         provider.strokeColor = android.graphics.Color.TRANSPARENT
         provider.strokeWidthPx = 0f
         provider.geodesic = state.geodesic

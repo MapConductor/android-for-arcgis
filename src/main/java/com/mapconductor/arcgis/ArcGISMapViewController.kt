@@ -1,6 +1,6 @@
 package com.mapconductor.arcgis.map
 
-import androidx.compose.ui.geometry.Offset
+import android.graphics.PointF
 import com.arcgismaps.mapping.Basemap
 import com.arcgismaps.mapping.view.Camera
 import com.arcgismaps.mapping.view.LongPressEvent
@@ -224,20 +224,20 @@ class ArcGISMapViewController(
         val mapHeight = holder.map.height.toFloat() - 1.0f
         val nearLeft =
             holder.fromScreenOffset(
-                Offset(1.0f, mapHeight),
+                PointF(1.0f, mapHeight),
             ) ?: return null
 
         val nearRight =
             holder.fromScreenOffsetSync(
-                Offset(mapWidth, mapHeight),
+                PointF(mapWidth, mapHeight),
             ) ?: return null
         val farLeft =
             holder.fromScreenOffsetSync(
-                Offset(1.0f, 1.0f),
+                PointF(1.0f, 1.0f),
             ) ?: return null
         val farRight =
             holder.fromScreenOffsetSync(
-                Offset(mapWidth, 1.0f),
+                PointF(mapWidth, 1.0f),
             ) ?: return null
 
         val bounds = GeoRectBounds()
@@ -333,7 +333,7 @@ class ArcGISMapViewController(
                 graphicsOverlay = markerController.renderer.markerLayer,
                 screenCoordinate = screenPoint,
                 tolerance =
-                    Settings.Default.tapTolerance.value
+                    Settings.Default.tapTolerance
                         .toDouble(),
                 returnPopupsOnly = false,
             )
