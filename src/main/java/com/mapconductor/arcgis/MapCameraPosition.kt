@@ -159,8 +159,8 @@ fun Camera.withZoomLevel(zoomLevel: Double): Camera {
     )
 }
 
-fun Camera.toMapCameraPosition() =
-    MapCameraPosition(
+fun Camera.toMapCameraPosition(): MapCameraPosition {
+    return MapCameraPosition(
         position =
             GeoPoint.fromLongLat(
                 longitude = this.location.x,
@@ -169,9 +169,14 @@ fun Camera.toMapCameraPosition() =
             ),
         zoom =
             converter
-                .altitudeToZoomLevel(altitude = this.location.z ?: 0.0, latitude = this.location.y, tilt = this.pitch),
+                .altitudeToZoomLevel(
+                    altitude = this.location.z ?: 0.0,
+                    latitude = this.location.y,
+                    tilt = this.pitch
+                ),
         bearing = ((this.heading % 360) + 360) % 360,
         tilt = this.pitch,
         paddings = MapPaddings.Zeros,
         visibleRegion = null,
     )
+}
