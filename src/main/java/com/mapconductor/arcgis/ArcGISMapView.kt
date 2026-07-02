@@ -30,12 +30,12 @@ import com.mapconductor.arcgis.polyline.ArcGISPolylineOverlayRenderer
 import com.mapconductor.arcgis.raster.ArcGISRasterLayerController
 import com.mapconductor.arcgis.raster.ArcGISRasterLayerOverlayRenderer
 import com.mapconductor.compose.map.MapViewBase
+import com.mapconductor.core.OnCameraMoveHandler
+import com.mapconductor.core.OnMapEventHandler
+import com.mapconductor.core.OnMapLoadedHandler
 import com.mapconductor.core.map.MapCameraPosition
 import com.mapconductor.core.map.MapCameraPositionInterface
 import com.mapconductor.core.map.MutableMapServiceRegistry
-import com.mapconductor.core.map.OnCameraMoveHandler
-import com.mapconductor.core.map.OnMapEventHandler
-import com.mapconductor.core.map.OnMapLoadedHandler
 import com.mapconductor.core.marker.MarkerEventControllerInterface
 import com.mapconductor.core.marker.MarkerOverlayRendererInterface
 import com.mapconductor.core.marker.MarkerRenderingStrategyInterface
