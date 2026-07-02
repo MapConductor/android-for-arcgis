@@ -1,5 +1,6 @@
 package com.mapconductor.arcgis.polygon
 
+import androidx.compose.ui.graphics.Color
 import com.arcgismaps.geometry.Geometry
 import com.arcgismaps.geometry.PolygonBuilder
 import com.arcgismaps.mapping.symbology.SimpleFillSymbol
@@ -28,7 +29,6 @@ import com.mapconductor.core.spherical.createInterpolatePoints
 import com.mapconductor.core.spherical.createLinearInterpolatePoints
 import com.mapconductor.core.tileserver.LocalTileServer
 import com.mapconductor.core.tileserver.TileServerRegistry
-import kotlin.collections.set
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -67,7 +67,7 @@ class ArcGISPolygonOverlayRenderer(
                 SimpleLineSymbol().apply {
                     style = SimpleLineSymbolStyle.Solid
                     color = state.strokeColor.toArcGISColor()
-                    width = state.strokeWidth.toFloat()
+                    width = state.strokeWidth.value
                 }
 
             val fillSymbol =
@@ -308,7 +308,7 @@ class ArcGISPolygonOverlayRenderer(
         provider.points = state.points
         provider.holes = state.holes
         provider.fillColor = state.fillColor
-        provider.strokeColor = android.graphics.Color.TRANSPARENT
+        provider.strokeColor = Color.Transparent
         provider.strokeWidthPx = 0f
         provider.geodesic = state.geodesic
         provider.outerBounds = boundsOf(state.points)

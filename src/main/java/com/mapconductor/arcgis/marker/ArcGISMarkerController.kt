@@ -86,7 +86,7 @@ class ArcGISMarkerController private constructor(
         val markerScreen = renderer.holder.toScreenOffset(nearest.state.position) ?: return null
 
         val tolerancePx =
-            Settings.Default.tapTolerance
+            Settings.Default.tapTolerance.value
                 .toDouble() *
                 ResourceProvider.getDensity().toDouble()
 

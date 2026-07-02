@@ -16,7 +16,6 @@ import com.mapconductor.core.polyline.AbstractPolylineOverlayRenderer
 import com.mapconductor.core.polyline.PolylineEntityInterface
 import com.mapconductor.core.polyline.PolylineState
 import com.mapconductor.core.spherical.Spherical
-import kotlin.collections.set
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -35,7 +34,7 @@ class ArcGISPolylineOverlayRenderer(
                 SimpleLineSymbol().apply {
                     style = SimpleLineSymbolStyle.Solid
                     color = state.strokeColor.toArcGISColor()
-                    width = state.strokeWidth.toFloat()
+                    width = state.strokeWidth.value
                 }
 
             val graphic =

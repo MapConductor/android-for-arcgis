@@ -29,9 +29,9 @@ import com.mapconductor.arcgis.polyline.ArcGISPolylineOverlayController
 import com.mapconductor.arcgis.polyline.ArcGISPolylineOverlayRenderer
 import com.mapconductor.arcgis.raster.ArcGISRasterLayerController
 import com.mapconductor.arcgis.raster.ArcGISRasterLayerOverlayRenderer
+import com.mapconductor.compose.map.MapViewBase
 import com.mapconductor.core.map.MapCameraPosition
 import com.mapconductor.core.map.MapCameraPositionInterface
-import com.mapconductor.compose.MapViewBase
 import com.mapconductor.core.map.MutableMapServiceRegistry
 import com.mapconductor.core.map.OnCameraMoveHandler
 import com.mapconductor.core.map.OnMapEventHandler
@@ -126,7 +126,7 @@ fun ArcGISMapView(
                                         mapView = wrapView,
                                         map = wrapView.sceneView,
                                     )
-                                cont.resume(holder, onCancellation = {})
+                                cont.resume(holder) { cause, _, _ -> }
                             }
                             is LoadStatus.FailedToLoad -> {
                                 // Offline or network error: resume with a holder anyway so
@@ -135,11 +135,10 @@ fun ArcGISMapView(
                                 if (cont.isActive) {
                                     cont.resume(
                                         ArcGISMapViewHolder(
-                                            mapView = wrapView,
-                                            map = wrapView.sceneView,
-                                        ),
-                                        onCancellation = {},
-                                    )
+                                                    mapView = wrapView,
+                                                    map = wrapView.sceneView,
+                                                )
+                                    ) { cause, _, _ -> }
                                 }
                             }
                             else -> {

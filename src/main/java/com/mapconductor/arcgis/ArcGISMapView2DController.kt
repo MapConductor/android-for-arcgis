@@ -1,6 +1,6 @@
 package com.mapconductor.arcgis.map
 
-import android.graphics.PointF
+import androidx.compose.ui.geometry.Offset
 import com.arcgismaps.geometry.SpatialReference
 import com.arcgismaps.mapping.Basemap
 import com.arcgismaps.mapping.Viewpoint
@@ -182,11 +182,11 @@ class ArcGISMapView2DController(
     private suspend fun getMapCameraPosition(): MapCameraPosition? {
         val mapWidth = holder.map.width.toFloat() - 1.0f
         val mapHeight = holder.map.height.toFloat() - 1.0f
-        val nearLeft = holder.fromScreenOffset(PointF(1.0f, mapHeight)) ?: return null
-        val nearRight = holder.fromScreenOffsetSync(PointF(mapWidth, mapHeight)) ?: return null
-        val farLeft = holder.fromScreenOffsetSync(PointF(1.0f, 1.0f)) ?: return null
-        val farRight = holder.fromScreenOffsetSync(PointF(mapWidth, 1.0f)) ?: return null
-        val center = holder.fromScreenOffsetSync(PointF(mapWidth / 2.0f, mapHeight / 2.0f)) ?: return null
+        val nearLeft = holder.fromScreenOffset(Offset(1.0f, mapHeight)) ?: return null
+        val nearRight = holder.fromScreenOffsetSync(Offset(mapWidth, mapHeight)) ?: return null
+        val farLeft = holder.fromScreenOffsetSync(Offset(1.0f, 1.0f)) ?: return null
+        val farRight = holder.fromScreenOffsetSync(Offset(mapWidth, 1.0f)) ?: return null
+        val center = holder.fromScreenOffsetSync(Offset(mapWidth / 2.0f, mapHeight / 2.0f)) ?: return null
 
         val bounds = GeoRectBounds()
         bounds.extend(nearLeft)
@@ -248,7 +248,7 @@ class ArcGISMapView2DController(
                 graphicsOverlay = markerController.renderer.markerLayer,
                 screenCoordinate = screenPoint,
                 tolerance =
-                    Settings.Default.tapTolerance
+                    Settings.Default.tapTolerance.value
                         .toDouble(),
                 returnPopupsOnly = false,
             )
