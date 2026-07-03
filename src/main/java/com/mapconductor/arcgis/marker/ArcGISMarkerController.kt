@@ -28,6 +28,7 @@ import com.mapconductor.settings.Settings
 import java.util.UUID
 import kotlin.math.floor
 import android.os.SystemClock
+import android.util.Log
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.withPermit
@@ -92,7 +93,7 @@ class ArcGISMarkerController private constructor(
 
         val icon = nearest.state.icon ?: DefaultMarkerIcon()
 
-        val baseSizePx = ResourceProvider.dpToPxForBitmap(icon.iconSize).toDouble()
+        val baseSizePx = ResourceProvider.dpToPxForBitmap(icon.iconSize)
         val iconWidthPx = baseSizePx * icon.scale.toDouble()
         val iconHeightPx = baseSizePx * icon.scale.toDouble()
 
@@ -236,6 +237,10 @@ class ArcGISMarkerController private constructor(
     }
 
     override fun destroy() {
+        // Clean up tile server registration
+        // Unregister this map's route only. Never stop the server here: it is
+        // a process-wide singleton shared by all map controllers and overlay
+        // modules; stopping it breaks tile loading for every other live map.
         markerTileGroupId?.let { groupId ->
             tileServer.unregister(groupId)
         }
@@ -303,6 +308,11 @@ class ArcGISMarkerController private constructor(
                 cacheSizeBytes = markerTiling.cacheSize,
                 debugTileOverlay = markerTiling.debugTileOverlay,
                 iconScaleCallback = markerTiling.iconScaleCallback,
+                // ArcGIS displays one 96dpi/256px LOD tile over 256dp on screen,
+                // matching the renderer's density-scaled output 1:1 — no extra
+                // icon scaling needed. (0.5 predates the MarkerTileRenderer fix
+                // that stopped double-applying MarkerIconInterface.scale.)
+                extraIconScale = 1.0,
             )
         markerTileRenderer = tileRenderer
 

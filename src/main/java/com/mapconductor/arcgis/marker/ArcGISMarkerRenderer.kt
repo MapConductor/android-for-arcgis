@@ -25,6 +25,17 @@ class ArcGISMarkerRenderer(
         holder = holder,
         coroutine = coroutine,
     ) {
+    override val supportsAnimationOverlay: Boolean = true
+
+    override fun setMarkerVisible(
+        markerEntity: MarkerEntityInterface<Graphic>,
+        visible: Boolean,
+    ) {
+        coroutine.launch {
+            markerEntity.marker?.isVisible = visible
+        }
+    }
+
     override fun setMarkerPosition(
         markerEntity: MarkerEntityInterface<Graphic>,
         position: GeoPoint,

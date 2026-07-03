@@ -252,6 +252,9 @@ fun ArcGISMapView(
                         setCameraMoveEndListener(null)
                         setMapClickListener(null)
                         setMapLongClickListener(null)
+                        // Free overlay controllers (tile-server routes, marker
+                        // managers) and cancel the controller scope.
+                        destroy()
                     }
                     controllerRef.value = null
                     state.clearController()

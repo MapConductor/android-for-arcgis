@@ -97,16 +97,22 @@ class ArcGISMapViewHolder(
         get() = mapView
     override val geoView: GeoView
         get() = map
+    // The native SceneView throws (ArcGISException wrapping a native NPE)
+    // instead of returning null once the view is destroyed. Teardown
+    // callbacks and per-frame projections can arrive just after
+    // mapView.onDestroy(), so degrade to null instead of crashing.
     override val spatialReference: SpatialReference?
-        get() = map.scene?.spatialReference
+        get() = runCatching { map.scene?.spatialReference }.getOrNull()
     override val operationalLayers: MutableList<Layer>?
-        get() = map.scene?.operationalLayers
+        get() = runCatching { map.scene?.operationalLayers }.getOrNull()
 
     override fun toScreenOffset(position: GeoPointInterface): Offset? {
         val result =
-            mapView.sceneView.locationToScreen(
-                point = GeoPoint.from(position).toPoint(spatialReference),
-            )
+            runCatching {
+                mapView.sceneView.locationToScreen(
+                    point = GeoPoint.from(position).toPoint(spatialReference),
+                )
+            }.getOrNull()
         return result?.let {
             Offset(it.screenPoint.x.toFloat(), it.screenPoint.y.toFloat())
         }
@@ -138,16 +144,19 @@ class ArcGISMapView2DHolder(
         get() = mapView
     override val geoView: GeoView
         get() = map
+    // See ArcGISMapViewHolder: native accessors throw after view destroy.
     override val spatialReference: SpatialReference?
-        get() = map.map?.spatialReference
+        get() = runCatching { map.map?.spatialReference }.getOrNull()
     override val operationalLayers: MutableList<Layer>?
-        get() = map.map?.operationalLayers
+        get() = runCatching { map.map?.operationalLayers }.getOrNull()
 
     override fun toScreenOffset(position: GeoPointInterface): Offset? {
         val result =
-            map.locationToScreen(
-                mapPoint = GeoPoint.from(position).toPoint(spatialReference),
-            )
+            runCatching {
+                map.locationToScreen(
+                    mapPoint = GeoPoint.from(position).toPoint(spatialReference),
+                )
+            }.getOrNull() ?: return null
         return Offset(result.x.toFloat(), result.y.toFloat())
     }
 
