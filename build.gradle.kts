@@ -24,15 +24,13 @@ android {
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         consumerProguardFiles("consumer-rules.pro")
+        aarMetadata {
+            minCompileSdk = project.property("compileSdk").toString().toInt()
+        }
     }
 
     buildFeatures {
         compose = true
-    }
-
-    composeOptions {
-        kotlinCompilerExtensionVersion =
-            project.property("kotlinCompilerExtensionVersion").toString()
     }
 
     buildTypes {
@@ -70,12 +68,13 @@ val libraryVersion = project.findProperty("libraryVersion") as String? ?: "1.0.0
 
 dependencies {
 
+    implementation(platform(libs.androidx.compose.bom)) // BOM manages Compose artifact versions.
+    compileOnly(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.compose.runtime)
     //    implementation(libs.play.services.maps)
     compileOnly(libs.androidx.ui)
     compileOnly(libs.androidx.ui.tooling.preview)
     compileOnly(libs.androidx.core.ktx)
-    implementation(platform(libs.androidx.compose.bom)) // ← bomでバージョン合わせる
     // Lifecycle（MapView用）
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.lifecycle.common.java8)
