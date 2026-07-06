@@ -31,6 +31,7 @@ import com.mapconductor.core.tileserver.LocalTileServer
 import com.mapconductor.core.tileserver.TileServerRegistry
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 class ArcGISPolygonOverlayRenderer(
@@ -144,12 +145,11 @@ class ArcGISPolygonOverlayRenderer(
         }
 
     override suspend fun removePolygon(entity: PolygonEntityInterface<ArcGISActualPolygon>) {
-        withContext(coroutine.coroutineContext) {
-            val currentGraphics = polygonLayer.graphics.toList()
-            if (currentGraphics.contains(entity.polygon)) {
-                polygonLayer.graphics.clear()
-                polygonLayer.graphics.addAll(currentGraphics.filterNot { it == entity.polygon })
-            }
+        // Launch on the renderer's own scope so the removal survives cancellation of
+        // the calling sync coroutine, and remove the single graphic in place instead
+        // of rebuilding the whole graphics list.
+        coroutine.launch {
+            polygonLayer.graphics.remove(entity.polygon)
         }
         removeMaskLayer(entity.state.id)
     }
