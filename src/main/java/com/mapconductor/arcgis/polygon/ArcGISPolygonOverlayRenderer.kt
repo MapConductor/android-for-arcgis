@@ -10,7 +10,7 @@ import com.arcgismaps.mapping.symbology.SimpleLineSymbolStyle
 import com.arcgismaps.mapping.view.Graphic
 import com.arcgismaps.mapping.view.GraphicsOverlay
 import com.mapconductor.arcgis.ArcGISActualPolygon
-import com.mapconductor.arcgis.map.ArcGISGeoViewHolder
+import com.mapconductor.arcgis.ArcGISGeoViewHolder
 import com.mapconductor.arcgis.raster.ArcGISRasterLayerController
 import com.mapconductor.arcgis.toArcGISColor
 import com.mapconductor.arcgis.toPoint

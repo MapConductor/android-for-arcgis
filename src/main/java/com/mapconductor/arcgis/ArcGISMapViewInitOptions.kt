@@ -1,4 +1,4 @@
-package com.mapconductor.arcgis.map
+package com.mapconductor.arcgis
 
 import com.arcgismaps.mapping.BasemapStyle
 

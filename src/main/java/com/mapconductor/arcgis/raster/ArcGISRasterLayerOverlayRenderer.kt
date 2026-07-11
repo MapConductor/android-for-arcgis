@@ -9,7 +9,7 @@ import com.arcgismaps.mapping.layers.Layer
 import com.arcgismaps.mapping.layers.TileImageFormat
 import com.arcgismaps.mapping.layers.TileInfo
 import com.arcgismaps.mapping.layers.WebTiledLayer
-import com.mapconductor.arcgis.map.ArcGISGeoViewHolder
+import com.mapconductor.arcgis.ArcGISGeoViewHolder
 import com.mapconductor.core.raster.RasterLayerEntityInterface
 import com.mapconductor.core.raster.RasterLayerOverlayRendererInterface
 import com.mapconductor.core.raster.RasterLayerSource

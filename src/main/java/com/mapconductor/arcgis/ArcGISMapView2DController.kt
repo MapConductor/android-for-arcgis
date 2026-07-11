@@ -1,15 +1,15 @@
-package com.mapconductor.arcgis.map
+package com.mapconductor.arcgis
 
 import androidx.compose.ui.geometry.Offset
 import com.arcgismaps.geometry.SpatialReference
 import com.arcgismaps.mapping.Basemap
 import com.arcgismaps.mapping.Viewpoint
+import com.arcgismaps.mapping.view.GraphicsOverlay
 import com.arcgismaps.mapping.view.LongPressEvent
 import com.arcgismaps.mapping.view.PanChangeEvent
 import com.arcgismaps.mapping.view.SingleTapConfirmedEvent
 import com.arcgismaps.mapping.view.UpEvent
 import com.arcgismaps.mapping.view.extensions.motionEvent
-import com.mapconductor.arcgis.ArcGISActualMarker
 import com.mapconductor.arcgis.circle.ArcGISCircleOverlayController
 import com.mapconductor.arcgis.groundimage.ArcGISGroundImageController
 import com.mapconductor.arcgis.marker.ArcGISMarkerController
@@ -20,13 +20,11 @@ import com.mapconductor.arcgis.marker.StrategyArcGISMarkerEventController
 import com.mapconductor.arcgis.polygon.ArcGISPolygonOverlayController
 import com.mapconductor.arcgis.polyline.ArcGISPolylineOverlayController
 import com.mapconductor.arcgis.raster.ArcGISRasterLayerController
-import com.mapconductor.arcgis.toEnvelope
-import com.mapconductor.arcgis.toGeoPoint
-import com.mapconductor.arcgis.toPoint
 import com.mapconductor.core.circle.CircleEvent
 import com.mapconductor.core.circle.CircleState
 import com.mapconductor.core.circle.OnCircleEventHandler
 import com.mapconductor.core.controller.BaseMapViewController
+import com.mapconductor.core.controller.OverlayControllerInterface
 import com.mapconductor.core.features.GeoPoint
 import com.mapconductor.core.features.GeoRectBounds
 import com.mapconductor.core.groundimage.GroundImageEvent
@@ -34,16 +32,10 @@ import com.mapconductor.core.groundimage.GroundImageState
 import com.mapconductor.core.groundimage.OnGroundImageEventHandler
 import com.mapconductor.core.map.MapCameraPosition
 import com.mapconductor.core.map.MapPaddings
-import com.mapconductor.core.OnCameraMoveHandler
-import com.mapconductor.core.OnMapEventHandler
-import com.mapconductor.core.OnMapInitializedHandler
-import com.mapconductor.core.OnMapLoadedHandler
 import com.mapconductor.core.map.VisibleRegion
 import com.mapconductor.core.marker.MarkerEventControllerInterface
 import com.mapconductor.core.marker.MarkerOverlayRendererInterface
-import com.mapconductor.core.marker.MarkerRenderingStrategyInterface
 import com.mapconductor.core.marker.MarkerState
-import com.mapconductor.core.marker.MarkerTileRasterLayerCallback
 import com.mapconductor.core.marker.OnMarkerEventHandler
 import com.mapconductor.core.marker.StrategyMarkerController
 import com.mapconductor.core.polygon.OnPolygonEventHandler
@@ -58,13 +50,13 @@ import kotlin.math.PI
 import kotlin.math.cos
 import kotlin.math.ln
 import kotlin.math.pow
+import kotlin.time.Duration.Companion.milliseconds
 import android.view.MotionEvent
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 
 class ArcGISMapView2DController(
     override val holder: ArcGISMapView2DHolder,
@@ -74,7 +66,8 @@ class ArcGISMapView2DController(
     private val circleController: ArcGISCircleOverlayController,
     private val groundImageController: ArcGISGroundImageController,
     private val rasterLayerController: ArcGISRasterLayerController,
-    override val coroutine: CoroutineScope = CoroutineScope(Dispatchers.Default),
+    override val defaultCoroutine: CoroutineScope = CoroutineScope(Dispatchers.Default),
+    override val mainCoroutine: CoroutineScope = CoroutineScope(Dispatchers.Main),
 ) : BaseMapViewController(),
     ArcGISMapViewControllerInterface {
     private val markerEventControllers = mutableListOf<ArcGISMarkerEventControllerInterface>()
@@ -95,38 +88,36 @@ class ArcGISMapView2DController(
         holder.map.graphicsOverlays.add(circleController.renderer.circleLayer)
         holder.map.graphicsOverlays.add(polygonController.renderer.polygonLayer)
         holder.map.graphicsOverlays.add(polylineController.renderer.polylineLayer)
-        holder.map.graphicsOverlays.add(markerController.renderer.markerLayer)
+        holder.map.graphicsOverlays.add((markerController.renderer as ArcGISMarkerRenderer).markerLayer)
         setupListeners()
-        registerController(markerController)
-        registerController(polygonController)
-        registerController(polylineController)
-        registerController(circleController)
-        registerController(groundImageController)
-        registerController(rasterLayerController)
+        registerOverlayController(markerController)
+        registerOverlayController(polygonController)
+        registerOverlayController(polylineController)
+        registerOverlayController(circleController)
+        registerOverlayController(groundImageController)
+        registerOverlayController(rasterLayerController)
         registerMarkerEventController(DefaultArcGISMarkerEventController(markerController))
 
-        markerController.setRasterLayerCallback(
-            MarkerTileRasterLayerCallback { state ->
-                if (state != null) {
-                    rasterLayerController.upsert(state)
-                } else {
-                    rasterLayerController.rasterLayerManager
-                        .allEntities()
-                        .filter { it.state.id.startsWith("marker-tile-") }
-                        .forEach { entity -> rasterLayerController.removeById(entity.state.id) }
-                }
-            },
-        )
+        markerController.setRasterLayerCallback { state ->
+            if (state != null) {
+                rasterLayerController.upsert(state)
+            } else {
+                rasterLayerController.rasterLayerManager
+                    .allEntities()
+                    .filter { it.state.id.startsWith("marker-tile-") }
+                    .forEach { entity -> rasterLayerController.removeById(entity.state.id) }
+            }
+        }
     }
 
     fun setupListeners() {
-        coroutine.launch { holder.map.onSingleTapConfirmed.collect { onMapTap(it) } }
-        coroutine.launch { holder.map.viewpointChanged.collect { onViewpointChange() } }
-        coroutine.launch { holder.map.onInteractiveZooming.collect { invokeCameraMoveCallback() } }
-        coroutine.launch { holder.map.onRotate.collect { invokeCameraMoveCallback() } }
-        coroutine.launch { holder.map.onLongPress.collect { onMapLongPress(it) } }
-        coroutine.launch { holder.map.onUp.collect { onMapUp(it) } }
-        coroutine.launch { holder.map.onPan.collect { onMapPan(it) } }
+        defaultCoroutine.launch { holder.map.onSingleTapConfirmed.collect { onMapTap(it) } }
+        defaultCoroutine.launch { holder.map.viewpointChanged.collect { onViewpointChange() } }
+        defaultCoroutine.launch { holder.map.onInteractiveZooming.collect { invokeCameraMoveCallback() } }
+        defaultCoroutine.launch { holder.map.onRotate.collect { invokeCameraMoveCallback() } }
+        defaultCoroutine.launch { holder.map.onLongPress.collect { onMapLongPress(it) } }
+        defaultCoroutine.launch { holder.map.onUp.collect { onMapUp(it) } }
+        defaultCoroutine.launch { holder.map.onPan.collect { onMapPan(it) } }
     }
 
     override fun hasMarker(state: MarkerState): Boolean = markerController.markerManager.hasEntity(state.id)
@@ -176,8 +167,8 @@ class ArcGISMapView2DController(
         if (cameraMoveEndCallback == null) return
         cameraMoveEndJob?.cancel()
         cameraMoveEndJob =
-            coroutine.launch {
-                delay(cameraMoveEndDebounceMs)
+            defaultCoroutine.launch {
+                delay(cameraMoveEndDebounceMs.milliseconds)
                 invokeCameraMoveEndCallback()
             }
     }
@@ -227,7 +218,7 @@ class ArcGISMapView2DController(
         invokeCameraMoveCallback()
     }
 
-    private suspend fun onMapUp(event: UpEvent) {
+    private fun onMapUp(event: UpEvent) {
         val controller = activeDragController
         if (controller != null) {
             val point = holder.map.screenToLocation(event.screenCoordinate) ?: return
@@ -248,7 +239,7 @@ class ArcGISMapView2DController(
         val position = point.toGeoPoint()
         val identifyResult =
             holder.map.identifyGraphicsOverlay(
-                graphicsOverlay = markerController.renderer.markerLayer,
+                graphicsOverlay = (markerController.renderer as ArcGISMarkerRenderer).markerLayer,
                 screenCoordinate = screenPoint,
                 tolerance =
                     Settings.Default.tapTolerance.value
@@ -257,7 +248,7 @@ class ArcGISMapView2DController(
             )
         val graphics = identifyResult.getOrNull()?.graphics
         graphics?.firstOrNull()?.let { graphic ->
-            (graphic.attributes.get("id") as? String)?.let { markerId ->
+            (graphic.attributes["id"] as? String)?.let { markerId ->
                 markerController.markerManager.getEntity(markerId)?.let { entity ->
                     if (entity.state.draggable) {
                         activeDragController = markerEventControllers.firstOrNull()
@@ -285,7 +276,7 @@ class ArcGISMapView2DController(
         mapLongClickCallback?.invoke(position)
     }
 
-    private suspend fun onMapTap(event: SingleTapConfirmedEvent) {
+    private fun onMapTap(event: SingleTapConfirmedEvent) {
         val screenPoint = event.screenCoordinate
         val touchPosition = holder.map.screenToLocation(screenPoint)?.toGeoPoint() ?: return
 
@@ -322,10 +313,6 @@ class ArcGISMapView2DController(
         }
 
         mapClickCallback?.invoke(touchPosition)
-    }
-
-    override fun setMapInitializedListener(listener: OnMapInitializedHandler?) {
-        mapInitializedCallback = listener
     }
 
     override suspend fun clearOverlays() {
@@ -373,11 +360,9 @@ class ArcGISMapView2DController(
 
     override fun moveCamera(position: MapCameraPosition) {
         val viewpoint = toViewpoint(position)
-        coroutine.launch {
-            withContext(Dispatchers.Main) {
-                if (!holder.mapView.isAttachedToWindow) return@withContext
-                holder.map.setViewpoint(viewpoint)
-            }
+        mainCoroutine.launch {
+            if (!holder.mapView.isAttachedToWindow) return@launch
+            holder.map.setViewpoint(viewpoint)
         }
     }
 
@@ -386,10 +371,10 @@ class ArcGISMapView2DController(
         duration: Long,
     ) {
         val viewpoint = toViewpoint(position)
-        coroutine.launch {
+        defaultCoroutine.launch {
             invokeCameraMoveStartCallback()
-            withContext(Dispatchers.Main) {
-                if (!holder.mapView.isAttachedToWindow) return@withContext
+            mainCoroutine.launch {
+                if (!holder.mapView.isAttachedToWindow) return@launch
                 holder.map.setViewpointAnimated(
                     viewpoint = viewpoint,
                     durationSeconds = duration.toFloat() / 1000.0f,
@@ -405,13 +390,21 @@ class ArcGISMapView2DController(
     ) {
         val envelope = bounds.toEnvelope() ?: return
 
-        coroutine.launch {
-            withContext(kotlinx.coroutines.Dispatchers.Main) {
-                if (!holder.mapView.isAttachedToWindow) return@withContext
-                holder.map.setViewpoint(com.arcgismaps.mapping.Viewpoint(envelope))
+        mainCoroutine.launch {
+            if (holder.mapView.isAttachedToWindow) {
+                holder.map.setViewpoint(Viewpoint(envelope))
             }
         }
     }
+
+    override fun getControllers(): List<OverlayControllerInterface<*, *, *>> = listOf(
+        markerController,
+        polylineController,
+        polygonController,
+        circleController,
+        groundImageController,
+        rasterLayerController,
+    )
 
     private fun toViewpoint(position: MapCameraPosition): Viewpoint {
         val point = GeoPoint.from(position.position).toPoint(SpatialReference.wgs84())
@@ -479,7 +472,7 @@ class ArcGISMapView2DController(
     }
 
     fun sendInitialCameraUpdate() {
-        coroutine.launch {
+        defaultCoroutine.launch {
             if (holder.map.width <= 0 || holder.map.height <= 0) return@launch
             getMapCameraPosition()?.let { notifyMapCameraPosition(it) }
         }
@@ -496,12 +489,8 @@ class ArcGISMapView2DController(
         controller.setAnimateEndListener(markerAnimateEndListener)
     }
 
-    fun createMarkerRenderer(
-        strategy: MarkerRenderingStrategyInterface<ArcGISActualMarker>,
-    ): MarkerOverlayRendererInterface<ArcGISActualMarker> {
-        val markerLayer =
-            com.arcgismaps.mapping.view
-                .GraphicsOverlay()
+    fun createMarkerRenderer(): MarkerOverlayRendererInterface<ArcGISActualMarker> {
+        val markerLayer = GraphicsOverlay()
         registerMarkerOverlayLayer(markerLayer)
         return ArcGISMarkerRenderer(
             markerLayer = markerLayer,
@@ -511,7 +500,6 @@ class ArcGISMapView2DController(
 
     fun createMarkerEventController(
         controller: StrategyMarkerController<ArcGISActualMarker>,
-        renderer: MarkerOverlayRendererInterface<ArcGISActualMarker>,
     ): MarkerEventControllerInterface<ArcGISActualMarker> = StrategyArcGISMarkerEventController(controller)
 
     fun registerMarkerEventController(controller: MarkerEventControllerInterface<ArcGISActualMarker>) {
@@ -519,7 +507,7 @@ class ArcGISMapView2DController(
         registerMarkerEventController(typed)
     }
 
-    internal fun registerMarkerOverlayLayer(layer: com.arcgismaps.mapping.view.GraphicsOverlay) {
+    internal fun registerMarkerOverlayLayer(layer: GraphicsOverlay) {
         if (holder.map.graphicsOverlays.contains(layer)) return
         holder.map.graphicsOverlays.add(layer)
     }

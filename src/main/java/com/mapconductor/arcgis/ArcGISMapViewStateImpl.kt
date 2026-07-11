@@ -1,11 +1,11 @@
-package com.mapconductor.arcgis.map
+package com.mapconductor.arcgis
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
-import com.mapconductor.arcgis.from
 import com.mapconductor.compose.map.BaseMapViewSaver
+import com.mapconductor.core.controller.OverlayControllerInterface
 import com.mapconductor.core.features.GeoPoint
 import com.mapconductor.core.features.GeoRectBounds
 import com.mapconductor.core.map.MapCameraPosition
@@ -30,7 +30,6 @@ class ArcGISMapViewState(
     override val id: String,
     mapDesignType: ArcGISDesignTypeInterface,
     cameraPosition: MapCameraPosition = MapCameraPosition.Default,
-    useMapView: Boolean = false,
 ) : MapViewState<ArcGISDesignTypeInterface>(),
     ArcGISMapViewStateInterface {
     private var _cameraPosition: MapCameraPosition = cameraPosition
@@ -72,7 +71,7 @@ class ArcGISMapViewState(
         durationMillis: Long?,
     ) {
         controller?.let { ctrl ->
-            val dstCameraPosition = MapCameraPosition.Companion.from(cameraPosition)
+            val dstCameraPosition = MapCameraPosition.from(cameraPosition)
             if (durationMillis == null || durationMillis == 0L) {
                 ctrl.moveCamera(dstCameraPosition)
             } else {
@@ -103,6 +102,7 @@ class ArcGISMapViewState(
     }
 
     override fun getMapViewHolder(): MapViewHolderInterface<*, *>? = controller?.holder
+    override fun getControllers(): List<OverlayControllerInterface<*, *, *>>? = controller?.getControllers()
 
     internal fun updateCameraPosition(cameraPosition: MapCameraPosition) {
         this._cameraPosition = cameraPosition
@@ -138,7 +138,6 @@ class ArcGISMapViewSaver : BaseMapViewSaver<ArcGISMapViewState>() {
 fun rememberArcGISMapViewState(
     mapDesign: ArcGISDesign = ArcGISDesign.Streets,
     cameraPosition: MapCameraPositionInterface = MapCameraPosition.Default,
-    useMapView: Boolean = false,
 ): ArcGISMapViewState {
     val stateId by rememberSaveable {
         val uuid = UUID.randomUUID().toString()
@@ -153,7 +152,6 @@ fun rememberArcGISMapViewState(
                     id = stateId,
                     mapDesignType = mapDesign,
                     cameraPosition = MapCameraPosition.from(cameraPosition),
-                    useMapView = useMapView,
                 ),
             )
         }

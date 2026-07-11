@@ -1,4 +1,4 @@
-package com.mapconductor.arcgis.map
+package com.mapconductor.arcgis
 
 import androidx.compose.ui.geometry.Offset
 import androidx.lifecycle.LifecycleOwner
@@ -8,8 +8,6 @@ import com.arcgismaps.mapping.view.DoubleXY
 import com.arcgismaps.mapping.view.GeoView
 import com.arcgismaps.mapping.view.MapView
 import com.arcgismaps.mapping.view.SceneView
-import com.mapconductor.arcgis.toGeoPoint
-import com.mapconductor.arcgis.toPoint
 import com.mapconductor.core.features.GeoPoint
 import com.mapconductor.core.features.GeoPointInterface
 import com.mapconductor.core.map.MapViewHolderInterface
@@ -93,10 +91,8 @@ class ArcGISMapViewHolder(
     override val mapView: WrapSceneView,
     override val map: SceneView,
 ) : ArcGISGeoViewHolder<WrapSceneView, SceneView> {
-    override val rootView: FrameLayout
-        get() = mapView
-    override val geoView: GeoView
-        get() = map
+    override val rootView: FrameLayout = mapView
+    override val geoView: GeoView = map
     // The native SceneView throws (ArcGISException wrapping a native NPE)
     // instead of returning null once the view is destroyed. Teardown
     // callbacks and per-frame projections can arrive just after
@@ -140,10 +136,9 @@ class ArcGISMapView2DHolder(
     override val mapView: WrapMapView,
     override val map: MapView,
 ) : ArcGISGeoViewHolder<WrapMapView, MapView> {
-    override val rootView: FrameLayout
-        get() = mapView
-    override val geoView: GeoView
-        get() = map
+    override val rootView: FrameLayout = mapView
+    override val geoView: GeoView = map
+
     // See ArcGISMapViewHolder: native accessors throw after view destroy.
     override val spatialReference: SpatialReference?
         get() = runCatching { map.map?.spatialReference }.getOrNull()

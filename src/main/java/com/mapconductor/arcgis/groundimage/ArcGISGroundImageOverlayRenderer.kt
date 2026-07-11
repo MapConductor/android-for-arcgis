@@ -7,7 +7,7 @@ import com.arcgismaps.geometry.SpatialReference
 import com.arcgismaps.mapping.layers.TileImageFormat
 import com.arcgismaps.mapping.layers.TileInfo
 import com.arcgismaps.mapping.layers.WebTiledLayer
-import com.mapconductor.arcgis.map.ArcGISGeoViewHolder
+import com.mapconductor.arcgis.ArcGISGeoViewHolder
 import com.mapconductor.core.groundimage.AbstractGroundImageOverlayRenderer
 import com.mapconductor.core.groundimage.GroundImageEntityInterface
 import com.mapconductor.core.groundimage.GroundImageState
@@ -37,8 +37,12 @@ class ArcGISGroundImageOverlayRenderer(
             tileServer.register(routeId, provider)
 
             val handle =
-                createHandle(routeId = routeId, generation = 0L, cacheKey = tileCacheKey(state), provider = provider)
-                    ?: return@withContext null
+                createHandle(
+                    routeId = routeId,
+                    generation = 0L,
+                    cacheKey = tileCacheKey(state),
+                    provider = provider,
+                )
             val loadResult = handle.layer.load()
             if (loadResult.isFailure) {
                 val error = loadResult.exceptionOrNull()
@@ -93,7 +97,6 @@ class ArcGISGroundImageOverlayRenderer(
                     cacheKey = tileCacheKey(current.state),
                     provider = provider,
                 )
-                    ?: return@withContext null
             val loadResult = nextHandle.layer.load()
             if (loadResult.isFailure) {
                 val error = loadResult.exceptionOrNull()
@@ -133,7 +136,7 @@ class ArcGISGroundImageOverlayRenderer(
         generation: Long,
         cacheKey: String,
         provider: GroundImageTileProvider,
-    ): ArcGISGroundImageHandle? {
+    ): ArcGISGroundImageHandle {
         val urlTemplate = tileServer.urlTemplate(routeId, provider.tileSize, cacheKey)
         val template =
             urlTemplate

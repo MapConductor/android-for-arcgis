@@ -5,7 +5,7 @@ import com.arcgismaps.mapping.symbology.PictureMarkerSymbol
 import com.arcgismaps.mapping.view.Graphic
 import com.arcgismaps.mapping.view.GraphicsOverlay
 import com.mapconductor.arcgis.ArcGISActualMarker
-import com.mapconductor.arcgis.map.ArcGISGeoViewHolder
+import com.mapconductor.arcgis.ArcGISGeoViewHolder
 import com.mapconductor.arcgis.toPoint
 import com.mapconductor.core.ResourceProvider
 import com.mapconductor.core.features.GeoPoint
@@ -59,8 +59,8 @@ class ArcGISMarkerRenderer(
 
                         val pictureSymbolFuture =
                             PictureMarkerSymbol.createWithImage(bitmapDrawable).also {
-                                it.width = width.toFloat()
-                                it.height = height.toFloat()
+                                it.width = width
+                                it.height = height
                                 it.offsetX = anchorX.toFloat()
                                 it.offsetY = anchorY.toFloat()
                             }
@@ -73,7 +73,7 @@ class ArcGISMarkerRenderer(
                                         .toPoint(holder.spatialReference),
                                 symbol = pictureSymbolFuture,
                             ).also {
-                                it.attributes.set("id", params.state.id)
+                                it.attributes["id"] = params.state.id
                             }
                         return@map marker
                     }.also {
@@ -86,7 +86,7 @@ class ArcGISMarkerRenderer(
     override suspend fun onRemove(data: List<MarkerEntityInterface<ArcGISActualMarker>>) {
         coroutine.launch {
             val elements = data.map { params -> params.marker }
-            markerLayer.graphics.removeAll(elements)
+            markerLayer.graphics.removeAll(elements.toSet())
         }
     }
 
@@ -114,8 +114,8 @@ class ArcGISMarkerRenderer(
 
                             val pictureSymbolFuture =
                                 PictureMarkerSymbol.createWithImage(bitmapDrawable).also {
-                                    it.width = width.toFloat()
-                                    it.height = height.toFloat()
+                                    it.width = width
+                                    it.height = height
                                     it.offsetX = anchorX.toFloat()
                                     it.offsetY = anchorY.toFloat()
                                 }
@@ -126,7 +126,7 @@ class ArcGISMarkerRenderer(
                                         .toPoint(holder.spatialReference),
                                 symbol = pictureSymbolFuture,
                             ).also {
-                                it.attributes.set("id", params.current.state.id)
+                                it.attributes["id"] = params.current.state.id
                             }
                         } else {
                             params.prev.marker!!
@@ -142,8 +142,8 @@ class ArcGISMarkerRenderer(
 
                         val pictureSymbolFuture =
                             PictureMarkerSymbol.createWithImage(bitmapDrawable).also {
-                                it.width = width.toFloat()
-                                it.height = height.toFloat()
+                                it.width = width
+                                it.height = height
                                 it.offsetX = anchorX.toFloat()
                                 it.offsetY = anchorY.toFloat()
                             }

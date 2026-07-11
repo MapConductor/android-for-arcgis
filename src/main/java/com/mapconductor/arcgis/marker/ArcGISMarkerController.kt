@@ -1,11 +1,9 @@
 package com.mapconductor.arcgis.marker
 
 import com.arcgismaps.mapping.view.Graphic
-import com.arcgismaps.mapping.view.GraphicsOverlay
-import com.arcgismaps.mapping.view.SurfacePlacement
 import com.mapconductor.arcgis.ArcGISActualMarker
-import com.mapconductor.arcgis.map.ArcGISGeoViewHolder
 import com.mapconductor.core.ResourceProvider
+import com.mapconductor.core.controller.OnCameraChangeReceiverInterface
 import com.mapconductor.core.features.GeoPointInterface
 import com.mapconductor.core.map.MapCameraPosition
 import com.mapconductor.core.marker.AbstractMarkerController
@@ -26,9 +24,8 @@ import com.mapconductor.core.raster.TileScheme
 import com.mapconductor.core.tileserver.TileServerRegistry
 import com.mapconductor.settings.Settings
 import java.util.UUID
-import kotlin.math.floor
 import android.os.SystemClock
-import android.util.Log
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.withPermit
@@ -39,14 +36,15 @@ internal data class SelectedMarker(
     val graphic: Graphic,
 )
 
-class ArcGISMarkerController private constructor(
+class ArcGISMarkerController(
     markerManager: MarkerManager<ArcGISActualMarker>,
-    override val renderer: ArcGISMarkerRenderer,
+    renderer: ArcGISMarkerRenderer,
     private val markerTiling: MarkerTilingOptions,
+    val coroutine: CoroutineScope = CoroutineScope(Dispatchers.Main),
 ) : AbstractMarkerController<ArcGISActualMarker>(
         markerManager = markerManager,
         renderer = renderer,
-    ) {
+    ), OnCameraChangeReceiverInterface {
     private var internalSelectedMarker: SelectedMarker? = null
 
     private val defaultMarkerIcon: BitmapIcon = DefaultMarkerIcon().toBitmapIcon()
@@ -65,14 +63,10 @@ class ArcGISMarkerController private constructor(
     internal var selectedMarker: SelectedMarker?
         set(value) {
             if (value == null) {
-                internalSelectedMarker?.let {
-                    setDraggingState(it.state, false)
-                }
                 internalSelectedMarker = null
                 return
             }
             internalSelectedMarker = value
-            setDraggingState(value.state, true)
         }
         get() = internalSelectedMarker
 
@@ -117,7 +111,6 @@ class ArcGISMarkerController private constructor(
 
     override suspend fun add(data: List<MarkerState>) {
         semaphore.withPermit {
-            val currentZoom = currentTileZoom()
             val tilingEnabled =
                 markerTiling.enabled && data.size >= markerManager.minMarkerCount
             val result =
@@ -134,10 +127,10 @@ class ArcGISMarkerController private constructor(
                 }
 
             if (result.tiledDataChanged) {
-                syncTiledOverlay(currentZoom)
+                syncTiledOverlay()
             } else if (result.hasTiledMarkers) {
                 if (markerTileRenderer == null || markerTileRasterLayerState == null) {
-                    syncTiledOverlay(currentZoom)
+                    syncTiledOverlay()
                 }
             } else {
                 removeTileOverlay()
@@ -159,7 +152,6 @@ class ArcGISMarkerController private constructor(
             val wantsTiled = tilingEnabled && !state.draggable && state.getAnimation() == null
             val wasTiled = tiledMarkerIds.contains(state.id)
             val markerIcon = state.icon?.toBitmapIcon() ?: defaultMarkerIcon
-            val currentZoom = currentTileZoom()
 
             if (wantsTiled) {
                 if (!wasTiled) {
@@ -175,7 +167,7 @@ class ArcGISMarkerController private constructor(
                     ),
                 )
                 renderer.onPostProcess()
-                syncTiledOverlay(currentZoom)
+                syncTiledOverlay()
                 return@withPermit
             }
 
@@ -212,7 +204,7 @@ class ArcGISMarkerController private constructor(
             renderer.onPostProcess()
 
             if (tiledMarkerIds.isNotEmpty()) {
-                syncTiledOverlay(currentZoom)
+                syncTiledOverlay()
             } else {
                 removeTileOverlay()
             }
@@ -247,7 +239,7 @@ class ArcGISMarkerController private constructor(
         markerTileGroupId = null
         markerTileRenderer = null
 
-        renderer.coroutine.launch {
+        coroutine.launch {
             rasterLayerCallback?.onRasterLayerUpdate(null)
         }
         markerTileRasterLayerState = null
@@ -277,9 +269,7 @@ class ArcGISMarkerController private constructor(
         rasterLayerCallback?.onRasterLayerUpdate(newState)
     }
 
-    private fun currentTileZoom(): Int = floor(lastKnownZoom).toInt().coerceAtLeast(0)
-
-    private suspend fun syncTiledOverlay(zoom: Int) {
+    private suspend fun syncTiledOverlay() {
         if (tiledMarkerIds.isEmpty()) {
             removeTileOverlay()
             return
@@ -302,7 +292,7 @@ class ArcGISMarkerController private constructor(
 
         cacheVersion = (cacheVersion + 1) and 0x7fffffff
         val tileRenderer =
-            MarkerTileRenderer<ArcGISActualMarker>(
+            MarkerTileRenderer(
                 markerManager = markerManager,
                 tileSize = 256,
                 cacheSizeBytes = markerTiling.cacheSize,
@@ -344,39 +334,5 @@ class ArcGISMarkerController private constructor(
 
         rasterLayerCallback?.onRasterLayerUpdate(null)
         markerTileRasterLayerState = null
-    }
-
-    companion object {
-        fun create(
-            holder: ArcGISGeoViewHolder<*, *>,
-            markerTiling: MarkerTilingOptions = MarkerTilingOptions.Default,
-            useScenePlacement: Boolean = true,
-        ): ArcGISMarkerController {
-            val markerLayer: GraphicsOverlay =
-                GraphicsOverlay().apply {
-                    if (useScenePlacement) {
-                        sceneProperties.surfacePlacement = SurfacePlacement.Relative
-                    }
-                }
-
-            val renderer =
-                ArcGISMarkerRenderer(
-                    markerLayer = markerLayer,
-                    holder = holder,
-                )
-
-            val markerManager =
-                MarkerManager.defaultManager<ArcGISActualMarker>(
-                    minMarkerCount = markerTiling.minMarkerCount,
-                )
-
-            val controller =
-                ArcGISMarkerController(
-                    markerManager = markerManager,
-                    renderer = renderer,
-                    markerTiling = markerTiling,
-                )
-            return controller
-        }
     }
 }

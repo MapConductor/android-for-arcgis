@@ -1,4 +1,4 @@
-package com.mapconductor.arcgis.map
+package com.mapconductor.arcgis
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -16,13 +16,12 @@ import com.arcgismaps.mapping.ArcGISTiledElevationSource
 import com.arcgismaps.mapping.view.GraphicsOverlay
 import com.arcgismaps.mapping.view.SceneView
 import com.arcgismaps.mapping.view.SurfacePlacement
-import com.mapconductor.arcgis.ArcGISActualMarker
 import com.mapconductor.arcgis.circle.ArcGISCircleOverlayController
 import com.mapconductor.arcgis.circle.ArcGISCircleOverlayRenderer
-import com.mapconductor.arcgis.from
 import com.mapconductor.arcgis.groundimage.ArcGISGroundImageController
 import com.mapconductor.arcgis.groundimage.ArcGISGroundImageOverlayRenderer
 import com.mapconductor.arcgis.marker.ArcGISMarkerController
+import com.mapconductor.arcgis.marker.ArcGISMarkerRenderer
 import com.mapconductor.arcgis.polygon.ArcGISPolygonOverlayController
 import com.mapconductor.arcgis.polygon.ArcGISPolygonOverlayRenderer
 import com.mapconductor.arcgis.polyline.ArcGISPolylineOverlayController
@@ -37,6 +36,7 @@ import com.mapconductor.core.map.MapCameraPosition
 import com.mapconductor.core.map.MapCameraPositionInterface
 import com.mapconductor.core.map.MutableMapServiceRegistry
 import com.mapconductor.core.marker.MarkerEventControllerInterface
+import com.mapconductor.core.marker.MarkerManager
 import com.mapconductor.core.marker.MarkerOverlayRendererInterface
 import com.mapconductor.core.marker.MarkerRenderingStrategyInterface
 import com.mapconductor.core.marker.MarkerRenderingSupport
@@ -45,6 +45,7 @@ import com.mapconductor.core.marker.MarkerTilingOptions
 import com.mapconductor.core.marker.StrategyMarkerController
 import com.mapconductor.core.tileserver.TileServerRegistry
 import java.util.concurrent.atomic.AtomicLong
+import android.content.Context
 import android.util.Log
 import android.widget.FrameLayout
 import kotlinx.coroutines.CoroutineScope
@@ -58,7 +59,7 @@ fun ArcGISMapView(
     state: ArcGISMapViewState,
     modifier: Modifier = Modifier,
     markerTiling: MarkerTilingOptions? = null,
-    sdkInitialize: (suspend (android.content.Context) -> Boolean)? = null,
+    sdkInitialize: (suspend (Context) -> Boolean)? = null,
     onMapLoaded: OnMapLoadedHandler? = null,
     onCameraMoveStart: OnCameraMoveHandler? = null,
     onCameraMove: OnCameraMoveHandler? = null,
@@ -115,7 +116,7 @@ fun ArcGISMapView(
 
             val coroutine = CoroutineScope(Dispatchers.Default)
 
-            suspendCancellableCoroutine<ArcGISMapViewHolder> { cont ->
+            suspendCancellableCoroutine { cont ->
                 cont.invokeOnCancellation { coroutine.cancel() }
                 coroutine.launch {
                     scene.loadStatus.collect {
@@ -126,7 +127,7 @@ fun ArcGISMapView(
                                         mapView = wrapView,
                                         map = wrapView.sceneView,
                                     )
-                                cont.resume(holder) { cause, _, _ -> }
+                                cont.resume(holder) { _, _, _ -> }
                             }
                             is LoadStatus.FailedToLoad -> {
                                 // Offline or network error: resume with a holder anyway so
@@ -135,10 +136,10 @@ fun ArcGISMapView(
                                 if (cont.isActive) {
                                     cont.resume(
                                         ArcGISMapViewHolder(
-                                                    mapView = wrapView,
-                                                    map = wrapView.sceneView,
-                                                )
-                                    ) { cause, _, _ -> }
+                                            mapView = wrapView,
+                                            map = wrapView.sceneView,
+                                        )
+                                    ) { _, _, _ -> }
                                 }
                             }
                             else -> {
@@ -151,9 +152,16 @@ fun ArcGISMapView(
         },
         controllerProvider = { holder ->
 
+            val markerLayer: GraphicsOverlay =
+                GraphicsOverlay().apply {
+//                    if (useScenePlacement) {
+//                        sceneProperties.surfacePlacement = SurfacePlacement.Relative
+//                    }
+                }
             val markerController =
                 getMarkerController(
                     holder = holder,
+                    markerLayer = markerLayer,
                     markerTiling = markerTiling ?: MarkerTilingOptions.Default,
                 )
             val polylineController = getPolylineController(holder)
@@ -179,14 +187,13 @@ fun ArcGISMapView(
                     object : MarkerRenderingSupport<ArcGISActualMarker> {
                         override fun createMarkerRenderer(
                             strategy: MarkerRenderingStrategyInterface<ArcGISActualMarker>,
-                        ): MarkerOverlayRendererInterface<ArcGISActualMarker> =
-                            mapController.createMarkerRenderer(strategy)
+                        ): MarkerOverlayRendererInterface<ArcGISActualMarker> = mapController.createMarkerRenderer()
 
                         override fun createMarkerEventController(
                             controller: StrategyMarkerController<ArcGISActualMarker>,
-                            renderer: MarkerOverlayRendererInterface<ArcGISActualMarker>,
-                        ): MarkerEventControllerInterface<ArcGISActualMarker> =
-                            mapController.createMarkerEventController(controller, renderer)
+                            renderer: MarkerOverlayRendererInterface<ArcGISActualMarker>
+                        ): MarkerEventControllerInterface<ArcGISActualMarker>
+                            = mapController.createMarkerEventController(controller)
 
                         override fun registerMarkerEventController(
                             controller: MarkerEventControllerInterface<ArcGISActualMarker>,
@@ -349,13 +356,29 @@ internal fun getPolygonController(
 
 internal fun getMarkerController(
     holder: ArcGISGeoViewHolder<*, *>,
-    markerTiling: MarkerTilingOptions,
-    useScenePlacement: Boolean = true,
-) = ArcGISMarkerController.create(
-    holder = holder,
-    markerTiling = markerTiling,
-    useScenePlacement = useScenePlacement,
-)
+    markerLayer: GraphicsOverlay,
+    markerTiling: MarkerTilingOptions = MarkerTilingOptions.Default,
+): ArcGISMarkerController {
+
+    val renderer =
+        ArcGISMarkerRenderer(
+            markerLayer = markerLayer,
+            holder = holder,
+        )
+
+    val markerManager =
+        MarkerManager.defaultManager<ArcGISActualMarker>(
+            minMarkerCount = markerTiling.minMarkerCount,
+        )
+
+    val controller =
+        ArcGISMarkerController(
+            markerManager = markerManager,
+            renderer = renderer,
+            markerTiling = markerTiling,
+        )
+    return controller
+}
 
 internal fun getRasterLayerController(holder: ArcGISGeoViewHolder<*, *>): ArcGISRasterLayerController {
     val renderer =
@@ -386,7 +409,7 @@ internal fun getGroundImageController(holder: ArcGISGeoViewHolder<*, *>): ArcGIS
  * @param context Application context
  * @return true if initialization succeeded, false otherwise
  */
-internal suspend fun defaultArcGISInitialize(context: android.content.Context): Boolean {
+internal fun defaultArcGISInitialize(context: Context): Boolean {
     if (ArcGISEnvironment.authenticationManager.arcGISCredentialStore
             .getCredentials()
             .isEmpty()

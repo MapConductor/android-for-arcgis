@@ -1,4 +1,4 @@
-package com.mapconductor.arcgis.map
+package com.mapconductor.arcgis
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -10,9 +10,8 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.arcgismaps.LoadStatus
 import com.arcgismaps.mapping.ArcGISMap
+import com.arcgismaps.mapping.view.GraphicsOverlay
 import com.arcgismaps.mapping.view.MapView
-import com.mapconductor.arcgis.ArcGISActualMarker
-import com.mapconductor.arcgis.from
 import com.mapconductor.compose.map.MapViewBase
 import com.mapconductor.core.map.MapCameraPosition
 import com.mapconductor.core.map.MapCameraPositionInterface
@@ -28,6 +27,7 @@ import com.mapconductor.core.marker.MarkerRenderingSupportKey
 import com.mapconductor.core.marker.MarkerTilingOptions
 import com.mapconductor.core.marker.StrategyMarkerController
 import java.util.concurrent.atomic.AtomicLong
+import android.content.Context
 import android.widget.FrameLayout
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -40,7 +40,7 @@ fun ArcGISMapView2D(
     state: ArcGISMapViewState,
     modifier: Modifier = Modifier,
     markerTiling: MarkerTilingOptions? = null,
-    sdkInitialize: (suspend (android.content.Context) -> Boolean)? = null,
+    sdkInitialize: (suspend (Context) -> Boolean)? = null,
     onMapLoaded: OnMapLoadedHandler? = null,
     onCameraMoveStart: OnCameraMoveHandler? = null,
     onCameraMove: OnCameraMoveHandler? = null,
@@ -82,7 +82,7 @@ fun ArcGISMapView2D(
             wrapView.arcGISMapView.map = map
 
             val coroutine = CoroutineScope(Dispatchers.Default)
-            suspendCancellableCoroutine<ArcGISMapView2DHolder> { cont ->
+            suspendCancellableCoroutine { cont ->
                 cont.invokeOnCancellation { coroutine.cancel() }
                 coroutine.launch {
                     map.loadStatus.collect {
@@ -92,9 +92,8 @@ fun ArcGISMapView2D(
                                     ArcGISMapView2DHolder(
                                         mapView = wrapView,
                                         map = wrapView.arcGISMapView,
-                                    ),
-                                    onCancellation = {},
-                                )
+                                    )
+                                ) { _, _, _ -> }
                             }
                             is LoadStatus.FailedToLoad -> {
                                 if (cont.isActive) {
@@ -102,9 +101,8 @@ fun ArcGISMapView2D(
                                         ArcGISMapView2DHolder(
                                             mapView = wrapView,
                                             map = wrapView.arcGISMapView,
-                                        ),
-                                        onCancellation = {},
-                                    )
+                                        )
+                                    ) { _, _, _ -> }
                                 }
                             }
                             else -> {
@@ -116,11 +114,17 @@ fun ArcGISMapView2D(
             }
         },
         controllerProvider = { holder ->
+            val markerLayer: GraphicsOverlay =
+                GraphicsOverlay().apply {
+//                    if (useScenePlacement) {
+//                        sceneProperties.surfacePlacement = SurfacePlacement.Relative
+//                    }
+                }
             val markerController =
                 getMarkerController(
                     holder = holder,
+                    markerLayer = markerLayer,
                     markerTiling = markerTiling ?: MarkerTilingOptions.Default,
-                    useScenePlacement = false,
                 )
             val polylineController = getPolylineController(holder, useScenePlacement = false)
             val rasterLayerController = getRasterLayerController(holder)
@@ -143,14 +147,13 @@ fun ArcGISMapView2D(
                     object : MarkerRenderingSupport<ArcGISActualMarker> {
                         override fun createMarkerRenderer(
                             strategy: MarkerRenderingStrategyInterface<ArcGISActualMarker>,
-                        ): MarkerOverlayRendererInterface<ArcGISActualMarker> =
-                            mapController.createMarkerRenderer(strategy)
+                        ): MarkerOverlayRendererInterface<ArcGISActualMarker> =  mapController.createMarkerRenderer()
 
                         override fun createMarkerEventController(
                             controller: StrategyMarkerController<ArcGISActualMarker>,
-                            renderer: MarkerOverlayRendererInterface<ArcGISActualMarker>,
-                        ): MarkerEventControllerInterface<ArcGISActualMarker> =
-                            mapController.createMarkerEventController(controller, renderer)
+                            renderer: MarkerOverlayRendererInterface<ArcGISActualMarker>
+                        ): MarkerEventControllerInterface<ArcGISActualMarker>
+                            = mapController.createMarkerEventController(controller)
 
                         override fun registerMarkerEventController(
                             controller: MarkerEventControllerInterface<ArcGISActualMarker>,
