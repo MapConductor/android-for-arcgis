@@ -102,7 +102,7 @@ class ArcGISMapViewState(
     }
 
     override fun getMapViewHolder(): MapViewHolderInterface<*, *>? = controller?.holder
-    override fun getControllers(): List<OverlayControllerInterface<*, *, *>>? = controller?.getControllers()
+    override fun getControllers() = controller?.getControllers()
 
     internal fun updateCameraPosition(cameraPosition: MapCameraPosition) {
         this._cameraPosition = cameraPosition
