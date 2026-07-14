@@ -29,7 +29,6 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.withPermit
-import kotlinx.coroutines.withContext
 
 internal data class SelectedMarker(
     val state: MarkerState,
@@ -114,17 +113,15 @@ class ArcGISMarkerController(
             val tilingEnabled =
                 markerTiling.enabled && data.size >= markerManager.minMarkerCount
             val result =
-                withContext(Dispatchers.Default) {
-                    MarkerIngestionEngine.ingest(
-                        data = data,
-                        markerManager = markerManager,
-                        renderer = renderer,
-                        defaultMarkerIcon = defaultMarkerIcon,
-                        tilingEnabled = tilingEnabled,
-                        tiledMarkerIds = tiledMarkerIds,
-                        shouldTile = { state -> !state.draggable && state.getAnimation() == null },
-                    )
-                }
+                MarkerIngestionEngine.ingest(
+                    data = data,
+                    markerManager = markerManager,
+                    renderer = renderer,
+                    defaultMarkerIcon = defaultMarkerIcon,
+                    tilingEnabled = tilingEnabled,
+                    tiledMarkerIds = tiledMarkerIds,
+                    shouldTile = { state -> !state.draggable && state.getAnimation() == null },
+                )
 
             if (result.tiledDataChanged) {
                 syncTiledOverlay()
