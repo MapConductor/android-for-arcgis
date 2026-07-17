@@ -17,19 +17,6 @@ import kotlin.math.sin
 // (ArcGIS camera FOV differs from Google/Mapbox; using DEFAULT_ZOOM0_ALTITUDE drifts the visible scale.)
 private val converter = ZoomAltitudeConverter()
 
-fun MapCameraPosition.getAltitudeForArcGIS(): Double = converter.zoomLevelToAltitude(zoom, position.latitude, tilt)
-
-fun MapCameraPosition.toCamera(): Camera {
-    val targetPoint = GeoPoint.from(position).toPoint()
-    return calculateCameraForOrbitParameters(
-        targetPoint = targetPoint,
-        distance = converter.zoomLevelToDistance(zoom, position.latitude),
-        // For orbit camera: cameraHeadingOffset = bearing + 180 makes Camera.heading == bearing.
-        cameraHeadingOffset = bearing + 180,
-        cameraPitchOffset = tilt,
-    )
-}
-
 internal const val EARTH_MEAN_RADIUS_METERS = 6371000.0
 internal const val DEFAULT_MAX_GMAPS_TILT = 60.0
 internal const val ARCGIS_MAX_PITCH = 90.0

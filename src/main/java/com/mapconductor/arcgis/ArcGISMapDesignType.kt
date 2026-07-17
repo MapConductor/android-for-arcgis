@@ -1,6 +1,7 @@
 package com.mapconductor.arcgis
 
 import com.arcgismaps.mapping.BasemapStyle
+import com.mapconductor.core.map.AttributionRule
 import com.mapconductor.core.map.MapDesignTypeInterface
 
 interface ArcGISDesignTypeInterface : MapDesignTypeInterface<String> {
@@ -10,6 +11,7 @@ interface ArcGISDesignTypeInterface : MapDesignTypeInterface<String> {
 data class ArcGISDesign(
     override val id: String,
     override val elevationSources: List<String> = emptyList<String>(),
+    override val attributionRules: List<AttributionRule> = emptyList(),
 ) : ArcGISDesignTypeInterface {
     override fun getValue(): String = id
 
