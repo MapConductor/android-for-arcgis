@@ -1,8 +1,9 @@
 package com.mapconductor.arcgis.polygon
 
-import androidx.compose.ui.graphics.Color
 import com.arcgismaps.geometry.Geometry
+import com.arcgismaps.geometry.MutablePart
 import com.arcgismaps.geometry.PolygonBuilder
+import com.arcgismaps.geometry.SpatialReference
 import com.arcgismaps.mapping.symbology.SimpleFillSymbol
 import com.arcgismaps.mapping.symbology.SimpleFillSymbolStyle
 import com.arcgismaps.mapping.symbology.SimpleLineSymbol
@@ -11,24 +12,14 @@ import com.arcgismaps.mapping.view.Graphic
 import com.arcgismaps.mapping.view.GraphicsOverlay
 import com.mapconductor.arcgis.ArcGISActualPolygon
 import com.mapconductor.arcgis.ArcGISGeoViewHolder
-import com.mapconductor.arcgis.raster.ArcGISRasterLayerController
 import com.mapconductor.arcgis.toArcGISColor
-import com.mapconductor.arcgis.toPoint
 import com.mapconductor.core.ResourceProvider
-import com.mapconductor.core.features.GeoPoint
 import com.mapconductor.core.features.GeoPointInterface
-import com.mapconductor.core.features.GeoRectBounds
 import com.mapconductor.core.polygon.AbstractPolygonOverlayRenderer
 import com.mapconductor.core.polygon.PolygonEntityInterface
-import com.mapconductor.core.polygon.PolygonRasterTileRenderer
 import com.mapconductor.core.polygon.PolygonState
-import com.mapconductor.core.raster.RasterLayerSource
-import com.mapconductor.core.raster.RasterLayerState
-import com.mapconductor.core.raster.TileScheme
+import com.mapconductor.core.polygon.unionHoles
 import com.mapconductor.core.spherical.createInterpolatePoints
-import com.mapconductor.core.spherical.createLinearInterpolatePoints
-import com.mapconductor.core.tileserver.LocalTileServer
-import com.mapconductor.core.tileserver.TileServerRegistry
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -37,33 +28,12 @@ import kotlinx.coroutines.withContext
 class ArcGISPolygonOverlayRenderer(
     val polygonLayer: GraphicsOverlay,
     override val holder: ArcGISGeoViewHolder<*, *>,
-    private val rasterLayerController: ArcGISRasterLayerController,
-    private val tileServer: LocalTileServer = TileServerRegistry.get(forceNoStoreCache = true),
     override val coroutine: CoroutineScope = CoroutineScope(Dispatchers.Main),
 ) : AbstractPolygonOverlayRenderer<ArcGISActualPolygon>() {
-    companion object {
-        private const val MASK_TILE_SIZE_PX = 256
-    }
-
-    private data class MaskHandle(
-        val routeId: String,
-        val provider: PolygonRasterTileRenderer,
-        val rasterLayerId: String,
-        var cacheVersion: Int,
-    )
-
-    private val masks = HashMap<String, MaskHandle>()
-
     override suspend fun createPolygon(state: PolygonState): ArcGISActualPolygon? =
         withContext(coroutine.coroutineContext) {
-            val geometry =
-                if (state.holes.isEmpty()) {
-                    removeMaskLayer(state.id)
-                    createGeometry(state)
-                } else {
-                    ensureMaskLayer(state, forceRecreate = true)
-                    createGeometry(state.copy(holes = emptyList()))
-                }
+            val resolved = resolveHoles(state)
+            val geometry = createGeometry(resolved)
             val outlineSymbol =
                 SimpleLineSymbol().apply {
                     style = SimpleLineSymbolStyle.Solid
@@ -74,12 +44,7 @@ class ArcGISPolygonOverlayRenderer(
             val fillSymbol =
                 SimpleFillSymbol().apply {
                     style = SimpleFillSymbolStyle.Solid
-                    color =
-                        if (state.holes.isEmpty()) {
-                            state.fillColor.toArcGISColor()
-                        } else {
-                            com.arcgismaps.Color(0)
-                        }
+                    color = state.fillColor.toArcGISColor()
                     outline = outlineSymbol
                 }
 
@@ -106,35 +71,20 @@ class ArcGISPolygonOverlayRenderer(
                 finger.holes != prevFinger.holes ||
                 finger.geodesic != prevFinger.geodesic
             ) {
-                current.polygon.geometry =
-                    if (current.state.holes.isEmpty()) {
-                        removeMaskLayer(current.state.id)
-                        createGeometry(current.state)
-                    } else {
-                        ensureMaskLayer(current.state, forceRecreate = true)
-                        createGeometry(current.state.copy(holes = emptyList()))
-                    }
+                val resolved = resolveHoles(current.state)
+                current.polygon.geometry = createGeometry(resolved)
             }
 
             (current.polygon.symbol as SimpleFillSymbol).let { symbol ->
-                if (current.state.holes.isNotEmpty()) {
-                    ensureMaskLayer(current.state, forceRecreate = true)
-                    symbol.color = com.arcgismaps.Color(0)
-                    symbol.outline?.let { outline ->
+                if (finger.fillColor != prevFinger.fillColor) {
+                    symbol.color = current.state.fillColor.toArcGISColor()
+                }
+                symbol.outline?.let { outline ->
+                    if (finger.strokeColor != prevFinger.strokeColor) {
                         outline.color = current.state.strokeColor.toArcGISColor()
+                    }
+                    if (finger.strokeWidth != prevFinger.strokeWidth) {
                         outline.width = ResourceProvider.dpToPx(current.state.strokeWidth).toFloat()
-                    }
-                } else {
-                    if (finger.fillColor != prevFinger.fillColor) {
-                        symbol.color = current.state.fillColor.toArcGISColor()
-                    }
-                    symbol.outline?.let { outline ->
-                        if (finger.strokeColor != prevFinger.strokeColor) {
-                            outline.color = current.state.strokeColor.toArcGISColor()
-                        }
-                        if (finger.strokeWidth != prevFinger.strokeWidth) {
-                            outline.width = ResourceProvider.dpToPx(current.state.strokeWidth).toFloat()
-                        }
                     }
                 }
             }
@@ -151,20 +101,31 @@ class ArcGISPolygonOverlayRenderer(
         coroutine.launch {
             polygonLayer.graphics.remove(entity.polygon)
         }
-        removeMaskLayer(entity.state.id)
     }
 
     override suspend fun onPostProcess() {
         // Sort graphics by zIndex to ensure correct rendering order
         withContext(coroutine.coroutineContext) {
+            val graphics = polygonLayer.graphics.toList()
+            if (graphics.size <= 1) return@withContext
+
             val sortedGraphics =
-                polygonLayer.graphics.toList().sortedBy { graphic ->
+                graphics.sortedBy { graphic ->
                     (graphic.attributes.get("zIndex") as? Int) ?: 0
                 }
+            if (graphics == sortedGraphics) return@withContext
+
             polygonLayer.graphics.clear()
             polygonLayer.graphics.addAll(sortedGraphics)
         }
     }
+
+    private suspend fun resolveHoles(state: PolygonState): PolygonState =
+        if (state.holes.size > 1) {
+            withContext(Dispatchers.Default) { state.unionHoles() }
+        } else {
+            state
+        }
 
     private fun createGeometry(state: PolygonState): Geometry {
         // ArcGIS polygons can become extremely dense when geodesic=true (especially for world-mask rings),
@@ -177,178 +138,53 @@ class ArcGISPolygonOverlayRenderer(
         ): List<GeoPointInterface> =
             when (geodesic) {
                 true -> createInterpolatePoints(points, maxSegmentLength = geodesicMaxSegmentLengthMeters)
-                false -> createLinearInterpolatePoints(points)
+                false -> points
             }
 
-        fun closeRing(points: List<GeoPointInterface>): List<GeoPointInterface> {
-            if (points.isEmpty()) return points
+        fun openRing(points: List<GeoPointInterface>): List<GeoPointInterface> {
+            if (points.size < 2) return points
             val first = points.first()
             val last = points.last()
-            return if (first.latitude == last.latitude && first.longitude == last.longitude) points else points + first
+            return if (first.latitude == last.latitude && first.longitude == last.longitude) {
+                points.dropLast(1)
+            } else {
+                points
+            }
         }
 
         val outer: List<GeoPointInterface> =
-            closeRing(toRing(state.points, state.geodesic)).let(::ensureClockwise)
+            openRing(toRing(state.points, state.geodesic)).let(::ensureClockwise)
         val holes: List<List<GeoPointInterface>> =
             state.holes
-                .map { ring -> closeRing(toRing(ring, state.geodesic)).let(::ensureCounterClockwise) }
-                .filter { it.size >= 4 }
+                .map { ring -> openRing(toRing(ring, state.geodesic)).let(::ensureCounterClockwise) }
+                .filter { it.size >= 3 }
 
-        // Prefer ArcGIS JSON to support holes without relying on PolygonBuilder part APIs.
-        if (holes.isNotEmpty()) {
-            val json =
-                buildString {
-                    append("{\"rings\":[")
-
-                    fun appendRing(ring: List<GeoPointInterface>) {
-                        append("[")
-                        ring.forEachIndexed { idx, p ->
-                            if (idx > 0) append(",")
-                            append("[")
-                            append(p.longitude)
-                            append(",")
-                            append(p.latitude)
-                            append("]")
-                        }
-                        append("]")
+        val spatialReference = SpatialReference.wgs84()
+        val parts =
+            (listOf(outer) + holes).map { ring ->
+                MutablePart(spatialReference).apply {
+                    ring.forEach { point ->
+                        addPoint(point.longitude, point.latitude)
                     }
-                    appendRing(outer)
-                    holes.forEach { hole ->
-                        append(",")
-                        appendRing(hole)
-                    }
-                    append("],\"spatialReference\":{\"wkid\":4326}}")
-                }
-
-            Geometry.fromJsonOrNull(json)?.let { return it }
-        }
-
-        val polygonBuilder =
-            PolygonBuilder().also { builder ->
-                outer.forEach {
-                    builder.addPoint(GeoPoint.from(it).toPoint())
                 }
             }
-        return polygonBuilder.toGeometry()
+        return PolygonBuilder(parts).toGeometry()
     }
-
-    private suspend fun ensureMaskLayer(
-        state: PolygonState,
-        forceRecreate: Boolean = false,
-    ) {
-        val polygonId = state.id
-        val handle = masks[polygonId]
-        if (handle != null && !forceRecreate) {
-            updateMaskBounds(handle, state)
-            return
-        }
-
-        if (handle != null) {
-            removeMaskLayer(polygonId)
-        }
-
-        val routeId = "polygon-raster-" + safeId(polygonId)
-        val rasterLayerId = "polygon-raster-$polygonId"
-        val provider =
-            PolygonRasterTileRenderer(
-                tileSizePx = MASK_TILE_SIZE_PX,
-            )
-        updateMaskBounds(provider, state)
-        tileServer.register(routeId, provider)
-
-        val cacheVersion = ((System.nanoTime() / 1_000_000) and 0x7fffffff).toInt()
-        val urlTemplate = tileServer.urlTemplate(routeId, MASK_TILE_SIZE_PX, cacheVersion.toString())
-        val rasterState =
-            RasterLayerState(
-                source =
-                    RasterLayerSource.UrlTemplate(
-                        template = urlTemplate,
-                        tileSize = MASK_TILE_SIZE_PX,
-                        maxZoom = 22,
-                        scheme = TileScheme.XYZ,
-                    ),
-                opacity = 1.0f,
-                visible = true,
-                zIndex = state.zIndex,
-                id = rasterLayerId,
-            )
-        rasterLayerController.upsert(rasterState)
-
-        if (!rasterLayerController.rasterLayerManager.hasEntity(rasterLayerId)) {
-            tileServer.unregister(routeId)
-            return
-        }
-
-        masks[polygonId] =
-            MaskHandle(
-                routeId = routeId,
-                provider = provider,
-                rasterLayerId = rasterLayerId,
-                cacheVersion = cacheVersion,
-            )
-    }
-
-    private suspend fun removeMaskLayer(polygonId: String) {
-        val handle = masks.remove(polygonId) ?: return
-        tileServer.unregister(handle.routeId)
-        rasterLayerController.removeById(handle.rasterLayerId)
-    }
-
-    private fun updateMaskBounds(
-        handle: MaskHandle,
-        state: PolygonState,
-    ) {
-        updateMaskBounds(handle.provider, state)
-    }
-
-    private fun updateMaskBounds(
-        provider: PolygonRasterTileRenderer,
-        state: PolygonState,
-    ) {
-        provider.points = state.points
-        provider.holes = state.holes
-        provider.fillColor = state.fillColor
-        provider.strokeColor = Color.Transparent
-        provider.strokeWidthPx = 0f
-        provider.geodesic = state.geodesic
-        provider.outerBounds = boundsOf(state.points)
-    }
-
-    private fun boundsOf(points: List<GeoPointInterface>): GeoRectBounds? {
-        if (points.isEmpty()) return null
-        val b = GeoRectBounds()
-        points.forEach { b.extend(it) }
-        val span = b.toSpan()
-        if (span == null) return b
-        val padLat = if (span.latitude == 0.0) 1e-6 else 0.0
-        val padLon = if (span.longitude == 0.0) 1e-6 else 0.0
-        return if (padLat != 0.0 || padLon != 0.0) b.expandedByDegrees(padLat, padLon) else b
-    }
-
-    private fun safeId(id: String): String =
-        id
-            .map { ch ->
-                when {
-                    ch.isLetterOrDigit() -> ch
-                    ch == '-' || ch == '_' || ch == '.' -> ch
-                    else -> '_'
-                }
-            }.joinToString("")
 
     private fun signedAreaLonLat(ring: List<GeoPointInterface>): Double {
         if (ring.size < 3) return 0.0
         var sum = 0.0
-        for (i in 0 until ring.size - 1) {
+        for (i in ring.indices) {
             val a = ring[i]
-            val b = ring[i + 1]
+            val b = ring[(i + 1) % ring.size]
             sum += (a.longitude * b.latitude) - (b.longitude * a.latitude)
         }
         return sum / 2.0
     }
 
-    private fun ensureClockwise(ringClosed: List<GeoPointInterface>): List<GeoPointInterface> =
-        if (signedAreaLonLat(ringClosed) < 0.0) ringClosed else ringClosed.asReversed()
+    private fun ensureClockwise(ring: List<GeoPointInterface>): List<GeoPointInterface> =
+        if (signedAreaLonLat(ring) < 0.0) ring else ring.asReversed()
 
-    private fun ensureCounterClockwise(ringClosed: List<GeoPointInterface>): List<GeoPointInterface> =
-        if (signedAreaLonLat(ringClosed) > 0.0) ringClosed else ringClosed.asReversed()
+    private fun ensureCounterClockwise(ring: List<GeoPointInterface>): List<GeoPointInterface> =
+        if (signedAreaLonLat(ring) > 0.0) ring else ring.asReversed()
 }

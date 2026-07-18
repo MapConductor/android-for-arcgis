@@ -111,13 +111,13 @@ class ArcGISMapView2DController(
     }
 
     fun setupListeners() {
-        defaultCoroutine.launch { holder.map.onSingleTapConfirmed.collect { onMapTap(it) } }
+        mainCoroutine.launch { holder.map.onSingleTapConfirmed.collect { onMapTap(it) } }
         defaultCoroutine.launch { holder.map.viewpointChanged.collect { onViewpointChange() } }
         defaultCoroutine.launch { holder.map.onInteractiveZooming.collect { invokeCameraMoveCallback() } }
         defaultCoroutine.launch { holder.map.onRotate.collect { invokeCameraMoveCallback() } }
-        defaultCoroutine.launch { holder.map.onLongPress.collect { onMapLongPress(it) } }
-        defaultCoroutine.launch { holder.map.onUp.collect { onMapUp(it) } }
-        defaultCoroutine.launch { holder.map.onPan.collect { onMapPan(it) } }
+        mainCoroutine.launch { holder.map.onLongPress.collect { onMapLongPress(it) } }
+        mainCoroutine.launch { holder.map.onUp.collect { onMapUp(it) } }
+        mainCoroutine.launch { holder.map.onPan.collect { onMapPan(it) } }
     }
 
     override fun hasMarker(state: MarkerState): Boolean = markerController.markerManager.hasEntity(state.id)
@@ -214,6 +214,7 @@ class ArcGISMapView2DController(
             val position = point.toGeoPoint()
             controller.updateDrag(point, position)
             controller.getSelectedState()?.let { state -> controller.dispatchDrag(state) }
+            return
         }
         invokeCameraMoveCallback()
     }
@@ -221,7 +222,7 @@ class ArcGISMapView2DController(
     private fun onMapUp(event: UpEvent) {
         val controller = activeDragController
         if (controller != null) {
-            val point = holder.map.screenToLocation(event.screenCoordinate) ?: return
+            val point = event.mapPoint ?: holder.map.screenToLocation(event.screenCoordinate) ?: return
             val position = point.toGeoPoint()
             val selectedState = controller.getSelectedState()
             controller.endDrag(point, position)
@@ -235,7 +236,7 @@ class ArcGISMapView2DController(
         if (event.motionEvent.action != MotionEvent.ACTION_MOVE) return
 
         val screenPoint = event.screenCoordinate
-        val point = holder.map.screenToLocation(screenPoint) ?: return
+        val point = event.mapPoint ?: holder.map.screenToLocation(screenPoint) ?: return
         val position = point.toGeoPoint()
         val identifyResult =
             holder.map.identifyGraphicsOverlay(

@@ -11,6 +11,7 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.arcgismaps.LoadStatus
 import com.arcgismaps.mapping.ArcGISMap
 import com.arcgismaps.mapping.view.GraphicsOverlay
+import com.arcgismaps.mapping.view.GraphicsRenderingMode
 import com.arcgismaps.mapping.view.MapView
 import com.mapconductor.compose.map.MapViewBase
 import com.mapconductor.core.map.MapCameraPosition
@@ -116,9 +117,7 @@ fun ArcGISMapView2D(
         controllerProvider = { holder ->
             val markerLayer: GraphicsOverlay =
                 GraphicsOverlay().apply {
-//                    if (useScenePlacement) {
-//                        sceneProperties.surfacePlacement = SurfacePlacement.Relative
-//                    }
+                    renderingMode = GraphicsRenderingMode.Dynamic
                 }
             val markerController =
                 getMarkerController(
@@ -128,7 +127,7 @@ fun ArcGISMapView2D(
                 )
             val polylineController = getPolylineController(holder, useScenePlacement = false)
             val rasterLayerController = getRasterLayerController(holder)
-            val polygonController = getPolygonController(holder, rasterLayerController, useScenePlacement = false)
+            val polygonController = getPolygonController(holder, useScenePlacement = false)
             val circleController = getCircleController(holder, useScenePlacement = false)
             val groundImageController = getGroundImageController(holder)
 

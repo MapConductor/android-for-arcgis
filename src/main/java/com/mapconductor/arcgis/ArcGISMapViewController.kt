@@ -111,7 +111,7 @@ class ArcGISMapViewController(
     }
 
     fun setupListeners() {
-        defaultCoroutine.launch {
+        mainCoroutine.launch {
             holder.map.onSingleTapConfirmed.collect { onMapTap(it) }
         }
         defaultCoroutine.launch {
@@ -123,13 +123,13 @@ class ArcGISMapViewController(
         defaultCoroutine.launch {
             holder.map.onRotate.collect { invokeCameraMoveCallback() }
         }
-        defaultCoroutine.launch {
+        mainCoroutine.launch {
             holder.map.onLongPress.collect { onMapLongPress(it) }
         }
-        defaultCoroutine.launch {
+        mainCoroutine.launch {
             holder.map.onUp.collect { onMapUp(it) }
         }
-        defaultCoroutine.launch {
+        mainCoroutine.launch {
             holder.map.onPan.collect { onMapPan(it) }
         }
     }
@@ -280,25 +280,29 @@ class ArcGISMapViewController(
         return camera
     }
 
-    private suspend fun onMapPan(event: PanChangeEvent) {
+    private fun onMapPan(event: PanChangeEvent) {
         val controller = activeDragController
         if (controller != null) {
             val screenPoint = event.screenCoordinate
-            val point = holder.map.screenToLocation(screenPoint).getOrNull() ?: return
+            // screenToLocation waits for an asynchronous scene intersection. During a drag
+            // that queues pointer frames and makes the graphic trail behind the finger.
+            // Markers are placed relative to the base surface, so use the synchronous base
+            // surface intersection just as the iOS drag path uses the gesture's map point.
+            val point = holder.map.screenToBaseSurface(screenPoint) ?: return
             val position = point.toGeoPoint()
             controller.updateDrag(point, position)
             controller.getSelectedState()?.let { state ->
                 controller.dispatchDrag(state)
             }
+            return
         }
         invokeCameraMoveCallback()
     }
 
-    private suspend fun onMapUp(event: UpEvent) {
+    private fun onMapUp(event: UpEvent) {
         val controller = activeDragController
         if (controller != null) {
-            val screenPoint = event.screenCoordinate
-            val point = holder.map.screenToLocation(screenPoint).getOrNull() ?: return
+            val point = event.mapPoint ?: holder.map.screenToBaseSurface(event.screenCoordinate) ?: return
             val position = point.toGeoPoint()
             val selectedState = controller.getSelectedState()
             controller.endDrag(point, position)
@@ -319,7 +323,7 @@ class ArcGISMapViewController(
         if (event.motionEvent.action != MotionEvent.ACTION_MOVE) return
 
         val screenPoint = event.screenCoordinate
-        val point = holder.map.screenToLocation(screenPoint).getOrNull() ?: return
+        val point = event.mapPoint ?: holder.map.screenToLocation(screenPoint).getOrNull() ?: return
         val position = point.toGeoPoint()
         val identifyResult =
             holder.map.identifyGraphicsOverlay(

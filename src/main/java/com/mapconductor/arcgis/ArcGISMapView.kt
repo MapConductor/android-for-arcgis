@@ -14,6 +14,7 @@ import com.arcgismaps.LoadStatus
 import com.arcgismaps.mapping.ArcGISScene
 import com.arcgismaps.mapping.ArcGISTiledElevationSource
 import com.arcgismaps.mapping.view.GraphicsOverlay
+import com.arcgismaps.mapping.view.GraphicsRenderingMode
 import com.arcgismaps.mapping.view.SceneView
 import com.arcgismaps.mapping.view.SurfacePlacement
 import com.mapconductor.arcgis.circle.ArcGISCircleOverlayController
@@ -154,9 +155,8 @@ fun ArcGISMapView(
 
             val markerLayer: GraphicsOverlay =
                 GraphicsOverlay().apply {
-//                    if (useScenePlacement) {
-//                        sceneProperties.surfacePlacement = SurfacePlacement.Relative
-//                    }
+                    renderingMode = GraphicsRenderingMode.Dynamic
+                    sceneProperties.surfacePlacement = SurfacePlacement.Relative
                 }
             val markerController =
                 getMarkerController(
@@ -166,7 +166,7 @@ fun ArcGISMapView(
                 )
             val polylineController = getPolylineController(holder)
             val rasterLayerController = getRasterLayerController(holder)
-            val polygonController = getPolygonController(holder, rasterLayerController)
+            val polygonController = getPolygonController(holder)
             val circleController = getCircleController(holder)
             val groundImageController = getGroundImageController(holder)
 
@@ -329,7 +329,6 @@ internal fun getPolylineController(
 
 internal fun getPolygonController(
     holder: ArcGISGeoViewHolder<*, *>,
-    rasterLayerController: ArcGISRasterLayerController,
     useScenePlacement: Boolean = true,
 ): ArcGISPolygonOverlayController {
     val polygonLayer: GraphicsOverlay =
@@ -344,7 +343,6 @@ internal fun getPolygonController(
         ArcGISPolygonOverlayRenderer(
             polygonLayer = polygonLayer,
             holder = holder,
-            rasterLayerController = rasterLayerController,
         )
 
     val controller =
