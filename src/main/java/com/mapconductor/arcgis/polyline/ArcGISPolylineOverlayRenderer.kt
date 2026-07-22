@@ -2,6 +2,7 @@ package com.mapconductor.arcgis.polyline
 
 import com.arcgismaps.geometry.Geometry
 import com.arcgismaps.geometry.PolylineBuilder
+import com.arcgismaps.geometry.SpatialReference
 import com.arcgismaps.mapping.symbology.SimpleLineSymbol
 import com.arcgismaps.mapping.symbology.SimpleLineSymbolStyle
 import com.arcgismaps.mapping.view.Graphic
@@ -78,16 +79,23 @@ class ArcGISPolylineOverlayRenderer(
     }
 
     private fun createGeometry(state: PolylineState): Geometry {
+        // The builder (and every point added to it) must share the same explicit spatial
+        // reference. WGS84 is used, matching the raw lon/lat degrees GeoPoint always carries;
+        // ArcGIS reprojects the resulting geometry onto the map's own (projected) spatial
+        // reference automatically when it's rendered. A null spatial reference builds without
+        // error but the resulting geometry doesn't render on the map (see ArcGISMarkerRenderer/
+        // ArcGISCircleOverlayRenderer for the same fix applied to markers and circles).
+        val spatialReference = SpatialReference.wgs84()
         val polylineBuilder =
-            PolylineBuilder().also { builder ->
+            PolylineBuilder(spatialReference).also { builder ->
                 if (state.geodesic) {
                     state.points.forEach {
-                        builder.addPoint(GeoPoint.from(it).toPoint())
+                        builder.addPoint(GeoPoint.from(it).toPoint(spatialReference))
                     }
                     return@also
                 }
 
-                builder.addPoint(GeoPoint.from(state.points[0]).toPoint())
+                builder.addPoint(GeoPoint.from(state.points[0]).toPoint(spatialReference))
                 for (i in 1 until state.points.size) {
                     var fraction = 0.0
                     while (fraction <= 1.0) {
@@ -97,10 +105,10 @@ class ArcGISPolylineOverlayRenderer(
                                 to = state.points[i],
                                 fraction = fraction,
                             )
-                        builder.addPoint(point.toPoint())
+                        builder.addPoint(point.toPoint(spatialReference))
                         fraction += 0.01
                     }
-                    builder.addPoint(GeoPoint.from(state.points[i]).toPoint())
+                    builder.addPoint(GeoPoint.from(state.points[i]).toPoint(spatialReference))
                 }
             }
         return polylineBuilder.toGeometry()

@@ -10,6 +10,8 @@ import com.arcgismaps.mapping.layers.TileImageFormat
 import com.arcgismaps.mapping.layers.TileInfo
 import com.arcgismaps.mapping.layers.WebTiledLayer
 import com.mapconductor.arcgis.ArcGISGeoViewHolder
+import com.mapconductor.core.projection.Earth
+import com.mapconductor.core.projection.WEB_MERCATOR_MAX_EXTENT_METERS
 import com.mapconductor.core.raster.RasterLayerEntityInterface
 import com.mapconductor.core.raster.RasterLayerOverlayRendererInterface
 import com.mapconductor.core.raster.RasterLayerSource
@@ -176,8 +178,8 @@ class ArcGISRasterLayerOverlayRenderer(
 
     companion object {
         private const val WEB_MERCATOR_WKID = 3857
-        private const val WEB_MERCATOR_RADIUS_METERS = 6378137.0
-        private const val WEB_MERCATOR_MAX = 20037508.3427892
+        private const val WEB_MERCATOR_RADIUS_METERS = Earth.RADIUS_METERS
+        private const val WEB_MERCATOR_MAX = WEB_MERCATOR_MAX_EXTENT_METERS
         private const val WEB_MERCATOR_MIN = -WEB_MERCATOR_MAX
         private const val DEFAULT_DPI = 96
         private const val INCHES_PER_METER = 39.37

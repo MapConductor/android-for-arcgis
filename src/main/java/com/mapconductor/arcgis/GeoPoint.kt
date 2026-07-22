@@ -1,5 +1,6 @@
 package com.mapconductor.arcgis
 
+import com.arcgismaps.geometry.GeometryEngine
 import com.arcgismaps.geometry.Point
 import com.arcgismaps.geometry.SpatialReference
 import com.mapconductor.core.features.GeoPoint
@@ -38,17 +39,16 @@ fun GeoPoint.Companion.fromLongLat(
 // }
 
 fun Point.toGeoPoint(): GeoPoint {
-//    val wgs84Point =
-//        if (this.spatialReference != SpatialReference.wgs84()) {
-//            GeometryEngine.projectOrNull(this, SpatialReference.wgs84())
-//                ?: throw IllegalArgumentException("Failed to project point to WGS84")
-//        } else {
-//            this
-//        }
+    val wgs84Point =
+        if (this.spatialReference != null && this.spatialReference != SpatialReference.wgs84()) {
+            GeometryEngine.projectOrNull(this, SpatialReference.wgs84()) as? Point ?: this
+        } else {
+            this
+        }
 
     return GeoPoint(
-        longitude = this.x,
-        latitude = this.y,
-        altitude = this.z ?: 0.0,
+        longitude = wgs84Point.x,
+        latitude = wgs84Point.y,
+        altitude = wgs84Point.z ?: 0.0,
     )
 }

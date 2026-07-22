@@ -44,9 +44,9 @@ import com.mapconductor.core.polygon.PolygonState
 import com.mapconductor.core.polyline.OnPolylineEventHandler
 import com.mapconductor.core.polyline.PolylineEvent
 import com.mapconductor.core.polyline.PolylineState
+import com.mapconductor.core.projection.Earth
 import com.mapconductor.core.raster.RasterLayerState
 import com.mapconductor.settings.Settings
-import kotlin.math.PI
 import kotlin.math.cos
 import kotlin.math.ln
 import kotlin.math.pow
@@ -531,7 +531,7 @@ class ArcGISMapView2DController(
     }
 
     companion object {
-        private const val WEB_MERCATOR_CIRCUMFERENCE_METERS = 2.0 * PI * 6378137.0
+        private const val WEB_MERCATOR_CIRCUMFERENCE_METERS = Earth.CIRCUMFERENCE_METERS
         private const val TILE_SIZE = 256.0
         private const val DPI = 96.0
         private const val INCHES_PER_METER = 39.37

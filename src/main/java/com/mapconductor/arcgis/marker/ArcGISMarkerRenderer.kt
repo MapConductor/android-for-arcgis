@@ -1,6 +1,7 @@
 package com.mapconductor.arcgis.marker
 
 import androidx.core.graphics.drawable.toDrawable
+import com.arcgismaps.geometry.SpatialReference
 import com.arcgismaps.mapping.symbology.PictureMarkerSymbol
 import com.arcgismaps.mapping.view.Graphic
 import com.arcgismaps.mapping.view.GraphicsOverlay
@@ -41,7 +42,7 @@ class ArcGISMarkerRenderer(
         position: GeoPoint,
     ) {
         coroutine.launch {
-            markerEntity.marker?.geometry = position.toPoint(holder.spatialReference)
+            markerEntity.marker?.geometry = position.toPoint(SpatialReference.wgs84())
         }
     }
 
@@ -70,7 +71,7 @@ class ArcGISMarkerRenderer(
                                 geometry =
                                     GeoPoint
                                         .from(params.state.position)
-                                        .toPoint(holder.spatialReference),
+                                        .toPoint(SpatialReference.wgs84()),
                                 symbol = pictureSymbolFuture,
                             ).also {
                                 it.attributes["id"] = params.state.id
@@ -123,7 +124,7 @@ class ArcGISMarkerRenderer(
                                 geometry =
                                     GeoPoint
                                         .from(params.current.state.position)
-                                        .toPoint(holder.spatialReference),
+                                        .toPoint(SpatialReference.wgs84()),
                                 symbol = pictureSymbolFuture,
                             ).also {
                                 it.attributes["id"] = params.current.state.id
@@ -151,7 +152,7 @@ class ArcGISMarkerRenderer(
                     }
 
                     marker.geometry =
-                        GeoPoint.from(params.current.state.position).toPoint()
+                        GeoPoint.from(params.current.state.position).toPoint(SpatialReference.wgs84())
                     // Always set visibility explicitly like Google Maps (remove conditional check)
                     marker.isVisible = params.current.visible
 

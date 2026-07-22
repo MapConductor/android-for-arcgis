@@ -4,6 +4,8 @@ import com.arcgismaps.geometry.GeodeticCurveType
 import com.arcgismaps.geometry.GeometryEngine
 import com.arcgismaps.geometry.LinearUnit
 import com.arcgismaps.geometry.LinearUnitId
+import com.arcgismaps.geometry.Point
+import com.arcgismaps.geometry.SpatialReference
 import com.arcgismaps.mapping.symbology.SimpleFillSymbol
 import com.arcgismaps.mapping.symbology.SimpleFillSymbolStyle
 import com.arcgismaps.mapping.symbology.SimpleLineSymbol
@@ -30,8 +32,7 @@ class ArcGISCircleOverlayRenderer(
 ) : AbstractCircleOverlayRenderer<ArcGISActualCircle>() {
     override suspend fun createCircle(state: CircleState): ArcGISActualCircle? =
         withContext(coroutine.coroutineContext) {
-            val spec = holder.spatialReference
-            val centerPoint = GeoPoint.from(state.center).toPoint(spec)
+            val centerPoint = centerPoint(state.center, state.geodesic)
             val circleGeometry =
                 if (state.geodesic) {
                     GeometryEngine.bufferGeodeticOrNull(
@@ -79,7 +80,6 @@ class ArcGISCircleOverlayRenderer(
         prev: CircleEntityInterface<ArcGISActualCircle>,
     ): ArcGISActualCircle? =
         withContext(coroutine.coroutineContext) {
-            val spec = holder.spatialReference
             val finger = current.fingerPrint
             val prevFinger = prev.fingerPrint
             val graphic = current.circle
@@ -88,7 +88,7 @@ class ArcGISCircleOverlayRenderer(
                 finger.radiusMeters != prevFinger.radiusMeters ||
                 finger.geodesic != prevFinger.geodesic
             ) {
-                val centerPoint = GeoPoint.from(current.state.center).toPoint(spec)
+                val centerPoint = centerPoint(current.state.center, current.state.geodesic)
                 val newGeometry =
                     if (current.state.geodesic) {
                         GeometryEngine.bufferGeodeticOrNull(
@@ -126,4 +126,23 @@ class ArcGISCircleOverlayRenderer(
             }
             return@withContext graphic
         }
+
+    /**
+     * `GeoPoint.toPoint(spatialReference)` only tags raw lon/lat degrees with the given
+     * spatial reference - it does not transform the coordinates - so passing the map's
+     * (projected) spatial reference directly produced a point sitting at (longitude, latitude)
+     * *meters* from that projection's origin, nowhere near the real location. Geodesic buffering
+     * operates on the ellipsoid and wants WGS84 coordinates as-is; planar buffering needs a
+     * genuinely projected point (so `radiusMeters` means meters in that projection), which
+     * requires an actual reprojection via [GeometryEngine.projectOrNull].
+     */
+    private fun centerPoint(
+        center: com.mapconductor.core.features.GeoPointInterface,
+        geodesic: Boolean,
+    ): Point {
+        val wgs84Point = GeoPoint.from(center).toPoint(SpatialReference.wgs84())
+        if (geodesic) return wgs84Point
+        val mapSpatialReference = holder.spatialReference ?: return wgs84Point
+        return GeometryEngine.projectOrNull(wgs84Point, mapSpatialReference) as? Point ?: wgs84Point
+    }
 }
