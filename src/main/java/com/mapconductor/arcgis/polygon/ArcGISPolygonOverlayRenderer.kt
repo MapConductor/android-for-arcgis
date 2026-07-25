@@ -20,6 +20,7 @@ import com.mapconductor.core.polygon.PolygonEntityInterface
 import com.mapconductor.core.polygon.PolygonState
 import com.mapconductor.core.polygon.unionHoles
 import com.mapconductor.core.spherical.createInterpolatePoints
+import com.mapconductor.core.spherical.createLinearInterpolatePoints
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -138,7 +139,10 @@ class ArcGISPolygonOverlayRenderer(
         ): List<GeoPointInterface> =
             when (geodesic) {
                 true -> createInterpolatePoints(points, maxSegmentLength = geodesicMaxSegmentLengthMeters)
-                false -> points
+                // 非 geodesic は緯度経度の直線で結ぶ形にしたい。ArcGIS は生の頂点だと辺を測地線として
+                // 描画してしまい geodesic ポリゴンと同一形状になる（＝下に隠れて見えない）ため、
+                // 線形補間で密にして「直線」を近似する。
+                false -> createLinearInterpolatePoints(points)
             }
 
         fun openRing(points: List<GeoPointInterface>): List<GeoPointInterface> {

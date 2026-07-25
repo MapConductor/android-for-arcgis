@@ -176,15 +176,18 @@ class ArcGISMapViewController(
     }
 
     private suspend fun invokeCameraMoveEndCallback() {
-        cameraMoveEndCallback?.let { cb ->
-            getMapCameraPosition()?.let { mapCameraPosition ->
-                cb(mapCameraPosition)
-            }
+        val mapCameraPosition = getMapCameraPosition() ?: return
+        // 範囲・ズーム制限に違反していれば矩形内へ引き戻す（ArcGIS はネイティブの範囲制限 API が無いため）。
+        // 再適用すると viewpointChanged が再発火し、そこでは補正不要になり通常フローへ進む。
+        cameraRestrictionCorrection(mapCameraPosition)?.let { corrected ->
+            moveCamera(corrected)
+            return
         }
+        cameraMoveEndCallback?.invoke(mapCameraPosition)
     }
 
     private fun scheduleCameraMoveEndCallback() {
-        if (cameraMoveEndCallback == null) return
+        if (cameraMoveEndCallback == null && !hasCameraRestriction()) return
         cameraMoveEndJob?.cancel()
         cameraMoveEndJob =
             defaultCoroutine.launch {

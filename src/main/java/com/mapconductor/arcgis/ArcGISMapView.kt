@@ -33,6 +33,7 @@ import com.mapconductor.compose.map.MapViewBase
 import com.mapconductor.core.OnCameraMoveHandler
 import com.mapconductor.core.OnMapEventHandler
 import com.mapconductor.core.OnMapLoadedHandler
+import com.mapconductor.core.map.CameraRestriction
 import com.mapconductor.core.map.MapCameraPosition
 import com.mapconductor.core.map.MapCameraPositionInterface
 import com.mapconductor.core.map.MutableMapServiceRegistry
@@ -60,6 +61,7 @@ fun ArcGISMapView(
     state: ArcGISMapViewState,
     modifier: Modifier = Modifier,
     markerTiling: MarkerTilingOptions? = null,
+    cameraRestriction: CameraRestriction? = null,
     sdkInitialize: (suspend (Context) -> Boolean)? = null,
     onMapLoaded: OnMapLoadedHandler? = null,
     onCameraMoveStart: OnCameraMoveHandler? = null,
@@ -211,6 +213,7 @@ fun ArcGISMapView(
                 mapController.setMapClickListener(onMapClick)
                 mapController.setMapLongClickListener(onMapLongClick)
                 mapController.setMapDesignTypeChangeListener(state::onMapDesignTypeChange)
+                cameraRestriction?.let { mapController.setCameraRestriction(it) }
                 state.setController(mapController)
 
                 // Set camera listeners immediately so they are ready to receive
