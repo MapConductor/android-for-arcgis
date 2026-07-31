@@ -12,7 +12,6 @@ import com.mapconductor.core.map.MapCameraPosition
 import com.mapconductor.core.map.MapCameraPositionInterface
 import com.mapconductor.core.map.MapPaddings
 import com.mapconductor.core.map.MapPaddingsInterface
-import com.mapconductor.core.map.MapViewHolderInterface
 import com.mapconductor.core.map.MapViewState
 import com.mapconductor.core.map.MapViewStateInterface
 import java.util.UUID
@@ -101,7 +100,13 @@ class ArcGISMapViewState(
         this.moveCameraTo(newPosition, durationMillis)
     }
 
-    override fun getMapViewHolder(): MapViewHolderInterface<*, *>? = controller?.holder
+    override fun getMapViewHolder(): ArcGISGeoViewHolder<*, *>? = controller?.holder as? ArcGISGeoViewHolder<*, *>
+
+    /** Holder while the 3D [ArcGISMapView] (SceneView) is attached; null in 2D mode. */
+    fun getSceneViewHolder(): ArcGISMapViewHolder? = controller?.holder as? ArcGISMapViewHolder
+
+    /** Holder while the 2D [ArcGISMapView2D] (MapView) is attached; null in 3D mode. */
+    fun getMapView2DHolder(): ArcGISMapView2DHolder? = controller?.holder as? ArcGISMapView2DHolder
     override fun getControllers() = controller?.getControllers()
 
     internal fun updateCameraPosition(cameraPosition: MapCameraPosition) {
