@@ -13,7 +13,6 @@ import com.arcgismaps.mapping.view.GraphicsOverlay
 import com.mapconductor.arcgis.ArcGISActualPolygon
 import com.mapconductor.arcgis.ArcGISGeoViewHolder
 import com.mapconductor.arcgis.toArcGISColor
-import com.mapconductor.core.ResourceProvider
 import com.mapconductor.core.features.GeoPointInterface
 import com.mapconductor.core.polygon.AbstractPolygonOverlayRenderer
 import com.mapconductor.core.polygon.PolygonEntityInterface
@@ -85,7 +84,7 @@ class ArcGISPolygonOverlayRenderer(
                         outline.color = current.state.strokeColor.toArcGISColor()
                     }
                     if (finger.strokeWidth != prevFinger.strokeWidth) {
-                        outline.width = ResourceProvider.dpToPx(current.state.strokeWidth).toFloat()
+                        outline.width = current.state.strokeWidth.value
                     }
                 }
             }

@@ -11,12 +11,12 @@ import com.mapconductor.arcgis.ArcGISActualPolyline
 import com.mapconductor.arcgis.ArcGISGeoViewHolder
 import com.mapconductor.arcgis.toArcGISColor
 import com.mapconductor.arcgis.toPoint
-import com.mapconductor.core.ResourceProvider
 import com.mapconductor.core.features.GeoPoint
 import com.mapconductor.core.polyline.AbstractPolylineOverlayRenderer
 import com.mapconductor.core.polyline.PolylineEntityInterface
 import com.mapconductor.core.polyline.PolylineState
-import com.mapconductor.core.spherical.Spherical
+import com.mapconductor.core.spherical.createInterpolatePoints
+import com.mapconductor.core.spherical.createLinearInterpolatePoints
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -65,7 +65,7 @@ class ArcGISPolylineOverlayRenderer(
                     symbol.color = current.state.strokeColor.toArcGISColor()
                 }
                 if (finger.strokeWidth != prevFinger.strokeWidth) {
-                    symbol.width = ResourceProvider.dpToPx(current.state.strokeWidth).toFloat()
+                    symbol.width = current.state.strokeWidth.value
                 }
             }
 
@@ -86,29 +86,17 @@ class ArcGISPolylineOverlayRenderer(
         // error but the resulting geometry doesn't render on the map (see ArcGISMarkerRenderer/
         // ArcGISCircleOverlayRenderer for the same fix applied to markers and circles).
         val spatialReference = SpatialReference.wgs84()
+        // 他プロバイダと同様、測地線・直線ともコアの共通補間で頂点列を生成し、ArcGIS には
+        // 密な頂点列をそのまま渡す（ArcGIS の再投影が生の辺を測地線状に描く挙動へは依存しない）。
+        val points =
+            when (state.geodesic) {
+                true -> createInterpolatePoints(state.points)
+                false -> createLinearInterpolatePoints(state.points)
+            }
         val polylineBuilder =
             PolylineBuilder(spatialReference).also { builder ->
-                if (state.geodesic) {
-                    state.points.forEach {
-                        builder.addPoint(GeoPoint.from(it).toPoint(spatialReference))
-                    }
-                    return@also
-                }
-
-                builder.addPoint(GeoPoint.from(state.points[0]).toPoint(spatialReference))
-                for (i in 1 until state.points.size) {
-                    var fraction = 0.0
-                    while (fraction <= 1.0) {
-                        val point =
-                            Spherical.linearInterpolate(
-                                from = state.points[i - 1],
-                                to = state.points[i],
-                                fraction = fraction,
-                            )
-                        builder.addPoint(point.toPoint(spatialReference))
-                        fraction += 0.01
-                    }
-                    builder.addPoint(GeoPoint.from(state.points[i]).toPoint(spatialReference))
+                points.forEach {
+                    builder.addPoint(GeoPoint.from(it).toPoint(spatialReference))
                 }
             }
         return polylineBuilder.toGeometry()
