@@ -106,7 +106,7 @@ class ArcGISMapViewHolder(
         val result =
             runCatching {
                 mapView.sceneView.locationToScreen(
-                    point = GeoPoint.from(position).toPoint(spatialReference),
+                    point = GeoPoint.from(position).toPoint(SpatialReference.wgs84()),
                 )
             }.getOrNull()
         return result?.let {
@@ -145,11 +145,19 @@ class ArcGISMapView2DHolder(
     override val operationalLayers: MutableList<Layer>?
         get() = runCatching { map.map?.operationalLayers }.getOrNull()
 
+    /**
+     * `GeoPoint.toPoint(spatialReference)` は経度緯度の値にその空間参照を「貼る」だけで座標変換は
+     * しない。2D の `ArcGISMap` は既定で Web メルカトルなので、ビューの空間参照をそのまま渡すと
+     * 経度・緯度がメートルとして解釈され、投影先は本来の位置から遥かに離れた点になる
+     * （InfoBubble が画面外に置かれて出てこない、という形で表面化した）。
+     * `SpatialReference.wgs84()` を明示して ArcGIS 側に再投影させる。
+     * 逆方向（`fromScreenOffset`）は [Point.toGeoPoint] が WGS84 へ投影済み。
+     */
     override fun toScreenOffset(position: GeoPointInterface): Offset? {
         val result =
             runCatching {
                 map.locationToScreen(
-                    mapPoint = GeoPoint.from(position).toPoint(spatialReference),
+                    mapPoint = GeoPoint.from(position).toPoint(SpatialReference.wgs84()),
                 )
             }.getOrNull() ?: return null
         return Offset(result.x.toFloat(), result.y.toFloat())

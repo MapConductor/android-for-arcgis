@@ -14,6 +14,7 @@ import com.arcgismaps.mapping.view.GraphicsOverlay
 import com.arcgismaps.mapping.view.GraphicsRenderingMode
 import com.arcgismaps.mapping.view.MapView
 import com.mapconductor.compose.map.MapViewBase
+import com.mapconductor.core.map.CameraRestriction
 import com.mapconductor.core.map.MapCameraPosition
 import com.mapconductor.core.map.MapCameraPositionInterface
 import com.mapconductor.core.map.MutableMapServiceRegistry
@@ -41,6 +42,7 @@ fun ArcGISMapView2D(
     state: ArcGISMapViewState,
     modifier: Modifier = Modifier,
     markerTiling: MarkerTilingOptions? = null,
+    cameraRestriction: CameraRestriction? = null,
     sdkInitialize: (suspend (Context) -> Boolean)? = null,
     onMapLoaded: OnMapLoadedHandler? = null,
     onCameraMoveStart: OnCameraMoveHandler? = null,
@@ -171,6 +173,8 @@ fun ArcGISMapView2D(
                 mapController.setMapLongClickListener(onMapLongClick)
                 mapController.setMapDesignTypeChangeListener(state::onMapDesignTypeChange)
                 state.setController(mapController)
+                // 他プロバイダの *MapView と同じく、コントローラ生成直後に適用する。
+                cameraRestriction?.let { mapController.setCameraRestriction(it) }
 
                 mapController.setCameraMoveStartListener {
                     cameraState.value = it
@@ -194,6 +198,9 @@ fun ArcGISMapView2D(
                     if (controllerGeneration.get() != generation) return@post
                     mapController.moveCamera(MapCameraPosition.from(initialCameraPosition))
                     mapController.sendInitialCameraUpdate()
+                    // viewpointChanged の初回発火に頼らず、レイアウト確定のこの時点で
+                    // 「準備完了」を通知する（取り逃すとオーバーレイが一切描画されない）。
+                    mapController.markMapInitialized()
                 }
             }
         },

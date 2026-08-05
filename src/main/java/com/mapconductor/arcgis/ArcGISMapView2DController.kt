@@ -30,6 +30,7 @@ import com.mapconductor.core.features.GeoRectBounds
 import com.mapconductor.core.groundimage.GroundImageEvent
 import com.mapconductor.core.groundimage.GroundImageState
 import com.mapconductor.core.groundimage.OnGroundImageEventHandler
+import com.mapconductor.core.map.CameraRestriction
 import com.mapconductor.core.map.MapCameraPosition
 import com.mapconductor.core.map.MapPaddings
 import com.mapconductor.core.map.VisibleRegion
@@ -47,7 +48,6 @@ import com.mapconductor.core.polyline.PolylineState
 import com.mapconductor.core.projection.Earth
 import com.mapconductor.core.raster.RasterLayerState
 import com.mapconductor.settings.Settings
-import kotlin.math.cos
 import kotlin.math.ln
 import kotlin.math.pow
 import kotlin.time.Duration.Companion.milliseconds
@@ -135,8 +135,7 @@ class ArcGISMapView2DController(
         rasterLayerController.rasterLayerManager.hasEntity(state.id)
 
     private suspend fun onViewpointChange() {
-        mapInitializedCallback?.invoke()
-        mapInitializedCallback = null
+        notifyMapInitialized()
 
         getMapCameraPosition()?.let { mapCameraPosition ->
             notifyMapCameraPosition(mapCameraPosition)
@@ -157,14 +156,47 @@ class ArcGISMapView2DController(
         scheduleCameraMoveEndCallback()
     }
 
-    private suspend fun invokeCameraMoveEndCallback() {
-        cameraMoveEndCallback?.let { cb ->
-            getMapCameraPosition()?.let(cb)
+    /**
+     * カメラの可動範囲を制限する。
+     *
+     * ズームは ArcGIS のネイティブなスケール制限（[com.arcgismaps.mapping.ArcGISMap.minScale] /
+     * [com.arcgismaps.mapping.ArcGISMap.maxScale]）へ変換して適用する。ArcGIS の縮尺は分母（1:N）で
+     * 表され、`minScale` が「最も引いた側」＝ N が大きい方、`maxScale` が「最も寄せた側」＝ N が
+     * 小さい方に対応するため、統一ズームとは大小が逆になる（`minZoom → minScale` /
+     * `maxZoom → maxScale`）。
+     *
+     * パン範囲（矩形）は ArcGIS に中心基準の制限 API が無いため、これまでどおりカメラ停止時の
+     * クランプで制限する（[invokeCameraMoveEndCallback]）。
+     *
+     * 縮尺は投影座標系上の公称縮尺で緯度に依存しないため（[zoomToScale]）、`minScale` /
+     * `maxScale` のような緯度に依らない定数へそのまま変換できる。
+     */
+    override fun setCameraRestriction(restriction: CameraRestriction?) {
+        super<BaseMapViewController>.setCameraRestriction(restriction)
+        // ビュー破棄後はネイティブアクセサが例外を投げるため runCatching で保護する
+        // （このホルダの他アクセサと同じ扱い）。
+        runCatching {
+            holder.map.map?.let { arcGISMap ->
+                arcGISMap.minScale = restriction?.minZoom?.let { zoomToScale(it) }
+                arcGISMap.maxScale = restriction?.maxZoom?.let { zoomToScale(it) }
+            }
         }
     }
 
+    private suspend fun invokeCameraMoveEndCallback() {
+        val mapCameraPosition = getMapCameraPosition() ?: return
+        // 範囲制限に違反していれば矩形内へ引き戻す（ArcGIS はカメラ中心基準の範囲制限 API を
+        // 持たないため）。再適用すると viewpointChanged が再発火し、そこでは補正不要になり
+        // 通常フローへ進む。3D 側（ArcGISMapViewController）と同一仕様。
+        cameraRestrictionCorrection(mapCameraPosition)?.let { corrected ->
+            moveCamera(corrected)
+            return
+        }
+        cameraMoveEndCallback?.invoke(mapCameraPosition)
+    }
+
     private fun scheduleCameraMoveEndCallback() {
-        if (cameraMoveEndCallback == null) return
+        if (cameraMoveEndCallback == null && !hasCameraRestriction()) return
         cameraMoveEndJob?.cancel()
         cameraMoveEndJob =
             defaultCoroutine.launch {
@@ -199,7 +231,7 @@ class ArcGISMapView2DController(
 
         return MapCameraPosition(
             position = center,
-            zoom = scaleToZoom(holder.map.mapScale.value, center.latitude),
+            zoom = scaleToZoom(holder.map.mapScale.value),
             bearing = ((holder.map.mapRotation.value % 360) + 360) % 360,
             tilt = 0.0,
             paddings = MapPaddings.Zeros,
@@ -393,7 +425,8 @@ class ArcGISMapView2DController(
 
         mainCoroutine.launch {
             if (holder.mapView.isAttachedToWindow) {
-                holder.map.setViewpoint(Viewpoint(envelope))
+                // padding は setViewpointGeometry の第2引数（デバイス非依存ピクセル）へ渡す。
+                holder.map.setViewpointGeometry(envelope, padding.toDouble())
             }
         }
     }
@@ -411,7 +444,7 @@ class ArcGISMapView2DController(
         val point = GeoPoint.from(position.position).toPoint(SpatialReference.wgs84())
         return Viewpoint(
             center = point,
-            scale = zoomToScale(position.zoom, position.position.latitude),
+            scale = zoomToScale(position.zoom),
             rotation = position.bearing,
         )
     }
@@ -472,6 +505,26 @@ class ArcGISMapView2DController(
         listener(mapDesignType)
     }
 
+    /**
+     * 「マップの準備ができた」ことをコンポーズ側へ通知する。
+     *
+     * これまで ArcGIS は基底の [notifyMapInitialized]（sticky。リスナー未登録でも記録して後で
+     * 配送する）を使わず、[onViewpointChange] で `mapInitializedCallback` を直接呼んでいた。
+     * `MapViewBase` は `InitState.MapLoaded` になるまで `CollectAndRenderOverlays` を
+     * コンポーズしないため、この 1 回きりのイベントを取り逃すとマーカー・ポリゴン・InfoBubble が
+     * 一切描画されない。`viewpointChanged` は replay を持たないホットフローで、購読は
+     * `setupListeners()` がコルーチンで非同期に始めるので、初期ビューポート確定がその購読より
+     * 早いと通知が失われる。2D は初期ビューポートが即座に確定して以後動かないため、
+     * 起動のたびにマーカーが出たり出なかったりする形で表面化した。
+     *
+     * そこでレイアウト確定後に呼び出し側から明示的に通知する。基底の実装が sticky かつ
+     * 一度しか配送しないので、[onViewpointChange] 側と重なっても二重通知にはならない。
+     * Compose の状態を書き換えるためメインディスパッチャで呼ぶ。
+     */
+    fun markMapInitialized() {
+        mainCoroutine.launch { notifyMapInitialized() }
+    }
+
     fun sendInitialCameraUpdate() {
         defaultCoroutine.launch {
             if (holder.map.width <= 0 || holder.map.height <= 0) return@launch
@@ -513,27 +566,33 @@ class ArcGISMapView2DController(
         holder.map.graphicsOverlays.add(layer)
     }
 
-    private fun zoomToScale(
-        zoom: Double,
-        latitude: Double,
-    ): Double {
-        val resolution = WEB_MERCATOR_CIRCUMFERENCE_METERS * cos(Math.toRadians(latitude)) / (TILE_SIZE * 2.0.pow(zoom))
-        return resolution * DPI * INCHES_PER_METER
+    /**
+     * 統一ズーム（Google 準拠）→ ArcGIS の縮尺分母。
+     *
+     * ArcGIS が扱う縮尺は Web メルカトルの **投影座標系上** の縮尺（公称縮尺）で、緯度による
+     * 補正は含まない。Google のズームも同じく投影座標系（256px タイルで世界一周）で定義されて
+     * いるため、両者は緯度に依存しない 1 対 1 の対応になる。
+     *
+     * 以前はここに `cos(latitude)` を掛けて「地表の実距離」に直していたため、高緯度ほど縮尺が
+     * 小さく（＝寄りすぎに）なっていた。緯度 65 度で Google Maps 比 2.4 倍ほど拡大されており、
+     * 同じ `MapCameraPosition` を渡しても表示範囲が一致しなかった。
+     */
+    private fun zoomToScale(zoom: Double): Double {
+        val resolution = WEB_MERCATOR_CIRCUMFERENCE_METERS / (TILE_SIZE * 2.0.pow(zoom))
+        return resolution * PIXELS_PER_METER_AT_96_DPI
     }
 
-    private fun scaleToZoom(
-        scale: Double,
-        latitude: Double,
-    ): Double {
-        val resolution = scale / (DPI * INCHES_PER_METER)
-        val numerator = WEB_MERCATOR_CIRCUMFERENCE_METERS * cos(Math.toRadians(latitude))
-        return ln(numerator / (TILE_SIZE * resolution)) / ln(2.0)
+    /** [zoomToScale] の逆変換。 */
+    private fun scaleToZoom(scale: Double): Double {
+        val resolution = scale / PIXELS_PER_METER_AT_96_DPI
+        return ln(WEB_MERCATOR_CIRCUMFERENCE_METERS / (TILE_SIZE * resolution)) / ln(2.0)
     }
 
     companion object {
         private const val WEB_MERCATOR_CIRCUMFERENCE_METERS = Earth.CIRCUMFERENCE_METERS
         private const val TILE_SIZE = 256.0
-        private const val DPI = 96.0
-        private const val INCHES_PER_METER = 39.37
+
+        /** 96 DPI（ESRI が縮尺計算に用いる標準値）における 1 メートルあたりのピクセル数。 */
+        private const val PIXELS_PER_METER_AT_96_DPI = 96.0 / 0.0254
     }
 }

@@ -1,6 +1,8 @@
 package com.mapconductor.arcgis.marker
 
 import androidx.core.graphics.drawable.toDrawable
+import com.arcgismaps.geometry.GeometryEngine
+import com.arcgismaps.geometry.Point
 import com.arcgismaps.geometry.SpatialReference
 import com.arcgismaps.mapping.symbology.PictureMarkerSymbol
 import com.arcgismaps.mapping.view.Graphic
@@ -28,6 +30,25 @@ class ArcGISMarkerRenderer(
     ) {
     override val supportsAnimationOverlay: Boolean = true
 
+    /**
+     * マーカー位置をビューの空間参照に合わせた [Point] へ変換する。
+     *
+     * `GraphicsOverlay` の `Graphic` は、ジオメトリの空間参照がビュー（`SceneView` /
+     * `MapView`）の空間参照と一致していないと描画されない。ArcGIS は表示時に自動で
+     * 再投影しないため、WGS84 のまま渡すと 3D（`ArcGISScene` は WGS84）では出るのに
+     * 2D（`ArcGISMap` は既定で Web メルカトル）では何も出ない、という差になる。
+     *
+     * `GeoPoint.toPoint(sr)` は値に空間参照を貼るだけで変換はしないので、まず WGS84 として
+     * 組み立ててから [GeometryEngine.projectOrNull] で実際に投影する
+     * （`ArcGISCircleOverlayRenderer.centerPoint` と同じ考え方）。
+     */
+    private fun GeoPoint.toViewPoint(): Point {
+        val wgs84Point = toPoint(SpatialReference.wgs84())
+        val target = holder.spatialReference ?: return wgs84Point
+        if (target == SpatialReference.wgs84()) return wgs84Point
+        return GeometryEngine.projectOrNull(wgs84Point, target) as? Point ?: wgs84Point
+    }
+
     override fun setMarkerVisible(
         markerEntity: MarkerEntityInterface<Graphic>,
         visible: Boolean,
@@ -42,7 +63,7 @@ class ArcGISMarkerRenderer(
         position: GeoPoint,
     ) {
         coroutine.launch {
-            markerEntity.marker?.geometry = position.toPoint(SpatialReference.wgs84())
+            markerEntity.marker?.geometry = position.toViewPoint()
         }
     }
 
@@ -68,10 +89,7 @@ class ArcGISMarkerRenderer(
 
                         val marker =
                             Graphic(
-                                geometry =
-                                    GeoPoint
-                                        .from(params.state.position)
-                                        .toPoint(SpatialReference.wgs84()),
+                                geometry = GeoPoint.from(params.state.position).toViewPoint(),
                                 symbol = pictureSymbolFuture,
                             ).also {
                                 it.attributes["id"] = params.state.id
@@ -121,10 +139,7 @@ class ArcGISMarkerRenderer(
                                     it.offsetY = anchorY.toFloat()
                                 }
                             Graphic(
-                                geometry =
-                                    GeoPoint
-                                        .from(params.current.state.position)
-                                        .toPoint(SpatialReference.wgs84()),
+                                geometry = GeoPoint.from(params.current.state.position).toViewPoint(),
                                 symbol = pictureSymbolFuture,
                             ).also {
                                 it.attributes["id"] = params.current.state.id
@@ -151,8 +166,7 @@ class ArcGISMarkerRenderer(
                         marker.symbol = pictureSymbolFuture
                     }
 
-                    marker.geometry =
-                        GeoPoint.from(params.current.state.position).toPoint(SpatialReference.wgs84())
+                    marker.geometry = GeoPoint.from(params.current.state.position).toViewPoint()
                     // Always set visibility explicitly like Google Maps (remove conditional check)
                     marker.isVisible = params.current.visible
 

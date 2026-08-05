@@ -242,6 +242,9 @@ fun ArcGISMapView(
                     if (controllerGeneration.get() != generation) return@post
                     mapController.moveCamera(MapCameraPosition.from(initialCameraPosition))
                     mapController.sendInitialCameraUpdate()
+                    // viewpointChanged の初回発火に頼らず、レイアウト確定のこの時点で
+                    // 「準備完了」を通知する（取り逃すとオーバーレイが一切描画されない）。
+                    mapController.markMapInitialized()
                 }
             }
         },

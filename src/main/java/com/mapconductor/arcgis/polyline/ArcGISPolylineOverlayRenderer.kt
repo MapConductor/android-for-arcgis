@@ -15,8 +15,8 @@ import com.mapconductor.core.features.GeoPoint
 import com.mapconductor.core.polyline.AbstractPolylineOverlayRenderer
 import com.mapconductor.core.polyline.PolylineEntityInterface
 import com.mapconductor.core.polyline.PolylineState
-import com.mapconductor.core.spherical.createInterpolatePoints
-import com.mapconductor.core.spherical.createLinearInterpolatePoints
+import com.mapconductor.core.spherical.WGS84Geodesic
+import com.mapconductor.core.spherical.Planar
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -90,8 +90,8 @@ class ArcGISPolylineOverlayRenderer(
         // 密な頂点列をそのまま渡す（ArcGIS の再投影が生の辺を測地線状に描く挙動へは依存しない）。
         val points =
             when (state.geodesic) {
-                true -> createInterpolatePoints(state.points)
-                false -> createLinearInterpolatePoints(state.points)
+                true -> WGS84Geodesic.createInterpolatePoints(state.points)
+                false -> Planar.createInterpolatePoints(state.points)
             }
         val polylineBuilder =
             PolylineBuilder(spatialReference).also { builder ->

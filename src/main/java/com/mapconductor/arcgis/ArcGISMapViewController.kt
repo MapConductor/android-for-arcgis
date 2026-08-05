@@ -1,5 +1,6 @@
 package com.mapconductor.arcgis
 
+import android.view.MotionEvent
 import androidx.compose.ui.geometry.Offset
 import com.arcgismaps.mapping.Basemap
 import com.arcgismaps.mapping.Viewpoint
@@ -32,11 +33,14 @@ import com.mapconductor.core.groundimage.GroundImageEvent
 import com.mapconductor.core.groundimage.GroundImageState
 import com.mapconductor.core.groundimage.OnGroundImageEventHandler
 import com.mapconductor.core.map.MapCameraPosition
+import com.mapconductor.core.map.MapGesture
 import com.mapconductor.core.map.MapPaddings
+import com.mapconductor.core.map.MapUISettings
+import com.mapconductor.core.map.MapUISettingsDiagnostics
 import com.mapconductor.core.map.VisibleRegion
+import com.mapconductor.core.marker.MarkerAnimationOverlayHost
 import com.mapconductor.core.marker.MarkerEventControllerInterface
 import com.mapconductor.core.marker.MarkerOverlayRendererInterface
-import com.mapconductor.core.marker.MarkerAnimationOverlayHost
 import com.mapconductor.core.marker.MarkerState
 import com.mapconductor.core.marker.OnMarkerEventHandler
 import com.mapconductor.core.marker.StrategyMarkerController
@@ -49,7 +53,6 @@ import com.mapconductor.core.polyline.PolylineState
 import com.mapconductor.core.raster.RasterLayerState
 import com.mapconductor.settings.Settings
 import kotlin.time.Duration.Companion.milliseconds
-import android.view.MotionEvent
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -206,8 +209,7 @@ class ArcGISMapViewController(
     }
 
     private suspend fun onViewpointChange() {
-        mapInitializedCallback?.invoke()
-        mapInitializedCallback = null
+        notifyMapInitialized()
 
         getFastMapCameraPosition()?.let { mapCameraPosition ->
             notifyMapCameraPosition(mapCameraPosition)
@@ -315,10 +317,27 @@ class ArcGISMapViewController(
             activeDragController = null
 
             with(holder.map) {
-                interactionOptions.isPanEnabled = true
-                interactionOptions.isRotateEnabled = true
-                interactionOptions.isZoomEnabled = true
+                interactionOptions.isPanEnabled = appliedUISettings.scrollGesture
+                interactionOptions.isRotateEnabled = appliedUISettings.rotateGesture
+                interactionOptions.isZoomEnabled = appliedUISettings.zoomGesture
             }
+        }
+    }
+
+    private var appliedUISettings: MapUISettings = MapUISettings.Default
+
+    override fun applyUISettings(settings: MapUISettings) {
+        appliedUISettings = settings
+        MapUISettingsDiagnostics.warnIfRequested(
+            settings.tiltGesture,
+            gesture = MapGesture.Tilt,
+            provider = "ArcGIS",
+            reason = "InteractionOptions has no separate tilt toggle",
+        )
+        with(holder.map) {
+            interactionOptions.isPanEnabled = settings.scrollGesture
+            interactionOptions.isRotateEnabled = settings.rotateGesture
+            interactionOptions.isZoomEnabled = settings.zoomGesture
         }
     }
 
@@ -519,6 +538,9 @@ class ArcGISMapViewController(
 
         mainCoroutine.launch {
             if (!holder.mapView.isAttachedToWindow) return@launch
+            // NOTE: 3D の SceneView は setViewpointGeometry(geometry, padding) を持たず、
+            // GeoView.setViewpoint(Viewpoint) には padding の概念が無いため padding は反映できない。
+            // （padding 対応は 2D の ArcGISMapView2DController のみ。）
             holder.map.setViewpoint(Viewpoint(envelope))
         }
     }
@@ -619,6 +641,26 @@ class ArcGISMapViewController(
     override fun setMapDesignTypeChangeListener(listener: ArcGISDesignTypeChangeHandler) {
         mapDesignTypeChangeListener = listener
         listener(mapDesignType)
+    }
+
+    /**
+     * 「マップの準備ができた」ことをコンポーズ側へ通知する。
+     *
+     * これまで ArcGIS は基底の [notifyMapInitialized]（sticky。リスナー未登録でも記録して後で
+     * 配送する）を使わず、[onViewpointChange] で `mapInitializedCallback` を直接呼んでいた。
+     * `MapViewBase` は `InitState.MapLoaded` になるまで `CollectAndRenderOverlays` を
+     * コンポーズしないため、この 1 回きりのイベントを取り逃すとマーカー・ポリゴン・InfoBubble が
+     * 一切描画されない。`viewpointChanged` は replay を持たないホットフローで、購読は
+     * `setupListeners()` がコルーチンで非同期に始めるので、初期ビューポート確定がその購読より
+     * 早いと通知が失われる。2D は初期ビューポートが即座に確定して以後動かないため、
+     * 起動のたびにマーカーが出たり出なかったりする形で表面化した。
+     *
+     * そこでレイアウト確定後に呼び出し側から明示的に通知する。基底の実装が sticky かつ
+     * 一度しか配送しないので、[onViewpointChange] 側と重なっても二重通知にはならない。
+     * Compose の状態を書き換えるためメインディスパッチャで呼ぶ。
+     */
+    fun markMapInitialized() {
+        mainCoroutine.launch { notifyMapInitialized() }
     }
 
     // Trigger an initial camera update after the view and scene are ready

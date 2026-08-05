@@ -18,8 +18,8 @@ import com.mapconductor.core.polygon.AbstractPolygonOverlayRenderer
 import com.mapconductor.core.polygon.PolygonEntityInterface
 import com.mapconductor.core.polygon.PolygonState
 import com.mapconductor.core.polygon.unionHoles
-import com.mapconductor.core.spherical.createInterpolatePoints
-import com.mapconductor.core.spherical.createLinearInterpolatePoints
+import com.mapconductor.core.spherical.WGS84Geodesic
+import com.mapconductor.core.spherical.Planar
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -137,11 +137,11 @@ class ArcGISPolygonOverlayRenderer(
             geodesic: Boolean,
         ): List<GeoPointInterface> =
             when (geodesic) {
-                true -> createInterpolatePoints(points, maxSegmentLength = geodesicMaxSegmentLengthMeters)
+                true -> WGS84Geodesic.createInterpolatePoints(points, maxSegmentLength = geodesicMaxSegmentLengthMeters)
                 // 非 geodesic は緯度経度の直線で結ぶ形にしたい。ArcGIS は生の頂点だと辺を測地線として
                 // 描画してしまい geodesic ポリゴンと同一形状になる（＝下に隠れて見えない）ため、
                 // 線形補間で密にして「直線」を近似する。
-                false -> createLinearInterpolatePoints(points)
+                false -> Planar.createInterpolatePoints(points)
             }
 
         fun openRing(points: List<GeoPointInterface>): List<GeoPointInterface> {
