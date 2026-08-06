@@ -12,6 +12,7 @@ import com.arcgismaps.mapping.layers.WebTiledLayer
 import com.mapconductor.arcgis.ArcGISGeoViewHolder
 import com.mapconductor.core.projection.Earth
 import com.mapconductor.core.projection.WEB_MERCATOR_MAX_EXTENT_METERS
+import com.mapconductor.core.raster.RasterHeaderRuleSet
 import com.mapconductor.core.raster.RasterLayerEntityInterface
 import com.mapconductor.core.raster.RasterLayerOverlayRendererInterface
 import com.mapconductor.core.raster.RasterLayerSource
@@ -65,6 +66,7 @@ class ArcGISRasterLayerOverlayRenderer(
     override suspend fun onPostProcess() {}
 
     private suspend fun addLayer(state: RasterLayerState): Layer? {
+        RasterHeaderRuleSet.warnUnsupported(provider = "ArcGIS", state = state)
         val operationalLayers = holder.operationalLayers ?: return null
         val layer =
             when (val source = state.source) {

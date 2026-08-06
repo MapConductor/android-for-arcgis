@@ -17,7 +17,6 @@ import com.mapconductor.compose.map.MapViewBase
 import com.mapconductor.core.map.CameraRestriction
 import com.mapconductor.core.map.MapCameraPosition
 import com.mapconductor.core.map.MapCameraPositionInterface
-import com.mapconductor.core.map.MutableMapServiceRegistry
 import com.mapconductor.core.OnCameraMoveHandler
 import com.mapconductor.core.OnMapEventHandler
 import com.mapconductor.core.OnMapLoadedHandler
@@ -55,7 +54,6 @@ fun ArcGISMapView2D(
     val scope = remember { ArcGISMapViewScope() }
     val context = LocalContext.current
     val registry = remember { scope.buildRegistry() }
-    val serviceRegistry = remember { MutableMapServiceRegistry() }
     val owner = LocalLifecycleOwner.current
     val basemapStyle = remember { ArcGISDesign.toBasemapStyle(state.mapDesignType) }
     val cameraState = remember { mutableStateOf<MapCameraPositionInterface?>(state.cameraPosition) }
@@ -79,7 +77,6 @@ fun ArcGISMapView2D(
         },
         scope = scope,
         registry = registry,
-        serviceRegistry = serviceRegistry,
         holderProvider = { wrapView ->
             val map = ArcGISMap(basemapStyle)
             wrapView.arcGISMapView.map = map
@@ -142,8 +139,7 @@ fun ArcGISMapView2D(
                 groundImageController = groundImageController,
                 rasterLayerController = rasterLayerController,
             ).also { mapController ->
-                serviceRegistry.clear()
-                serviceRegistry.put(
+                state.serviceRegistry.put(
                     MarkerRenderingSupportKey,
                     object : MarkerRenderingSupport<ArcGISActualMarker> {
                         override fun createMarkerRenderer(

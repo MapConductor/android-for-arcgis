@@ -36,7 +36,6 @@ import com.mapconductor.core.OnMapLoadedHandler
 import com.mapconductor.core.map.CameraRestriction
 import com.mapconductor.core.map.MapCameraPosition
 import com.mapconductor.core.map.MapCameraPositionInterface
-import com.mapconductor.core.map.MutableMapServiceRegistry
 import com.mapconductor.core.marker.MarkerEventControllerInterface
 import com.mapconductor.core.marker.MarkerManager
 import com.mapconductor.core.marker.MarkerOverlayRendererInterface
@@ -74,7 +73,6 @@ fun ArcGISMapView(
     val scope = remember { ArcGISMapViewScope() } // Use specific scope
     val context = LocalContext.current // Context will be available from MapViewBase too if needed
     val registry = remember { scope.buildRegistry() }
-    val serviceRegistry = remember { MutableMapServiceRegistry() }
     val owner = LocalLifecycleOwner.current
     val basemapStyle = remember { ArcGISDesign.toBasemapStyle(state.mapDesignType) }
     val cameraState = remember { mutableStateOf<MapCameraPositionInterface?>(state.cameraPosition) }
@@ -100,7 +98,6 @@ fun ArcGISMapView(
         },
         scope = scope,
         registry = registry,
-        serviceRegistry = serviceRegistry,
         holderProvider = { wrapView ->
             val options =
                 ArcGISMapViewInitOptions(
@@ -183,8 +180,7 @@ fun ArcGISMapView(
                 groundImageController = groundImageController,
                 rasterLayerController = rasterLayerController,
             ).also { mapController ->
-                serviceRegistry.clear()
-                serviceRegistry.put(
+                state.serviceRegistry.put(
                     MarkerRenderingSupportKey,
                     object : MarkerRenderingSupport<ArcGISActualMarker> {
                         override fun createMarkerRenderer(
