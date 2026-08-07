@@ -93,6 +93,7 @@ class ArcGISMapViewHolder(
 ) : ArcGISGeoViewHolder<WrapSceneView, SceneView> {
     override val rootView: FrameLayout = mapView
     override val geoView: GeoView = map
+
     // The native SceneView throws (ArcGISException wrapping a native NPE)
     // instead of returning null once the view is destroyed. Teardown
     // callbacks and per-frame projections can arrive just after

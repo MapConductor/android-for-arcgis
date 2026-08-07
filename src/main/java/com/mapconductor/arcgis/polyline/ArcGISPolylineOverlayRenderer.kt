@@ -15,8 +15,8 @@ import com.mapconductor.core.features.GeoPoint
 import com.mapconductor.core.polyline.AbstractPolylineOverlayRenderer
 import com.mapconductor.core.polyline.PolylineEntityInterface
 import com.mapconductor.core.polyline.PolylineState
-import com.mapconductor.core.spherical.WGS84Geodesic
 import com.mapconductor.core.spherical.Planar
+import com.mapconductor.core.spherical.WGS84Geodesic
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch

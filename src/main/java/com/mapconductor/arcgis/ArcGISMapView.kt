@@ -138,7 +138,7 @@ fun ArcGISMapView(
                                         ArcGISMapViewHolder(
                                             mapView = wrapView,
                                             map = wrapView.sceneView,
-                                        )
+                                        ),
                                     ) { _, _, _ -> }
                                 }
                             }
@@ -189,9 +189,10 @@ fun ArcGISMapView(
 
                         override fun createMarkerEventController(
                             controller: StrategyMarkerController<ArcGISActualMarker>,
-                            renderer: MarkerOverlayRendererInterface<ArcGISActualMarker>
-                        ): MarkerEventControllerInterface<ArcGISActualMarker>
-                            = mapController.createMarkerEventController(controller)
+                            renderer: MarkerOverlayRendererInterface<ArcGISActualMarker>,
+                        ): MarkerEventControllerInterface<ArcGISActualMarker> =
+                            mapController
+                                .createMarkerEventController(controller)
 
                         override fun registerMarkerEventController(
                             controller: MarkerEventControllerInterface<ArcGISActualMarker>,
@@ -359,7 +360,6 @@ internal fun getMarkerController(
     markerLayer: GraphicsOverlay,
     markerTiling: MarkerTilingOptions = MarkerTilingOptions.Default,
 ): ArcGISMarkerController {
-
     val renderer =
         ArcGISMarkerRenderer(
             markerLayer = markerLayer,

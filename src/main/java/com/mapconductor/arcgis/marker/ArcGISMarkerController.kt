@@ -43,7 +43,8 @@ class ArcGISMarkerController(
 ) : AbstractMarkerController<ArcGISActualMarker>(
         markerManager = markerManager,
         renderer = renderer,
-    ), OnCameraChangeReceiverInterface {
+    ),
+    OnCameraChangeReceiverInterface {
     private var internalSelectedMarker: SelectedMarker? = null
 
     private val defaultMarkerIcon: BitmapIcon = DefaultMarkerIcon().toBitmapIcon()

@@ -14,12 +14,12 @@ import com.arcgismaps.mapping.view.GraphicsOverlay
 import com.arcgismaps.mapping.view.GraphicsRenderingMode
 import com.arcgismaps.mapping.view.MapView
 import com.mapconductor.compose.map.MapViewBase
-import com.mapconductor.core.map.CameraRestriction
-import com.mapconductor.core.map.MapCameraPosition
-import com.mapconductor.core.map.MapCameraPositionInterface
 import com.mapconductor.core.OnCameraMoveHandler
 import com.mapconductor.core.OnMapEventHandler
 import com.mapconductor.core.OnMapLoadedHandler
+import com.mapconductor.core.map.CameraRestriction
+import com.mapconductor.core.map.MapCameraPosition
+import com.mapconductor.core.map.MapCameraPositionInterface
 import com.mapconductor.core.marker.MarkerEventControllerInterface
 import com.mapconductor.core.marker.MarkerOverlayRendererInterface
 import com.mapconductor.core.marker.MarkerRenderingStrategyInterface
@@ -92,7 +92,7 @@ fun ArcGISMapView2D(
                                     ArcGISMapView2DHolder(
                                         mapView = wrapView,
                                         map = wrapView.arcGISMapView,
-                                    )
+                                    ),
                                 ) { _, _, _ -> }
                             }
                             is LoadStatus.FailedToLoad -> {
@@ -101,7 +101,7 @@ fun ArcGISMapView2D(
                                         ArcGISMapView2DHolder(
                                             mapView = wrapView,
                                             map = wrapView.arcGISMapView,
-                                        )
+                                        ),
                                     ) { _, _, _ -> }
                                 }
                             }
@@ -144,13 +144,14 @@ fun ArcGISMapView2D(
                     object : MarkerRenderingSupport<ArcGISActualMarker> {
                         override fun createMarkerRenderer(
                             strategy: MarkerRenderingStrategyInterface<ArcGISActualMarker>,
-                        ): MarkerOverlayRendererInterface<ArcGISActualMarker> =  mapController.createMarkerRenderer()
+                        ): MarkerOverlayRendererInterface<ArcGISActualMarker> = mapController.createMarkerRenderer()
 
                         override fun createMarkerEventController(
                             controller: StrategyMarkerController<ArcGISActualMarker>,
-                            renderer: MarkerOverlayRendererInterface<ArcGISActualMarker>
-                        ): MarkerEventControllerInterface<ArcGISActualMarker>
-                            = mapController.createMarkerEventController(controller)
+                            renderer: MarkerOverlayRendererInterface<ArcGISActualMarker>,
+                        ): MarkerEventControllerInterface<ArcGISActualMarker> =
+                            mapController
+                                .createMarkerEventController(controller)
 
                         override fun registerMarkerEventController(
                             controller: MarkerEventControllerInterface<ArcGISActualMarker>,

@@ -1,16 +1,7 @@
 package com.mapconductor.arcgis
 
-import android.view.MotionEvent
-import androidx.compose.ui.geometry.Offset
 import com.arcgismaps.mapping.Basemap
-import com.arcgismaps.mapping.Viewpoint
-import com.arcgismaps.mapping.view.Camera
 import com.arcgismaps.mapping.view.GraphicsOverlay
-import com.arcgismaps.mapping.view.LongPressEvent
-import com.arcgismaps.mapping.view.PanChangeEvent
-import com.arcgismaps.mapping.view.SingleTapConfirmedEvent
-import com.arcgismaps.mapping.view.UpEvent
-import com.arcgismaps.mapping.view.extensions.motionEvent
 import com.mapconductor.arcgis.circle.ArcGISCircleOverlayController
 import com.mapconductor.arcgis.groundimage.ArcGISGroundImageController
 import com.mapconductor.arcgis.marker.ArcGISMarkerController
@@ -21,23 +12,18 @@ import com.mapconductor.arcgis.marker.StrategyArcGISMarkerEventController
 import com.mapconductor.arcgis.polygon.ArcGISPolygonOverlayController
 import com.mapconductor.arcgis.polyline.ArcGISPolylineOverlayController
 import com.mapconductor.arcgis.raster.ArcGISRasterLayerController
-import com.mapconductor.arcgis.zoom.ZoomAltitudeConverter
-import com.mapconductor.core.circle.CircleEvent
 import com.mapconductor.core.circle.CircleState
 import com.mapconductor.core.circle.OnCircleEventHandler
 import com.mapconductor.core.controller.BaseMapViewController
 import com.mapconductor.core.controller.OverlayControllerInterface
 import com.mapconductor.core.features.GeoPoint
 import com.mapconductor.core.features.GeoRectBounds
-import com.mapconductor.core.groundimage.GroundImageEvent
 import com.mapconductor.core.groundimage.GroundImageState
 import com.mapconductor.core.groundimage.OnGroundImageEventHandler
 import com.mapconductor.core.map.MapCameraPosition
 import com.mapconductor.core.map.MapGesture
-import com.mapconductor.core.map.MapPaddings
 import com.mapconductor.core.map.MapUISettings
 import com.mapconductor.core.map.MapUISettingsDiagnostics
-import com.mapconductor.core.map.VisibleRegion
 import com.mapconductor.core.marker.MarkerAnimationOverlayHost
 import com.mapconductor.core.marker.MarkerEventControllerInterface
 import com.mapconductor.core.marker.MarkerOverlayRendererInterface
@@ -45,45 +31,40 @@ import com.mapconductor.core.marker.MarkerState
 import com.mapconductor.core.marker.OnMarkerEventHandler
 import com.mapconductor.core.marker.StrategyMarkerController
 import com.mapconductor.core.polygon.OnPolygonEventHandler
-import com.mapconductor.core.polygon.PolygonEvent
 import com.mapconductor.core.polygon.PolygonState
 import com.mapconductor.core.polyline.OnPolylineEventHandler
-import com.mapconductor.core.polyline.PolylineEvent
 import com.mapconductor.core.polyline.PolylineState
 import com.mapconductor.core.raster.RasterLayerState
-import com.mapconductor.settings.Settings
-import kotlin.time.Duration.Companion.milliseconds
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 class ArcGISMapViewController(
     override val holder: ArcGISMapViewHolder,
-    private val markerController: ArcGISMarkerController,
-    private val polylineController: ArcGISPolylineOverlayController,
-    private val polygonController: ArcGISPolygonOverlayController,
-    private val circleController: ArcGISCircleOverlayController,
-    private val groundImageController: ArcGISGroundImageController,
-    private val rasterLayerController: ArcGISRasterLayerController,
+    internal val markerController: ArcGISMarkerController,
+    internal val polylineController: ArcGISPolylineOverlayController,
+    internal val polygonController: ArcGISPolygonOverlayController,
+    internal val circleController: ArcGISCircleOverlayController,
+    internal val groundImageController: ArcGISGroundImageController,
+    internal val rasterLayerController: ArcGISRasterLayerController,
     override val defaultCoroutine: CoroutineScope = CoroutineScope(Dispatchers.Default),
     override val mainCoroutine: CoroutineScope = CoroutineScope(Dispatchers.Main),
 ) : BaseMapViewController(),
     ArcGISMapViewControllerInterface {
-    private val markerEventControllers = mutableListOf<ArcGISMarkerEventControllerInterface>()
-    private var activeDragController: ArcGISMarkerEventControllerInterface? = null
-    private var markerClickListener: OnMarkerEventHandler? = null
-    private var markerDragStartListener: OnMarkerEventHandler? = null
-    private var markerDragListener: OnMarkerEventHandler? = null
-    private var markerDragEndListener: OnMarkerEventHandler? = null
-    private var markerAnimateStartListener: OnMarkerEventHandler? = null
-    private var markerAnimateEndListener: OnMarkerEventHandler? = null
+    internal val markerEventControllers = mutableListOf<ArcGISMarkerEventControllerInterface>()
+    internal var activeDragController: ArcGISMarkerEventControllerInterface? = null
+    internal var markerClickListener: OnMarkerEventHandler? = null
+    internal var markerDragStartListener: OnMarkerEventHandler? = null
+    internal var markerDragListener: OnMarkerEventHandler? = null
+    internal var markerDragEndListener: OnMarkerEventHandler? = null
+    internal var markerAnimateStartListener: OnMarkerEventHandler? = null
+    internal var markerAnimateEndListener: OnMarkerEventHandler? = null
 
     // ArcGIS updates the viewpoint asynchronously; firing "move end" immediately after setViewpointCamera()
     // can read a stale camera and cause feedback loops in camera sync scenarios.
-    private var cameraMoveEndJob: Job? = null
-    private val cameraMoveEndDebounceMs = 180L
+    internal var cameraMoveEndJob: Job? = null
+    internal val cameraMoveEndDebounceMs = 180L
 
     init {
         holder.map.graphicsOverlays.clear()
@@ -112,6 +93,49 @@ class ArcGISMapViewController(
             }
         }
     }
+
+    override fun moveCamera(position: MapCameraPosition) = handleMoveCamera(position)
+
+    override fun animateCamera(
+        position: MapCameraPosition,
+        duration: Long,
+    ) = handleAnimateCamera(position, duration)
+
+    override fun fitBounds(
+        bounds: GeoRectBounds,
+        padding: Int,
+    ) = handleFitBounds(bounds, padding)
+
+    // 拡張ファイル（Camera / Gestures）からは基底クラスの protected へ触れないため、
+    // ここで internal の入口を用意しておく。
+    internal fun cameraMoveStartHandler(): ((MapCameraPosition) -> Unit)? = cameraMoveStartCallback
+
+    internal fun cameraMoveHandler(): ((MapCameraPosition) -> Unit)? = cameraMoveCallback
+
+    internal fun needsCameraMoveEndWork(): Boolean = cameraMoveEndCallback != null || hasCameraRestriction()
+
+    internal fun emitCameraMoveEnd(position: MapCameraPosition) {
+        cameraMoveEndCallback?.invoke(position)
+    }
+
+    internal fun emitMapClick(point: GeoPoint) {
+        mapClickCallback?.invoke(point)
+    }
+
+    internal fun emitMapLongClick(point: GeoPoint) {
+        mapLongClickCallback?.invoke(point)
+    }
+
+    internal fun emitMapInitialized() {
+        notifyMapInitialized()
+    }
+
+    internal suspend fun emitCameraPosition(position: MapCameraPosition) {
+        notifyMapCameraPosition(position)
+    }
+
+    internal fun correctForCameraRestriction(current: MapCameraPosition): MapCameraPosition? =
+        cameraRestrictionCorrection(current)
 
     fun setupListeners() {
         mainCoroutine.launch {
@@ -154,177 +178,7 @@ class ArcGISMapViewController(
     override fun hasRasterLayer(state: RasterLayerState): Boolean =
         this.rasterLayerController.rasterLayerManager.hasEntity(state.id)
 
-    private fun getFastMapCameraPosition(): MapCameraPosition? =
-        try {
-            holder.map.getCurrentViewpointCamera().toMapCameraPosition()
-        } catch (_: Exception) {
-            null
-        }
-
-    private fun invokeCameraMoveStartCallback() {
-        cameraMoveStartCallback?.let { cb ->
-            getFastMapCameraPosition()?.let { mapCameraPosition ->
-                cb(mapCameraPosition)
-            }
-        }
-    }
-
-    private fun invokeCameraMoveCallback() {
-        cameraMoveCallback?.let { cb ->
-            getFastMapCameraPosition()?.let { mapCameraPosition ->
-                cb(mapCameraPosition)
-            }
-        }
-        scheduleCameraMoveEndCallback()
-    }
-
-    private suspend fun invokeCameraMoveEndCallback() {
-        val mapCameraPosition = getMapCameraPosition() ?: return
-        // 範囲・ズーム制限に違反していれば矩形内へ引き戻す（ArcGIS はネイティブの範囲制限 API が無いため）。
-        // 再適用すると viewpointChanged が再発火し、そこでは補正不要になり通常フローへ進む。
-        cameraRestrictionCorrection(mapCameraPosition)?.let { corrected ->
-            moveCamera(corrected)
-            return
-        }
-        cameraMoveEndCallback?.invoke(mapCameraPosition)
-    }
-
-    private fun scheduleCameraMoveEndCallback() {
-        if (cameraMoveEndCallback == null && !hasCameraRestriction()) return
-        cameraMoveEndJob?.cancel()
-        cameraMoveEndJob =
-            defaultCoroutine.launch {
-                delay(cameraMoveEndDebounceMs.milliseconds)
-                invokeCameraMoveEndCallback()
-            }
-    }
-
-    private fun currentViewportSizeInDp(): Pair<Int, Int> {
-        val density =
-            holder.mapView.resources.displayMetrics.density
-                .coerceAtLeast(0.1f)
-        val widthDp = (holder.map.width / density).toInt().coerceAtLeast(1)
-        val heightDp = (holder.map.height / density).toInt().coerceAtLeast(1)
-        return Pair(widthDp, heightDp)
-    }
-
-    private suspend fun onViewpointChange() {
-        notifyMapInitialized()
-
-        getFastMapCameraPosition()?.let { mapCameraPosition ->
-            notifyMapCameraPosition(mapCameraPosition)
-            scheduleCameraMoveEndCallback()
-        }
-    }
-
-    private suspend fun getMapCameraPosition(): MapCameraPosition? {
-        val mapWidth = holder.map.width.toFloat() - 1.0f
-        val mapHeight = holder.map.height.toFloat() - 1.0f
-        val nearLeft =
-            holder.fromScreenOffset(
-                Offset(1.0f, mapHeight),
-            ) ?: return null
-
-        val nearRight =
-            holder.fromScreenOffsetSync(
-                Offset(mapWidth, mapHeight),
-            ) ?: return null
-        val farLeft =
-            holder.fromScreenOffsetSync(
-                Offset(1.0f, 1.0f),
-            ) ?: return null
-        val farRight =
-            holder.fromScreenOffsetSync(
-                Offset(mapWidth, 1.0f),
-            ) ?: return null
-
-        val bounds = GeoRectBounds()
-        bounds.extend(nearLeft)
-        bounds.extend(nearRight)
-        bounds.extend(farLeft)
-        bounds.extend(farRight)
-
-        val visibleRegion =
-            VisibleRegion(
-                bounds = bounds,
-                nearLeft = nearLeft,
-                nearRight = nearRight,
-                farLeft = farLeft,
-                farRight = farRight,
-            )
-
-        val arcCamera = holder.map.getCurrentViewpointCamera()
-        val lat = arcCamera.location.y
-        val lon = arcCamera.location.x
-        val alt = arcCamera.location.z ?: 0.0
-        val tilt = arcCamera.pitch
-        val bearing = ((arcCamera.heading % 360) + 360) % 360
-
-        val conv = ZoomAltitudeConverter()
-        val (viewportWidthDp, viewportHeightDp) = currentViewportSizeInDp()
-        val zoom =
-            conv.altitudeToZoomLevel(
-                altitude = alt,
-                latitude = lat,
-                tilt = tilt,
-                viewportWidthPx = viewportWidthDp,
-                viewportHeightPx = viewportHeightDp,
-            )
-
-        val camera =
-            MapCameraPosition(
-                position =
-                    GeoPoint
-                        .fromLongLat(lon, lat, alt),
-                zoom = zoom,
-                bearing = bearing,
-                tilt = tilt,
-                paddings = MapPaddings.Zeros,
-                visibleRegion = visibleRegion,
-            )
-        return camera
-    }
-
-    private fun onMapPan(event: PanChangeEvent) {
-        val controller = activeDragController
-        if (controller != null) {
-            val screenPoint = event.screenCoordinate
-            // screenToLocation waits for an asynchronous scene intersection. During a drag
-            // that queues pointer frames and makes the graphic trail behind the finger.
-            // Markers are placed relative to the base surface, so use the synchronous base
-            // surface intersection just as the iOS drag path uses the gesture's map point.
-            val point = holder.map.screenToBaseSurface(screenPoint) ?: return
-            val position = point.toGeoPoint()
-            controller.updateDrag(point, position)
-            controller.getSelectedState()?.let { state ->
-                controller.dispatchDrag(state)
-            }
-            return
-        }
-        invokeCameraMoveCallback()
-    }
-
-    private fun onMapUp(event: UpEvent) {
-        val controller = activeDragController
-        if (controller != null) {
-            val point = event.mapPoint ?: holder.map.screenToBaseSurface(event.screenCoordinate) ?: return
-            val position = point.toGeoPoint()
-            val selectedState = controller.getSelectedState()
-            controller.endDrag(point, position)
-            selectedState?.let { state ->
-                controller.dispatchDragEnd(state)
-            }
-            activeDragController = null
-
-            with(holder.map) {
-                interactionOptions.isPanEnabled = appliedUISettings.scrollGesture
-                interactionOptions.isRotateEnabled = appliedUISettings.rotateGesture
-                interactionOptions.isZoomEnabled = appliedUISettings.zoomGesture
-            }
-        }
-    }
-
-    private var appliedUISettings: MapUISettings = MapUISettings.Default
+    internal var appliedUISettings: MapUISettings = MapUISettings.Default
 
     override fun applyUISettings(settings: MapUISettings) {
         appliedUISettings = settings
@@ -338,120 +192,6 @@ class ArcGISMapViewController(
             interactionOptions.isPanEnabled = settings.scrollGesture
             interactionOptions.isRotateEnabled = settings.rotateGesture
             interactionOptions.isZoomEnabled = settings.zoomGesture
-        }
-    }
-
-    private suspend fun onMapLongPress(event: LongPressEvent) {
-        if (event.motionEvent.action != MotionEvent.ACTION_MOVE) return
-
-        val screenPoint = event.screenCoordinate
-        val point = event.mapPoint ?: holder.map.screenToLocation(screenPoint).getOrNull() ?: return
-        val position = point.toGeoPoint()
-        val identifyResult =
-            holder.map.identifyGraphicsOverlay(
-                graphicsOverlay = (markerController.renderer as ArcGISMarkerRenderer).markerLayer,
-                screenCoordinate = screenPoint,
-                tolerance =
-                    Settings.Default.tapTolerance.value
-                        .toDouble(),
-                returnPopupsOnly = false,
-            )
-        val graphics = identifyResult.getOrNull()?.graphics
-        graphics?.firstOrNull()?.let { graphic ->
-            (graphic.attributes["id"] as? String)?.let { markerId ->
-                markerController.markerManager.getEntity(markerId)?.let { entity ->
-                    if (entity.state.draggable) {
-                        activeDragController = markerEventControllers.firstOrNull()
-                        activeDragController?.startDrag(entity)
-                        // 3Dナビゲーションを無効化
-                        with(holder.map) {
-                            interactionOptions.isPanEnabled = false
-                            interactionOptions.isRotateEnabled = false
-                            interactionOptions.isZoomEnabled = false
-                        }
-                        activeDragController?.dispatchDragStart(entity.state)
-                        return
-                    }
-                }
-            }
-        }
-        markerEventControllers
-            .drop(1)
-            .forEach { controller ->
-                controller.find(position)?.let { entity ->
-                    if (entity.state.draggable) {
-                        activeDragController = controller
-                        controller.startDrag(entity)
-                        with(holder.map) {
-                            interactionOptions.isPanEnabled = false
-                            interactionOptions.isRotateEnabled = false
-                            interactionOptions.isZoomEnabled = false
-                        }
-                        controller.dispatchDragStart(entity.state)
-                        return
-                    }
-                }
-            }
-        mapLongClickCallback?.invoke(position)
-    }
-
-    private suspend fun onMapTap(event: SingleTapConfirmedEvent) {
-        val screenPoint = event.screenCoordinate
-        val touchPosition =
-            holder.map
-                .screenToLocation(screenPoint)
-                .getOrNull()
-                ?.toGeoPoint() ?: return
-
-        markerEventControllers.forEach { controller ->
-            controller.find(touchPosition)?.let { markerEntity ->
-                controller.dispatchClick(markerEntity.state)
-                return
-            }
-        }
-
-        circleController.find(touchPosition)?.let { circleEntity ->
-            val event =
-                CircleEvent(
-                    state = circleEntity.state,
-                    clicked = touchPosition,
-                )
-            circleController.dispatchClick(event)
-            return
-        }
-
-        groundImageController.find(touchPosition)?.let { entity ->
-            val event =
-                GroundImageEvent(
-                    state = entity.state,
-                    clicked = touchPosition,
-                )
-            groundImageController.dispatchClick(event)
-            return
-        }
-
-        polylineController.findWithClosestPoint(touchPosition)?.let { hitResult ->
-            val event =
-                PolylineEvent(
-                    state = hitResult.entity.state,
-                    clicked = hitResult.closestPoint,
-                )
-            polylineController.dispatchClick(event)
-            return
-        }
-
-        polygonController.find(touchPosition)?.let { polygonEntity ->
-            val event =
-                PolygonEvent(
-                    state = polygonEntity.state,
-                    clicked = touchPosition,
-                )
-            polygonController.dispatchClick(event)
-            return
-        }
-
-        holder.map.screenToLocation(screenPoint).getOrNull()?.also {
-            mapClickCallback?.invoke(it.toGeoPoint())
         }
     }
 
@@ -502,79 +242,15 @@ class ArcGISMapViewController(
         this.groundImageController.clickListener = listener
     }
 
-    override fun moveCamera(position: MapCameraPosition) {
-        val dstCameraPosition = toCameraWithView(position)
-
-        mainCoroutine.launch {
-            if (!holder.mapView.isAttachedToWindow) return@launch
-            holder.map.setViewpointCamera(camera = dstCameraPosition)
-        }
-    }
-
-    override fun animateCamera(
-        position: MapCameraPosition,
-        duration: Long,
-    ) {
-        val dstCameraPosition = toCameraWithView(position)
-
-        defaultCoroutine.launch {
-            invokeCameraMoveStartCallback()
-            mainCoroutine.launch {
-                if (!holder.mapView.isAttachedToWindow) return@launch
-                holder.map.setViewpointCameraAnimated(
-                    camera = dstCameraPosition,
-                    duration = duration.toFloat() / 1000.0f,
-                )
-            }
-            scheduleCameraMoveEndCallback()
-        }
-    }
-
-    override fun fitBounds(
-        bounds: GeoRectBounds,
-        padding: Int,
-    ) {
-        val envelope = bounds.toEnvelope() ?: return
-
-        mainCoroutine.launch {
-            if (!holder.mapView.isAttachedToWindow) return@launch
-            // NOTE: 3D の SceneView は setViewpointGeometry(geometry, padding) を持たず、
-            // GeoView.setViewpoint(Viewpoint) には padding の概念が無いため padding は反映できない。
-            // （padding 対応は 2D の ArcGISMapView2DController のみ。）
-            holder.map.setViewpoint(Viewpoint(envelope))
-        }
-    }
-
-    override fun getControllers(): Map<String, OverlayControllerInterface<*, *>> = mapOf(
-        "marker" to markerController,
-        "polyline" to polylineController,
-        "polygon" to polygonController,
-        "circle" to circleController,
-        "ground_image" to groundImageController,
-        "raster_layer" to rasterLayerController,
-    )
-
-    private fun toCameraWithView(position: MapCameraPosition): Camera {
-        val targetPoint =
-            GeoPoint
-                .from(position.position)
-                .toPoint()
-        val conv = ZoomAltitudeConverter()
-        val (viewportWidthDp, viewportHeightDp) = currentViewportSizeInDp()
-        val distance =
-            conv.zoomLevelToDistance(
-                zoomLevel = position.zoom,
-                latitude = position.position.latitude,
-                viewportWidthPx = viewportWidthDp,
-                viewportHeightPx = viewportHeightDp,
-            )
-        return calculateCameraForOrbitParameters(
-            targetPoint = targetPoint,
-            distance = distance,
-            cameraHeadingOffset = position.bearing + 180,
-            cameraPitchOffset = position.tilt,
+    override fun getControllers(): Map<String, OverlayControllerInterface<*, *>> =
+        mapOf(
+            "marker" to markerController,
+            "polyline" to polylineController,
+            "polygon" to polygonController,
+            "circle" to circleController,
+            "ground_image" to groundImageController,
+            "raster_layer" to rasterLayerController,
         )
-    }
 
     @Deprecated("Use MarkerState.onDragStart instead.")
     override fun setOnMarkerDragStart(listener: OnMarkerEventHandler?) {
@@ -622,8 +298,8 @@ class ArcGISMapViewController(
         this.polygonController.clickListener = listener
     }
 
-    private var mapDesignType: ArcGISDesignTypeInterface = ArcGISDesign.Streets
-    private var mapDesignTypeChangeListener: ArcGISDesignTypeChangeHandler? = null
+    internal var mapDesignType: ArcGISDesignTypeInterface = ArcGISDesign.Streets
+    internal var mapDesignTypeChangeListener: ArcGISDesignTypeChangeHandler? = null
 
     override fun setMapDesignType(value: ArcGISDesignTypeInterface) {
         holder.map.scene?.let { scene ->

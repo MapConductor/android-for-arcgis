@@ -5,7 +5,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import com.mapconductor.compose.map.BaseMapViewSaver
-import com.mapconductor.core.controller.OverlayControllerInterface
 import com.mapconductor.core.features.GeoPoint
 import com.mapconductor.core.features.GeoRectBounds
 import com.mapconductor.core.map.MapCameraPosition
@@ -107,6 +106,7 @@ class ArcGISMapViewState(
 
     /** Holder while the 2D [ArcGISMapView2D] (MapView) is attached; null in 3D mode. */
     fun getMapView2DHolder(): ArcGISMapView2DHolder? = controller?.holder as? ArcGISMapView2DHolder
+
     override fun getControllers() = controller?.getControllers()
 
     internal fun updateCameraPosition(cameraPosition: MapCameraPosition) {
