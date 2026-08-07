@@ -80,40 +80,74 @@ internal suspend fun ArcGISMapView2DController.getMapCameraPosition(): MapCamera
             farRight = farRight,
         )
 
+    // 2D はカメラピッチを持てないため tilt は擬似表現（[ArcGIS2DTiltEmulation]）。
+    // 直近に要求した論理 tilt を手掛かりに、前進させた中心とズームを巻き戻して返す。
+    val bearing = ((holder.map.mapRotation.value % 360) + 360) % 360
+    val logicalTilt = lastLogicalCameraPosition?.tilt ?: 0.0
+    val (restoredCenter, restoredZoom) =
+        ArcGIS2DTiltEmulation.restoreLogicalCamera(
+            center = center,
+            zoom = scaleToZoom(holder.map.mapScale.value),
+            bearing = bearing,
+            logicalTilt = logicalTilt,
+        )
+
     return MapCameraPosition(
-        position = center,
-        zoom = scaleToZoom(holder.map.mapScale.value),
-        bearing = ((holder.map.mapRotation.value % 360) + 360) % 360,
-        tilt = 0.0,
+        position = restoredCenter,
+        zoom = restoredZoom,
+        bearing = bearing,
+        tilt = logicalTilt,
         paddings = MapPaddings.Zeros,
         visibleRegion = visibleRegion,
     )
 }
 
 internal fun ArcGISMapView2DController.handleMoveCamera(position: MapCameraPosition) {
+    lastLogicalCameraPosition = position
+    // 2D はカメラピッチを持てないので、ビュー自体を傾けて遠近感を作る（WrapMapView.visualTilt）。
+    // tilt が変わると MapView のサイズも変わるため、ビューポートは必ずレイアウト確定後に
+    // 適用する（先に適用すると ArcGIS がリサイズで表示範囲を取り直して縮尺がずれる）。
+    val tiltChanged = holder.mapView.visualTilt != position.tilt
+    holder.mapView.visualTilt = position.tilt
+    // ビューを傾けると地図の中身は縦に潰れる。マーカーだけは立って見えるよう、
+    // アイコンを先に縦へ引き伸ばす（他のオーバーレイは寝たままでよい）。
+    if (tiltChanged) markerController.refreshVerticalStretch()
     val viewpoint = toViewpoint(position)
-    mainCoroutine.launch {
-        if (!holder.mapView.isAttachedToWindow) return@launch
-        holder.map.setViewpoint(viewpoint)
+    val applyViewpoint = {
+        mainCoroutine.launch {
+            if (!holder.mapView.isAttachedToWindow) return@launch
+            holder.map.setViewpoint(viewpoint)
+        }
+        Unit
     }
+    if (tiltChanged) holder.mapView.post { applyViewpoint() } else applyViewpoint()
 }
 
 internal fun ArcGISMapView2DController.handleAnimateCamera(
     position: MapCameraPosition,
     duration: Long,
 ) {
+    lastLogicalCameraPosition = position
+    val tiltChanged = holder.mapView.visualTilt != position.tilt
+    holder.mapView.visualTilt = position.tilt
+    if (tiltChanged) markerController.refreshVerticalStretch()
     val viewpoint = toViewpoint(position)
-    defaultCoroutine.launch {
-        invokeCameraMoveStartCallback()
-        mainCoroutine.launch {
-            if (!holder.mapView.isAttachedToWindow) return@launch
-            holder.map.setViewpointAnimated(
-                viewpoint = viewpoint,
-                durationSeconds = duration.toFloat() / 1000.0f,
-            )
+    val animate = {
+        defaultCoroutine.launch {
+            invokeCameraMoveStartCallback()
+            mainCoroutine.launch {
+                if (!holder.mapView.isAttachedToWindow) return@launch
+                holder.map.setViewpointAnimated(
+                    viewpoint = viewpoint,
+                    durationSeconds = duration.toFloat() / 1000.0f,
+                )
+            }
+            scheduleCameraMoveEndCallback()
         }
-        scheduleCameraMoveEndCallback()
+        Unit
     }
+    // tilt 変更時はレイアウト確定を待つ（handleMoveCamera と同じ理由）。
+    if (tiltChanged) holder.mapView.post { animate() } else animate()
 }
 
 internal fun ArcGISMapView2DController.handleFitBounds(

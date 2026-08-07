@@ -11,9 +11,12 @@ import com.arcgismaps.mapping.view.SceneView
 import com.mapconductor.core.features.GeoPoint
 import com.mapconductor.core.features.GeoPointInterface
 import com.mapconductor.core.map.MapViewHolderInterface
+import kotlin.math.abs
+import kotlin.math.max
 import android.content.Context
 import android.content.pm.PackageManager
 import android.util.AttributeSet
+import android.view.Gravity
 import android.widget.FrameLayout
 import kotlinx.coroutines.runBlocking
 
@@ -66,6 +69,67 @@ class WrapMapView : FrameLayout {
     constructor(context: Context, attrs: AttributeSet?) : super(context, attrs)
     constructor(context: Context, attrs: AttributeSet?, defStyleAttr: Int) : super(context, attrs, defStyleAttr)
 
+    /**
+     * 2D `MapView` を「見た目だけ」傾ける角度（論理 tilt、度）。
+     *
+     * 2D はカメラピッチを持てないため、ビューそのものを X 軸まわりに回して遠近感を作る
+     * （react-for-leaflet が CSS `rotateX` で行っているのと同じ方式。ios-for-arcgis の
+     * `ArcGIS2DTiltModifier` と対応する）。地図側の中心・縮尺は [ArcGIS2DTiltEmulation] が
+     * 受け持ち、ここは描画だけを扱う。
+     *
+     * 負の tilt は中心の前進で表現されるので、描画角度は常に `abs(tilt)` を使う。
+     *
+     * 注意: `GraphicsOverlay` の内容（マーカー・ポリゴン等）は `MapView` の内側にあるため、
+     * この変換で一緒に寝る。
+     */
+    var visualTilt: Double = 0.0
+        set(value) {
+            if (field == value) return
+            field = value
+            applyVisualTilt()
+        }
+
+    override fun onLayout(
+        changed: Boolean,
+        left: Int,
+        top: Int,
+        right: Int,
+        bottom: Int,
+    ) {
+        super.onLayout(changed, left, top, right, bottom)
+        if (changed) applyVisualTilt()
+    }
+
+    /**
+     * 回した平面が元のフレームを覆うよう [PLANE_SCALE] 倍に広げてから回し、
+     * 親（この FrameLayout）でクリップする。拡大しても縮尺は変わらない（縮尺は解像度で
+     * 決まる）ので、単に地図が広く映る＝傾いたカメラがより広い地表を見るのと同じになる。
+     */
+    private fun applyVisualTilt() {
+        if (!this::arcGISMapView.isInitialized) return
+        if (width <= 0 || height <= 0) return
+
+        val angle = abs(visualTilt).coerceIn(0.0, MAX_TILT_DEGREES).toFloat()
+        val scale = if (angle > 0f) PLANE_SCALE else 1.0f
+        val targetWidth = (width * scale).toInt()
+        val targetHeight = (height * scale).toInt()
+
+        val params = arcGISMapView.layoutParams as LayoutParams
+        if (params.width != targetWidth || params.height != targetHeight || params.gravity != Gravity.CENTER) {
+            params.width = targetWidth
+            params.height = targetHeight
+            params.gravity = Gravity.CENTER
+            arcGISMapView.layoutParams = params
+        }
+
+        // 遠近は掛けない（正射影）。react-for-leaflet / react-for-openlayers の CSS も
+        // `perspective` を置いておらず、[PLANE_SCALE] = 1 / cos(60°) がちょうど効く前提。
+        // 遠近を入れると遠方が縮んで平面が上辺を覆えなくなる。Android は正射影を直接
+        // 指定できないため、視点距離を十分大きく取って近似する。
+        arcGISMapView.cameraDistance = max(targetWidth, targetHeight) * ORTHOGRAPHIC_DISTANCE_FACTOR
+        arcGISMapView.rotationX = angle
+    }
+
     fun onCreate(owner: LifecycleOwner) {
         this.arcGISMapView.onCreate(owner)
     }
@@ -84,6 +148,21 @@ class WrapMapView : FrameLayout {
 
     fun onDestroy(owner: LifecycleOwner) {
         this.arcGISMapView.onDestroy(owner)
+    }
+
+    companion object {
+        /**
+         * 回した平面が元のフレームを覆うための拡大率。
+         * 正射影なら回した後の高さは `PLANE_SCALE * cos(tilt)` なので、最大 60° で
+         * ちょうど 1.0 になる 2.0 が最小値。react-for-leaflet / react-for-openlayers の
+         * 200% と同じ。
+         */
+        private const val PLANE_SCALE = 2.0f
+
+        /** 正射影に近づけるための視点距離 ÷ ビューサイズ。大きいほど遠近が弱い。 */
+        private const val ORTHOGRAPHIC_DISTANCE_FACTOR = 200.0f
+
+        private const val MAX_TILT_DEGREES = 60.0
     }
 }
 

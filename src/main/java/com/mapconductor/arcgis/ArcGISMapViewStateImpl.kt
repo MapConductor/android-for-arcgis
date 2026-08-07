@@ -107,8 +107,6 @@ class ArcGISMapViewState(
     /** Holder while the 2D [ArcGISMapView2D] (MapView) is attached; null in 3D mode. */
     fun getMapView2DHolder(): ArcGISMapView2DHolder? = controller?.holder as? ArcGISMapView2DHolder
 
-    override fun getControllers() = controller?.getControllers()
-
     internal fun updateCameraPosition(cameraPosition: MapCameraPosition) {
         this._cameraPosition = cameraPosition
     }

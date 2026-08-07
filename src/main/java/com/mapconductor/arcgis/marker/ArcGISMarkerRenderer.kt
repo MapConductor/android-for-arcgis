@@ -9,12 +9,16 @@ import com.arcgismaps.mapping.view.Graphic
 import com.arcgismaps.mapping.view.GraphicsOverlay
 import com.mapconductor.arcgis.ArcGISActualMarker
 import com.mapconductor.arcgis.ArcGISGeoViewHolder
+import com.mapconductor.arcgis.WrapMapView
 import com.mapconductor.arcgis.toPoint
 import com.mapconductor.core.ResourceProvider
 import com.mapconductor.core.features.GeoPoint
 import com.mapconductor.core.marker.AbstractMarkerOverlayRenderer
 import com.mapconductor.core.marker.MarkerEntityInterface
 import com.mapconductor.core.marker.MarkerOverlayRendererInterface
+import kotlin.math.abs
+import kotlin.math.cos
+import kotlin.math.max
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -29,6 +33,35 @@ class ArcGISMarkerRenderer(
         coroutine = coroutine,
     ) {
     override val supportsAnimationOverlay: Boolean = true
+
+    /**
+     * マーカーのアイコンを縦へ引き伸ばす倍率。
+     *
+     * 2D は [WrapMapView] 自体を傾けて tilt を表現するので、地図の中身が縦に cos(tilt) 倍へ
+     * 潰れる。マーカーだけは立って見えてほしいので、先に 1/cos(tilt) 倍しておいて潰された後に
+     * 元の高さになるようにする。3D（SceneView）はビューを傾けないので常に 1。
+     */
+    private val verticalStretch: Float
+        get() {
+            val wrap = holder.mapView as? WrapMapView ?: return 1.0f
+            val angle = abs(wrap.visualTilt).coerceIn(0.0, 60.0)
+            return (1.0 / max(cos(Math.toRadians(angle)), 0.5)).toFloat()
+        }
+
+    /**
+     * tilt が変わったときに、既存マーカーの縦補正を掛け直す。
+     * 元の寸法は生成時に属性へ控えてあるので、そこから毎回作り直す（倍率を累積させない）。
+     */
+    fun refreshVerticalStretch() {
+        val stretch = verticalStretch
+        markerLayer.graphics.forEach { graphic ->
+            val symbol = graphic.symbol as? PictureMarkerSymbol ?: return@forEach
+            val baseHeight = graphic.attributes[BASE_HEIGHT_KEY] as? Float ?: return@forEach
+            val baseOffsetY = graphic.attributes[BASE_OFFSET_Y_KEY] as? Float ?: return@forEach
+            symbol.height = baseHeight * stretch
+            symbol.offsetY = baseOffsetY * stretch
+        }
+    }
 
     /**
      * マーカー位置をビューの空間参照に合わせた [Point] へ変換する。
@@ -82,9 +115,9 @@ class ArcGISMarkerRenderer(
                         val pictureSymbolFuture =
                             PictureMarkerSymbol.createWithImage(bitmapDrawable).also {
                                 it.width = width
-                                it.height = height
+                                it.height = height * verticalStretch
                                 it.offsetX = anchorX.toFloat()
-                                it.offsetY = anchorY.toFloat()
+                                it.offsetY = anchorY.toFloat() * verticalStretch
                             }
 
                         val marker =
@@ -93,6 +126,8 @@ class ArcGISMarkerRenderer(
                                 symbol = pictureSymbolFuture,
                             ).also {
                                 it.attributes["id"] = params.state.id
+                                it.attributes[BASE_HEIGHT_KEY] = height
+                                it.attributes[BASE_OFFSET_Y_KEY] = anchorY.toFloat()
                             }
                         return@map marker
                     }.also {
@@ -134,15 +169,17 @@ class ArcGISMarkerRenderer(
                             val pictureSymbolFuture =
                                 PictureMarkerSymbol.createWithImage(bitmapDrawable).also {
                                     it.width = width
-                                    it.height = height
+                                    it.height = height * verticalStretch
                                     it.offsetX = anchorX.toFloat()
-                                    it.offsetY = anchorY.toFloat()
+                                    it.offsetY = anchorY.toFloat() * verticalStretch
                                 }
                             Graphic(
                                 geometry = GeoPoint.from(params.current.state.position).toViewPoint(),
                                 symbol = pictureSymbolFuture,
                             ).also {
                                 it.attributes["id"] = params.current.state.id
+                                it.attributes[BASE_HEIGHT_KEY] = height
+                                it.attributes[BASE_OFFSET_Y_KEY] = anchorY.toFloat()
                             }
                         } else {
                             params.prev.marker!!
@@ -159,9 +196,9 @@ class ArcGISMarkerRenderer(
                         val pictureSymbolFuture =
                             PictureMarkerSymbol.createWithImage(bitmapDrawable).also {
                                 it.width = width
-                                it.height = height
+                                it.height = height * verticalStretch
                                 it.offsetX = anchorX.toFloat()
-                                it.offsetY = anchorY.toFloat()
+                                it.offsetY = anchorY.toFloat() * verticalStretch
                             }
                         marker.symbol = pictureSymbolFuture
                     }
@@ -175,4 +212,10 @@ class ArcGISMarkerRenderer(
                 }
             results
         }
+
+    companion object {
+        /** 縦補正の掛け直しに使う素の寸法（属性キー）。 */
+        private const val BASE_HEIGHT_KEY = "mcBaseHeight"
+        private const val BASE_OFFSET_Y_KEY = "mcBaseOffsetY"
+    }
 }

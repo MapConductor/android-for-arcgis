@@ -45,6 +45,11 @@ class ArcGISMarkerController(
         renderer = renderer,
     ),
     OnCameraChangeReceiverInterface {
+    /** 2D の tilt 表現が変わったときに、マーカーの縦補正を掛け直す。 */
+    fun refreshVerticalStretch() {
+        (renderer as? ArcGISMarkerRenderer)?.refreshVerticalStretch()
+    }
+
     private var internalSelectedMarker: SelectedMarker? = null
 
     private val defaultMarkerIcon: BitmapIcon = DefaultMarkerIcon().toBitmapIcon()

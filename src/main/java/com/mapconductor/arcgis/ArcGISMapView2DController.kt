@@ -17,7 +17,6 @@ import com.mapconductor.arcgis.raster.ArcGISRasterLayerController
 import com.mapconductor.core.circle.CircleState
 import com.mapconductor.core.circle.OnCircleEventHandler
 import com.mapconductor.core.controller.BaseMapViewController
-import com.mapconductor.core.controller.OverlayControllerInterface
 import com.mapconductor.core.features.GeoPoint
 import com.mapconductor.core.features.GeoRectBounds
 import com.mapconductor.core.groundimage.GroundImageState
@@ -63,6 +62,11 @@ class ArcGISMapView2DController(
     internal var markerAnimateStartListener: OnMarkerEventHandler? = null
     internal var markerAnimateEndListener: OnMarkerEventHandler? = null
     internal var cameraMoveEndJob: Job? = null
+
+    // 直近に要求した論理カメラ位置。2D はカメラピッチを持てず tilt を擬似表現しているため、
+    // カメラ状態の読み戻し時に元の tilt・位置・ズームを復元するヒントとして保持する
+    // （android-for-tomtom / ios-for-arcgis と同方針）。
+    internal var lastLogicalCameraPosition: MapCameraPosition? = null
     internal val cameraMoveEndDebounceMs = 180L
     internal var mapDesignType: ArcGISDesignTypeInterface = ArcGISDesign.Streets
     internal var mapDesignTypeChangeListener: ArcGISDesignTypeChangeHandler? = null
@@ -231,21 +235,17 @@ class ArcGISMapView2DController(
         groundImageController.clickListener = listener
     }
 
-    override fun getControllers(): Map<String, OverlayControllerInterface<*, *>> =
-        mapOf(
-            "marker" to markerController,
-            "polyline" to polylineController,
-            "polygon" to polygonController,
-            "circle" to circleController,
-            "ground_image" to groundImageController,
-            "raster_layer" to rasterLayerController,
-        )
-
+    /**
+     * 2D の MapView はカメラピッチを持てないため、tilt < 0（上向き）は中心の前進と
+     * ズーム補正で近似する（[ArcGIS2DTiltEmulation]）。tilt >= 0 は他プロバイダと同じく
+     * 指定位置がそのまま画面中心に来る。
+     */
     internal fun toViewpoint(position: MapCameraPosition): Viewpoint {
-        val point = GeoPoint.from(position.position).toPoint(SpatialReference.wgs84())
+        val (center, zoom) = ArcGIS2DTiltEmulation.shiftedCamera(position)
+        val point = GeoPoint.from(center).toPoint(SpatialReference.wgs84())
         return Viewpoint(
             center = point,
-            scale = zoomToScale(position.zoom),
+            scale = zoomToScale(zoom),
             rotation = position.bearing,
         )
     }
