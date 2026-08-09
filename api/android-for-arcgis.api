@@ -104,6 +104,7 @@ public interface com.mapconductor.arcgis.ArcGISGeoViewHolder<ActualMapView exten
 }
 public final class com.mapconductor.arcgis.ArcGISGeoViewHolder$DefaultImpls {
   public static <ActualMapView extends android.widget.FrameLayout, ActualMap extends com.arcgismaps.mapping.view.GeoView> void setNavigationEnabled(com.mapconductor.arcgis.ArcGISGeoViewHolder<ActualMapView, ActualMap>, boolean);
+  public static <ActualMapView extends android.widget.FrameLayout, ActualMap extends com.arcgismaps.mapping.view.GeoView> java.lang.Object fromScreenOffset-3MmeM6k(com.mapconductor.arcgis.ArcGISGeoViewHolder<ActualMapView, ActualMap>, long, kotlin.coroutines.Continuation<? super com.mapconductor.core.features.GeoPoint>);
   public static <ActualMapView extends android.widget.FrameLayout, ActualMap extends com.arcgismaps.mapping.view.GeoView> com.mapconductor.core.features.GeoPoint fromScreenOffsetSync-k-4lQ0M(com.mapconductor.arcgis.ArcGISGeoViewHolder<ActualMapView, ActualMap>, long);
 }
 public final class com.mapconductor.arcgis.ArcGISMapView2DController extends com.mapconductor.core.controller.BaseMapViewController implements com.mapconductor.arcgis.ArcGISMapViewControllerInterface {
