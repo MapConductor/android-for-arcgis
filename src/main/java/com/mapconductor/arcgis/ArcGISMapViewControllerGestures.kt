@@ -8,6 +8,7 @@ import com.arcgismaps.mapping.view.extensions.motionEvent
 import com.mapconductor.arcgis.marker.ArcGISMarkerRenderer
 import com.mapconductor.core.circle.CircleEvent
 import com.mapconductor.core.groundimage.GroundImageEvent
+import com.mapconductor.core.marker.clickableOnly
 import com.mapconductor.core.polygon.PolygonEvent
 import com.mapconductor.core.polyline.PolylineEvent
 import com.mapconductor.settings.Settings
@@ -118,7 +119,7 @@ internal suspend fun ArcGISMapViewController.onMapTap(event: SingleTapConfirmedE
             ?.toGeoPoint() ?: return
 
     markerEventControllers.forEach { controller ->
-        controller.find(touchPosition)?.let { markerEntity ->
+        controller.find(touchPosition).clickableOnly()?.let { markerEntity ->
             controller.dispatchClick(markerEntity.state)
             return
         }
