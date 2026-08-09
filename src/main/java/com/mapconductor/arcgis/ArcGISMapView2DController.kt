@@ -201,30 +201,6 @@ class ArcGISMapView2DController(
         rasterLayerController.clear()
     }
 
-    override suspend fun compositionMarkers(data: List<MarkerState>) = markerController.add(data)
-
-    override suspend fun updateMarker(state: MarkerState) = markerController.update(state)
-
-    override suspend fun compositionPolylines(data: List<PolylineState>) = polylineController.add(data)
-
-    override suspend fun updatePolyline(state: PolylineState) = polylineController.update(state)
-
-    override suspend fun compositionPolygons(data: List<PolygonState>) = polygonController.add(data)
-
-    override suspend fun updatePolygon(state: PolygonState) = polygonController.update(state)
-
-    override suspend fun compositionCircles(data: List<CircleState>) = circleController.add(data)
-
-    override suspend fun updateCircle(state: CircleState) = circleController.update(state)
-
-    override suspend fun compositionGroundImages(data: List<GroundImageState>) = groundImageController.add(data)
-
-    override suspend fun updateGroundImage(state: GroundImageState) = groundImageController.update(state)
-
-    override suspend fun compositionRasterLayers(data: List<RasterLayerState>) = rasterLayerController.add(data)
-
-    override suspend fun updateRasterLayer(state: RasterLayerState) = rasterLayerController.update(state)
-
     @Deprecated("Use CircleState.onClick instead.")
     override fun setOnCircleClickListener(listener: OnCircleEventHandler?) {
         circleController.clickListener = listener

@@ -125,18 +125,6 @@ public final class com.mapconductor.arcgis.ArcGISMapView2DController extends com
   public boolean hasRasterLayer(com.mapconductor.core.raster.RasterLayerState);
   public void setCameraRestriction(com.mapconductor.core.map.CameraRestriction);
   public java.lang.Object clearOverlays(kotlin.coroutines.Continuation<? super kotlin.Unit>);
-  public java.lang.Object compositionMarkers(java.util.List<com.mapconductor.core.marker.MarkerState>, kotlin.coroutines.Continuation<? super kotlin.Unit>);
-  public java.lang.Object updateMarker(com.mapconductor.core.marker.MarkerState, kotlin.coroutines.Continuation<? super kotlin.Unit>);
-  public java.lang.Object compositionPolylines(java.util.List<com.mapconductor.core.polyline.PolylineState>, kotlin.coroutines.Continuation<? super kotlin.Unit>);
-  public java.lang.Object updatePolyline(com.mapconductor.core.polyline.PolylineState, kotlin.coroutines.Continuation<? super kotlin.Unit>);
-  public java.lang.Object compositionPolygons(java.util.List<com.mapconductor.core.polygon.PolygonState>, kotlin.coroutines.Continuation<? super kotlin.Unit>);
-  public java.lang.Object updatePolygon(com.mapconductor.core.polygon.PolygonState, kotlin.coroutines.Continuation<? super kotlin.Unit>);
-  public java.lang.Object compositionCircles(java.util.List<com.mapconductor.core.circle.CircleState>, kotlin.coroutines.Continuation<? super kotlin.Unit>);
-  public java.lang.Object updateCircle(com.mapconductor.core.circle.CircleState, kotlin.coroutines.Continuation<? super kotlin.Unit>);
-  public java.lang.Object compositionGroundImages(java.util.List<com.mapconductor.core.groundimage.GroundImageState>, kotlin.coroutines.Continuation<? super kotlin.Unit>);
-  public java.lang.Object updateGroundImage(com.mapconductor.core.groundimage.GroundImageState, kotlin.coroutines.Continuation<? super kotlin.Unit>);
-  public java.lang.Object compositionRasterLayers(java.util.List<com.mapconductor.core.raster.RasterLayerState>, kotlin.coroutines.Continuation<? super kotlin.Unit>);
-  public java.lang.Object updateRasterLayer(com.mapconductor.core.raster.RasterLayerState, kotlin.coroutines.Continuation<? super kotlin.Unit>);
   public void setOnCircleClickListener(kotlin.jvm.functions.Function1<? super com.mapconductor.core.circle.CircleEvent, kotlin.Unit>);
   public void setOnGroundImageClickListener(kotlin.jvm.functions.Function1<? super com.mapconductor.core.groundimage.GroundImageEvent, kotlin.Unit>);
   public void setOnMarkerDragStart(kotlin.jvm.functions.Function1<? super com.mapconductor.core.marker.MarkerState, kotlin.Unit>);
@@ -154,7 +142,6 @@ public final class com.mapconductor.arcgis.ArcGISMapView2DController extends com
   public final com.mapconductor.core.marker.MarkerOverlayRendererInterface<com.arcgismaps.mapping.view.Graphic> createMarkerRenderer();
   public final com.mapconductor.core.marker.MarkerEventControllerInterface<com.arcgismaps.mapping.view.Graphic> createMarkerEventController(com.mapconductor.core.marker.StrategyMarkerController<com.arcgismaps.mapping.view.Graphic>);
   public final void registerMarkerEventController(com.mapconductor.core.marker.MarkerEventControllerInterface<com.arcgismaps.mapping.view.Graphic>);
-  public void setMarkerAnimationOverlayHost(com.mapconductor.core.marker.MarkerAnimationOverlayHost);
   public com.mapconductor.core.map.MapViewHolderInterface getHolder();
 }
 public final class com.mapconductor.arcgis.ArcGISMapView2DController$Companion {
@@ -204,27 +191,11 @@ public final class com.mapconductor.arcgis.ArcGISMapViewController extends com.m
   public void animateCamera(com.mapconductor.core.map.MapCameraPosition, long);
   public void fitBounds(com.mapconductor.core.features.GeoRectBounds, int);
   public final void setupListeners();
-  public boolean hasMarker(com.mapconductor.core.marker.MarkerState);
   public boolean hasPolyline(com.mapconductor.core.polyline.PolylineState);
-  public boolean hasPolygon(com.mapconductor.core.polygon.PolygonState);
-  public boolean hasCircle(com.mapconductor.core.circle.CircleState);
   public boolean hasGroundImage(com.mapconductor.core.groundimage.GroundImageState);
-  public boolean hasRasterLayer(com.mapconductor.core.raster.RasterLayerState);
   public void applyUISettings(com.mapconductor.core.map.MapUISettings);
   public java.lang.Object clearOverlays(kotlin.coroutines.Continuation<? super kotlin.Unit>);
-  public java.lang.Object compositionMarkers(java.util.List<com.mapconductor.core.marker.MarkerState>, kotlin.coroutines.Continuation<? super kotlin.Unit>);
   public void setMarkerAnimationOverlayHost(com.mapconductor.core.marker.MarkerAnimationOverlayHost);
-  public java.lang.Object updateMarker(com.mapconductor.core.marker.MarkerState, kotlin.coroutines.Continuation<? super kotlin.Unit>);
-  public java.lang.Object compositionPolylines(java.util.List<com.mapconductor.core.polyline.PolylineState>, kotlin.coroutines.Continuation<? super kotlin.Unit>);
-  public java.lang.Object updatePolyline(com.mapconductor.core.polyline.PolylineState, kotlin.coroutines.Continuation<? super kotlin.Unit>);
-  public java.lang.Object compositionPolygons(java.util.List<com.mapconductor.core.polygon.PolygonState>, kotlin.coroutines.Continuation<? super kotlin.Unit>);
-  public java.lang.Object updatePolygon(com.mapconductor.core.polygon.PolygonState, kotlin.coroutines.Continuation<? super kotlin.Unit>);
-  public java.lang.Object compositionCircles(java.util.List<com.mapconductor.core.circle.CircleState>, kotlin.coroutines.Continuation<? super kotlin.Unit>);
-  public java.lang.Object updateCircle(com.mapconductor.core.circle.CircleState, kotlin.coroutines.Continuation<? super kotlin.Unit>);
-  public java.lang.Object compositionGroundImages(java.util.List<com.mapconductor.core.groundimage.GroundImageState>, kotlin.coroutines.Continuation<? super kotlin.Unit>);
-  public java.lang.Object updateGroundImage(com.mapconductor.core.groundimage.GroundImageState, kotlin.coroutines.Continuation<? super kotlin.Unit>);
-  public java.lang.Object compositionRasterLayers(java.util.List<com.mapconductor.core.raster.RasterLayerState>, kotlin.coroutines.Continuation<? super kotlin.Unit>);
-  public java.lang.Object updateRasterLayer(com.mapconductor.core.raster.RasterLayerState, kotlin.coroutines.Continuation<? super kotlin.Unit>);
   public void setOnCircleClickListener(kotlin.jvm.functions.Function1<? super com.mapconductor.core.circle.CircleEvent, kotlin.Unit>);
   public void setOnGroundImageClickListener(kotlin.jvm.functions.Function1<? super com.mapconductor.core.groundimage.GroundImageEvent, kotlin.Unit>);
   public void setOnMarkerDragStart(kotlin.jvm.functions.Function1<? super com.mapconductor.core.marker.MarkerState, kotlin.Unit>);
