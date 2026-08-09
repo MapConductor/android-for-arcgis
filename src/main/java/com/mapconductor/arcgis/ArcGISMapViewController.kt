@@ -14,7 +14,7 @@ import com.mapconductor.arcgis.polyline.ArcGISPolylineOverlayController
 import com.mapconductor.arcgis.raster.ArcGISRasterLayerController
 import com.mapconductor.core.circle.OnCircleEventHandler
 import com.mapconductor.core.controller.BaseMapViewController
-import com.mapconductor.core.features.GeoPoint
+import com.mapconductor.core.features.GeoPointInterface
 import com.mapconductor.core.features.GeoRectBounds
 import com.mapconductor.core.groundimage.GroundImageState
 import com.mapconductor.core.groundimage.OnGroundImageEventHandler
@@ -27,6 +27,7 @@ import com.mapconductor.core.marker.MarkerEventControllerInterface
 import com.mapconductor.core.marker.MarkerOverlayRendererInterface
 import com.mapconductor.core.marker.OnMarkerEventHandler
 import com.mapconductor.core.marker.StrategyMarkerController
+import com.mapconductor.core.marker.dispatchGeoMarkerClick
 import com.mapconductor.core.polygon.OnPolygonEventHandler
 import com.mapconductor.core.polyline.OnPolylineEventHandler
 import com.mapconductor.core.polyline.PolylineState
@@ -101,6 +102,16 @@ class ArcGISMapViewController(
         padding: Int,
     ) = handleFitBounds(bounds, padding)
 
+    /**
+     * マーカーのヒットテスト。クリックカスケードの先頭。
+     *
+     * ArcGIS は地図タップの座標からそのまま引けるので、コアの
+     * [dispatchGeoMarkerClick] に委ねる（`clickable = false` の透過もそちら）。
+     * 長押し（ドラッグ開始）だけは identifyGraphicsOverlay を使うので Gestures 側に残る。
+     */
+    override fun dispatchMarkerTap(position: GeoPointInterface): Boolean =
+        markerEventControllers.dispatchGeoMarkerClick(position)
+
     // 拡張ファイル（Camera / Gestures）からは基底クラスの protected へ触れないため、
     // ここで internal の入口を用意しておく。
     internal fun cameraMoveStartHandler(): ((MapCameraPosition) -> Unit)? = cameraMoveStartCallback
@@ -111,14 +122,6 @@ class ArcGISMapViewController(
 
     internal fun emitCameraMoveEnd(position: MapCameraPosition) {
         cameraMoveEndCallback?.invoke(position)
-    }
-
-    internal fun emitMapClick(point: GeoPoint) {
-        mapClickCallback?.invoke(point)
-    }
-
-    internal fun emitMapLongClick(point: GeoPoint) {
-        mapLongClickCallback?.invoke(point)
     }
 
     internal fun emitMapInitialized() {

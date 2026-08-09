@@ -117,6 +117,7 @@ public final class com.mapconductor.arcgis.ArcGISMapView2DController extends com
   public void moveCamera(com.mapconductor.core.map.MapCameraPosition);
   public void animateCamera(com.mapconductor.core.map.MapCameraPosition, long);
   public void fitBounds(com.mapconductor.core.features.GeoRectBounds, int);
+  protected boolean dispatchMarkerTap(com.mapconductor.core.features.GeoPointInterface);
   public final void setupListeners();
   public boolean hasMarker(com.mapconductor.core.marker.MarkerState);
   public boolean hasPolyline(com.mapconductor.core.polyline.PolylineState);
@@ -191,6 +192,7 @@ public final class com.mapconductor.arcgis.ArcGISMapViewController extends com.m
   public void moveCamera(com.mapconductor.core.map.MapCameraPosition);
   public void animateCamera(com.mapconductor.core.map.MapCameraPosition, long);
   public void fitBounds(com.mapconductor.core.features.GeoRectBounds, int);
+  protected boolean dispatchMarkerTap(com.mapconductor.core.features.GeoPointInterface);
   public final void setupListeners();
   public boolean hasPolyline(com.mapconductor.core.polyline.PolylineState);
   public boolean hasGroundImage(com.mapconductor.core.groundimage.GroundImageState);
@@ -447,13 +449,11 @@ public final class com.mapconductor.arcgis.marker.ArcGISMarkerController extends
   public java.lang.Object find(com.mapconductor.core.features.GeoPointInterface);
   public java.lang.Object update(java.lang.Object, kotlin.coroutines.Continuation);
 }
-public interface com.mapconductor.arcgis.marker.ArcGISMarkerEventControllerInterface extends com.mapconductor.core.marker.MarkerEventControllerInterface<com.arcgismaps.mapping.view.Graphic> {
-  public abstract com.mapconductor.core.marker.MarkerEntityInterface<com.arcgismaps.mapping.view.Graphic> find(com.mapconductor.core.features.GeoPoint);
+public interface com.mapconductor.arcgis.marker.ArcGISMarkerEventControllerInterface extends com.mapconductor.core.marker.MarkerEventControllerInterface<com.arcgismaps.mapping.view.Graphic>, com.mapconductor.core.marker.GeoMarkerClickTargetInterface<com.arcgismaps.mapping.view.Graphic> {
   public abstract com.mapconductor.core.marker.MarkerState getSelectedState();
   public abstract void startDrag(com.mapconductor.core.marker.MarkerEntityInterface<com.arcgismaps.mapping.view.Graphic>);
   public abstract void updateDrag(com.arcgismaps.geometry.Point, com.mapconductor.core.features.GeoPoint);
   public abstract void endDrag(com.arcgismaps.geometry.Point, com.mapconductor.core.features.GeoPoint);
-  public abstract void dispatchClick(com.mapconductor.core.marker.MarkerState);
   public abstract void dispatchDragStart(com.mapconductor.core.marker.MarkerState);
   public abstract void dispatchDrag(com.mapconductor.core.marker.MarkerState);
   public abstract void dispatchDragEnd(com.mapconductor.core.marker.MarkerState);
@@ -482,7 +482,7 @@ public final class com.mapconductor.arcgis.marker.ArcGISMarkerRenderer$Companion
 }
 public final class com.mapconductor.arcgis.marker.DefaultArcGISMarkerEventController implements com.mapconductor.arcgis.marker.ArcGISMarkerEventControllerInterface {
   public com.mapconductor.arcgis.marker.DefaultArcGISMarkerEventController(com.mapconductor.arcgis.marker.ArcGISMarkerController);
-  public com.mapconductor.core.marker.MarkerEntityInterface<com.arcgismaps.mapping.view.Graphic> find(com.mapconductor.core.features.GeoPoint);
+  public com.mapconductor.core.marker.MarkerEntityInterface<com.arcgismaps.mapping.view.Graphic> find(com.mapconductor.core.features.GeoPointInterface);
   public com.mapconductor.core.marker.MarkerState getSelectedState();
   public void startDrag(com.mapconductor.core.marker.MarkerEntityInterface<com.arcgismaps.mapping.view.Graphic>);
   public void updateDrag(com.arcgismaps.geometry.Point, com.mapconductor.core.features.GeoPoint);
@@ -511,7 +511,7 @@ public final class com.mapconductor.arcgis.marker.SelectedMarker {
 }
 public final class com.mapconductor.arcgis.marker.StrategyArcGISMarkerEventController implements com.mapconductor.arcgis.marker.ArcGISMarkerEventControllerInterface {
   public com.mapconductor.arcgis.marker.StrategyArcGISMarkerEventController(com.mapconductor.core.marker.StrategyMarkerController<com.arcgismaps.mapping.view.Graphic>);
-  public com.mapconductor.core.marker.MarkerEntityInterface<com.arcgismaps.mapping.view.Graphic> find(com.mapconductor.core.features.GeoPoint);
+  public com.mapconductor.core.marker.MarkerEntityInterface<com.arcgismaps.mapping.view.Graphic> find(com.mapconductor.core.features.GeoPointInterface);
   public com.mapconductor.core.marker.MarkerState getSelectedState();
   public void startDrag(com.mapconductor.core.marker.MarkerEntityInterface<com.arcgismaps.mapping.view.Graphic>);
   public void updateDrag(com.arcgismaps.geometry.Point, com.mapconductor.core.features.GeoPoint);

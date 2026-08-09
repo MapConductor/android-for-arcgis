@@ -3,6 +3,7 @@ package com.mapconductor.arcgis.marker
 import com.arcgismaps.geometry.Point
 import com.mapconductor.arcgis.ArcGISActualMarker
 import com.mapconductor.core.features.GeoPoint
+import com.mapconductor.core.features.GeoPointInterface
 import com.mapconductor.core.marker.MarkerEntityInterface
 import com.mapconductor.core.marker.MarkerState
 import com.mapconductor.core.marker.OnMarkerEventHandler
@@ -10,7 +11,8 @@ import com.mapconductor.core.marker.OnMarkerEventHandler
 internal class DefaultArcGISMarkerEventController(
     private val controller: ArcGISMarkerController,
 ) : ArcGISMarkerEventControllerInterface {
-    override fun find(position: GeoPoint): MarkerEntityInterface<ArcGISActualMarker>? = controller.find(position)
+    override fun find(position: GeoPointInterface): MarkerEntityInterface<ArcGISActualMarker>? =
+        controller.find(position)
 
     override fun getSelectedState(): MarkerState? = controller.selectedMarker?.state
 

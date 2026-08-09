@@ -3,14 +3,17 @@ package com.mapconductor.arcgis.marker
 import com.arcgismaps.geometry.Point
 import com.mapconductor.arcgis.ArcGISActualMarker
 import com.mapconductor.core.features.GeoPoint
+import com.mapconductor.core.marker.GeoMarkerClickTargetInterface
 import com.mapconductor.core.marker.MarkerEntityInterface
 import com.mapconductor.core.marker.MarkerEventControllerInterface
 import com.mapconductor.core.marker.MarkerState
 import com.mapconductor.core.marker.OnMarkerEventHandler
 
-internal interface ArcGISMarkerEventControllerInterface : MarkerEventControllerInterface<ArcGISActualMarker> {
-    fun find(position: GeoPoint): MarkerEntityInterface<ArcGISActualMarker>?
-
+internal interface ArcGISMarkerEventControllerInterface :
+    MarkerEventControllerInterface<ArcGISActualMarker>,
+    // find / dispatchClick はコアの契約。クリックカスケードは
+    // BaseMapViewController.dispatchTap が回す。
+    GeoMarkerClickTargetInterface<ArcGISActualMarker> {
     fun getSelectedState(): MarkerState?
 
     fun startDrag(entity: MarkerEntityInterface<ArcGISActualMarker>)
@@ -24,8 +27,6 @@ internal interface ArcGISMarkerEventControllerInterface : MarkerEventControllerI
         point: Point,
         position: GeoPoint,
     )
-
-    fun dispatchClick(state: MarkerState)
 
     fun dispatchDragStart(state: MarkerState)
 
