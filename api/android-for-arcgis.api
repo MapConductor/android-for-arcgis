@@ -330,13 +330,9 @@ public final class com.mapconductor.arcgis.ArcGISMapViewState extends com.mapcon
   public com.mapconductor.arcgis.ArcGISMapViewState(java.lang.String, com.mapconductor.arcgis.ArcGISDesignTypeInterface, com.mapconductor.core.map.MapCameraPosition);
   public com.mapconductor.arcgis.ArcGISMapViewState(java.lang.String, com.mapconductor.arcgis.ArcGISDesignTypeInterface, com.mapconductor.core.map.MapCameraPosition, int, kotlin.jvm.internal.DefaultConstructorMarker);
   public java.lang.String getId();
-  public com.mapconductor.core.map.MapCameraPosition getCameraPosition();
   public final kotlinx.coroutines.flow.StateFlow<com.mapconductor.core.map.MapPaddingsInterface> getPadding();
   public com.mapconductor.arcgis.ArcGISDesignTypeInterface getMapDesignType();
   public void setMapDesignType(com.mapconductor.arcgis.ArcGISDesignTypeInterface);
-  public void moveCameraTo(com.mapconductor.core.map.MapCameraPosition, java.lang.Long);
-  public void fitBounds(com.mapconductor.core.features.GeoRectBounds, int);
-  public void moveCameraTo(com.mapconductor.core.features.GeoPoint, java.lang.Long);
   public com.mapconductor.arcgis.ArcGISGeoViewHolder<?, ?> getMapViewHolder();
   public final com.mapconductor.arcgis.ArcGISMapViewHolder getSceneViewHolder();
   public final com.mapconductor.arcgis.ArcGISMapView2DHolder getMapView2DHolder();
