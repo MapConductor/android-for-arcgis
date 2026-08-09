@@ -1,0 +1,634 @@
+public final class com.mapconductor.arcgis.ArcGIS2DTiltEmulation {
+  public static final com.mapconductor.arcgis.ArcGIS2DTiltEmulation INSTANCE;
+  public final kotlin.Pair<com.mapconductor.core.features.GeoPointInterface, java.lang.Double> shiftedCamera(com.mapconductor.core.map.MapCameraPosition);
+  public final kotlin.Pair<com.mapconductor.core.features.GeoPointInterface, java.lang.Double> restoreLogicalCamera(com.mapconductor.core.features.GeoPointInterface, double, double, double);
+}
+public final class com.mapconductor.arcgis.ArcGISDesign implements com.mapconductor.arcgis.ArcGISDesignTypeInterface {
+  public static final com.mapconductor.arcgis.ArcGISDesign$Companion Companion;
+  public com.mapconductor.arcgis.ArcGISDesign(java.lang.String, java.util.List<java.lang.String>, java.util.List<com.mapconductor.core.map.AttributionRule>);
+  public com.mapconductor.arcgis.ArcGISDesign(java.lang.String, java.util.List, java.util.List, int, kotlin.jvm.internal.DefaultConstructorMarker);
+  public java.lang.String getId();
+  public java.util.List<java.lang.String> getElevationSources();
+  public java.util.List<com.mapconductor.core.map.AttributionRule> getAttributionRules();
+  public java.lang.String getValue();
+  public final com.mapconductor.arcgis.ArcGISDesign withElevationSources(java.util.List<java.lang.String>);
+  public final java.lang.String component1();
+  public final java.util.List<java.lang.String> component2();
+  public final java.util.List<com.mapconductor.core.map.AttributionRule> component3();
+  public final com.mapconductor.arcgis.ArcGISDesign copy(java.lang.String, java.util.List<java.lang.String>, java.util.List<com.mapconductor.core.map.AttributionRule>);
+  public java.lang.String toString();
+  public int hashCode();
+  public boolean equals(java.lang.Object);
+  public java.lang.Object getId();
+  public java.lang.Object getValue();
+}
+public final class com.mapconductor.arcgis.ArcGISDesign$Companion {
+  public final com.mapconductor.arcgis.ArcGISDesign getStreets();
+  public final com.mapconductor.arcgis.ArcGISDesign getImagery();
+  public final com.mapconductor.arcgis.ArcGISDesign getImageryStandard();
+  public final com.mapconductor.arcgis.ArcGISDesign getImageryLabels();
+  public final com.mapconductor.arcgis.ArcGISDesign getLightGray();
+  public final com.mapconductor.arcgis.ArcGISDesign getLightGrayBase();
+  public final com.mapconductor.arcgis.ArcGISDesign getLightGrayLabels();
+  public final com.mapconductor.arcgis.ArcGISDesign getDarkGray();
+  public final com.mapconductor.arcgis.ArcGISDesign getDarkGrayBase();
+  public final com.mapconductor.arcgis.ArcGISDesign getDarkGrayLabels();
+  public final com.mapconductor.arcgis.ArcGISDesign getNavigation();
+  public final com.mapconductor.arcgis.ArcGISDesign getNavigationNight();
+  public final com.mapconductor.arcgis.ArcGISDesign getStreetsNight();
+  public final com.mapconductor.arcgis.ArcGISDesign getStreetsRelief();
+  public final com.mapconductor.arcgis.ArcGISDesign getTopographic();
+  public final com.mapconductor.arcgis.ArcGISDesign getOceans();
+  public final com.mapconductor.arcgis.ArcGISDesign getOceansBase();
+  public final com.mapconductor.arcgis.ArcGISDesign getOceansLabels();
+  public final com.mapconductor.arcgis.ArcGISDesign getTerrain();
+  public final com.mapconductor.arcgis.ArcGISDesign getTerrainBase();
+  public final com.mapconductor.arcgis.ArcGISDesign getTerrainDetail();
+  public final com.mapconductor.arcgis.ArcGISDesign getCommunity();
+  public final com.mapconductor.arcgis.ArcGISDesign getChartedTerritory();
+  public final com.mapconductor.arcgis.ArcGISDesign getColoredPencil();
+  public final com.mapconductor.arcgis.ArcGISDesign getNova();
+  public final com.mapconductor.arcgis.ArcGISDesign getModernAntique();
+  public final com.mapconductor.arcgis.ArcGISDesign getMidcentury();
+  public final com.mapconductor.arcgis.ArcGISDesign getNewspaper();
+  public final com.mapconductor.arcgis.ArcGISDesign getHillshadeLight();
+  public final com.mapconductor.arcgis.ArcGISDesign getHillshadeDark();
+  public final com.mapconductor.arcgis.ArcGISDesign getStreetsReliefBase();
+  public final com.mapconductor.arcgis.ArcGISDesign getTopographicBase();
+  public final com.mapconductor.arcgis.ArcGISDesign getChartedTerritoryBase();
+  public final com.mapconductor.arcgis.ArcGISDesign getModernAntiqueBase();
+  public final com.mapconductor.arcgis.ArcGISDesign getHumanGeography();
+  public final com.mapconductor.arcgis.ArcGISDesign getHumanGeographyBase();
+  public final com.mapconductor.arcgis.ArcGISDesign getHumanGeographyDetail();
+  public final com.mapconductor.arcgis.ArcGISDesign getHumanGeographyLabels();
+  public final com.mapconductor.arcgis.ArcGISDesign getHumanGeographyDark();
+  public final com.mapconductor.arcgis.ArcGISDesign getHumanGeographyDarkBase();
+  public final com.mapconductor.arcgis.ArcGISDesign getHumanGeographyDarkDetail();
+  public final com.mapconductor.arcgis.ArcGISDesign getHumanGeographyDarkLabels();
+  public final com.mapconductor.arcgis.ArcGISDesign getOutdoor();
+  public final com.mapconductor.arcgis.ArcGISDesign getOsmStandard();
+  public final com.mapconductor.arcgis.ArcGISDesign getOsmStandardRelief();
+  public final com.mapconductor.arcgis.ArcGISDesign getOsmStandardReliefBase();
+  public final com.mapconductor.arcgis.ArcGISDesign getOsmStreets();
+  public final com.mapconductor.arcgis.ArcGISDesign getOsmStreetsRelief();
+  public final com.mapconductor.arcgis.ArcGISDesign getOsmLightGray();
+  public final com.mapconductor.arcgis.ArcGISDesign getOsmLightGrayBase();
+  public final com.mapconductor.arcgis.ArcGISDesign getOsmLightGrayLabels();
+  public final com.mapconductor.arcgis.ArcGISDesign getOsmDarkGray();
+  public final com.mapconductor.arcgis.ArcGISDesign getOsmDarkGrayBase();
+  public final com.mapconductor.arcgis.ArcGISDesign getOsmDarkGrayLabels();
+  public final com.mapconductor.arcgis.ArcGISDesign getOsmStreetsReliefBase();
+  public final com.mapconductor.arcgis.ArcGISDesign getOsmBlueprint();
+  public final com.mapconductor.arcgis.ArcGISDesign getOsmHybrid();
+  public final com.mapconductor.arcgis.ArcGISDesign getOsmHybridDetail();
+  public final com.mapconductor.arcgis.ArcGISDesign getOsmNavigation();
+  public final com.mapconductor.arcgis.ArcGISDesign getOsmNavigationDark();
+  public final com.mapconductor.arcgis.ArcGISDesign Create(java.lang.String, java.util.List<java.lang.String>);
+  public final com.arcgismaps.mapping.BasemapStyle toBasemapStyle(com.mapconductor.arcgis.ArcGISDesignTypeInterface);
+}
+public interface com.mapconductor.arcgis.ArcGISDesignTypeInterface extends com.mapconductor.core.map.MapDesignTypeInterface<java.lang.String> {
+  public abstract java.util.List<java.lang.String> getElevationSources();
+}
+public final class com.mapconductor.arcgis.ArcGISDesignTypeInterface$DefaultImpls {
+  public static java.util.List<com.mapconductor.core.map.AttributionRule> getAttributionRules(com.mapconductor.arcgis.ArcGISDesignTypeInterface);
+}
+public final class com.mapconductor.arcgis.ArcGISExtensionKt {
+  public static final int toArcGISColor-8_81llA(long);
+}
+public interface com.mapconductor.arcgis.ArcGISGeoViewHolder<ActualMapView extends android.widget.FrameLayout, ActualMap extends com.arcgismaps.mapping.view.GeoView> extends com.mapconductor.core.map.MapViewHolderInterface<ActualMapView, ActualMap> {
+  public abstract android.widget.FrameLayout getRootView();
+  public abstract com.arcgismaps.mapping.view.GeoView getGeoView();
+  public abstract com.arcgismaps.geometry.SpatialReference getSpatialReference();
+  public abstract java.util.List<com.arcgismaps.mapping.layers.Layer> getOperationalLayers();
+  public default void setNavigationEnabled(boolean);
+}
+public final class com.mapconductor.arcgis.ArcGISGeoViewHolder$DefaultImpls {
+  public static <ActualMapView extends android.widget.FrameLayout, ActualMap extends com.arcgismaps.mapping.view.GeoView> void setNavigationEnabled(com.mapconductor.arcgis.ArcGISGeoViewHolder<ActualMapView, ActualMap>, boolean);
+  public static <ActualMapView extends android.widget.FrameLayout, ActualMap extends com.arcgismaps.mapping.view.GeoView> com.mapconductor.core.features.GeoPoint fromScreenOffsetSync-k-4lQ0M(com.mapconductor.arcgis.ArcGISGeoViewHolder<ActualMapView, ActualMap>, long);
+}
+public final class com.mapconductor.arcgis.ArcGISMapView2DController extends com.mapconductor.core.controller.BaseMapViewController implements com.mapconductor.arcgis.ArcGISMapViewControllerInterface {
+  public static final com.mapconductor.arcgis.ArcGISMapView2DController$Companion Companion;
+  public com.mapconductor.arcgis.ArcGISMapView2DController(com.mapconductor.arcgis.ArcGISMapView2DHolder, com.mapconductor.arcgis.marker.ArcGISMarkerController, com.mapconductor.arcgis.polyline.ArcGISPolylineOverlayController, com.mapconductor.arcgis.polygon.ArcGISPolygonOverlayController, com.mapconductor.arcgis.circle.ArcGISCircleOverlayController, com.mapconductor.arcgis.groundimage.ArcGISGroundImageController, com.mapconductor.arcgis.raster.ArcGISRasterLayerController, kotlinx.coroutines.CoroutineScope, kotlinx.coroutines.CoroutineScope);
+  public com.mapconductor.arcgis.ArcGISMapView2DController(com.mapconductor.arcgis.ArcGISMapView2DHolder, com.mapconductor.arcgis.marker.ArcGISMarkerController, com.mapconductor.arcgis.polyline.ArcGISPolylineOverlayController, com.mapconductor.arcgis.polygon.ArcGISPolygonOverlayController, com.mapconductor.arcgis.circle.ArcGISCircleOverlayController, com.mapconductor.arcgis.groundimage.ArcGISGroundImageController, com.mapconductor.arcgis.raster.ArcGISRasterLayerController, kotlinx.coroutines.CoroutineScope, kotlinx.coroutines.CoroutineScope, int, kotlin.jvm.internal.DefaultConstructorMarker);
+  public com.mapconductor.arcgis.ArcGISMapView2DHolder getHolder();
+  public kotlinx.coroutines.CoroutineScope getDefaultCoroutine();
+  public kotlinx.coroutines.CoroutineScope getMainCoroutine();
+  public void moveCamera(com.mapconductor.core.map.MapCameraPosition);
+  public void animateCamera(com.mapconductor.core.map.MapCameraPosition, long);
+  public void fitBounds(com.mapconductor.core.features.GeoRectBounds, int);
+  public final void setupListeners();
+  public boolean hasMarker(com.mapconductor.core.marker.MarkerState);
+  public boolean hasPolyline(com.mapconductor.core.polyline.PolylineState);
+  public boolean hasPolygon(com.mapconductor.core.polygon.PolygonState);
+  public boolean hasCircle(com.mapconductor.core.circle.CircleState);
+  public boolean hasGroundImage(com.mapconductor.core.groundimage.GroundImageState);
+  public boolean hasRasterLayer(com.mapconductor.core.raster.RasterLayerState);
+  public void setCameraRestriction(com.mapconductor.core.map.CameraRestriction);
+  public java.lang.Object clearOverlays(kotlin.coroutines.Continuation<? super kotlin.Unit>);
+  public java.lang.Object compositionMarkers(java.util.List<com.mapconductor.core.marker.MarkerState>, kotlin.coroutines.Continuation<? super kotlin.Unit>);
+  public java.lang.Object updateMarker(com.mapconductor.core.marker.MarkerState, kotlin.coroutines.Continuation<? super kotlin.Unit>);
+  public java.lang.Object compositionPolylines(java.util.List<com.mapconductor.core.polyline.PolylineState>, kotlin.coroutines.Continuation<? super kotlin.Unit>);
+  public java.lang.Object updatePolyline(com.mapconductor.core.polyline.PolylineState, kotlin.coroutines.Continuation<? super kotlin.Unit>);
+  public java.lang.Object compositionPolygons(java.util.List<com.mapconductor.core.polygon.PolygonState>, kotlin.coroutines.Continuation<? super kotlin.Unit>);
+  public java.lang.Object updatePolygon(com.mapconductor.core.polygon.PolygonState, kotlin.coroutines.Continuation<? super kotlin.Unit>);
+  public java.lang.Object compositionCircles(java.util.List<com.mapconductor.core.circle.CircleState>, kotlin.coroutines.Continuation<? super kotlin.Unit>);
+  public java.lang.Object updateCircle(com.mapconductor.core.circle.CircleState, kotlin.coroutines.Continuation<? super kotlin.Unit>);
+  public java.lang.Object compositionGroundImages(java.util.List<com.mapconductor.core.groundimage.GroundImageState>, kotlin.coroutines.Continuation<? super kotlin.Unit>);
+  public java.lang.Object updateGroundImage(com.mapconductor.core.groundimage.GroundImageState, kotlin.coroutines.Continuation<? super kotlin.Unit>);
+  public java.lang.Object compositionRasterLayers(java.util.List<com.mapconductor.core.raster.RasterLayerState>, kotlin.coroutines.Continuation<? super kotlin.Unit>);
+  public java.lang.Object updateRasterLayer(com.mapconductor.core.raster.RasterLayerState, kotlin.coroutines.Continuation<? super kotlin.Unit>);
+  public void setOnCircleClickListener(kotlin.jvm.functions.Function1<? super com.mapconductor.core.circle.CircleEvent, kotlin.Unit>);
+  public void setOnGroundImageClickListener(kotlin.jvm.functions.Function1<? super com.mapconductor.core.groundimage.GroundImageEvent, kotlin.Unit>);
+  public void setOnMarkerDragStart(kotlin.jvm.functions.Function1<? super com.mapconductor.core.marker.MarkerState, kotlin.Unit>);
+  public void setOnMarkerDrag(kotlin.jvm.functions.Function1<? super com.mapconductor.core.marker.MarkerState, kotlin.Unit>);
+  public void setOnMarkerDragEnd(kotlin.jvm.functions.Function1<? super com.mapconductor.core.marker.MarkerState, kotlin.Unit>);
+  public void setOnMarkerAnimateStart(kotlin.jvm.functions.Function1<? super com.mapconductor.core.marker.MarkerState, kotlin.Unit>);
+  public void setOnMarkerAnimateEnd(kotlin.jvm.functions.Function1<? super com.mapconductor.core.marker.MarkerState, kotlin.Unit>);
+  public void setOnMarkerClickListener(kotlin.jvm.functions.Function1<? super com.mapconductor.core.marker.MarkerState, kotlin.Unit>);
+  public void setOnPolylineClickListener(kotlin.jvm.functions.Function1<? super com.mapconductor.core.polyline.PolylineEvent, kotlin.Unit>);
+  public void setOnPolygonClickListener(kotlin.jvm.functions.Function1<? super com.mapconductor.core.polygon.PolygonEvent, kotlin.Unit>);
+  public void setMapDesignType(com.mapconductor.arcgis.ArcGISDesignTypeInterface);
+  public void setMapDesignTypeChangeListener(kotlin.jvm.functions.Function1<? super com.mapconductor.arcgis.ArcGISDesignTypeInterface, kotlin.Unit>);
+  public final void markMapInitialized();
+  public final void sendInitialCameraUpdate();
+  public final com.mapconductor.core.marker.MarkerOverlayRendererInterface<com.arcgismaps.mapping.view.Graphic> createMarkerRenderer();
+  public final com.mapconductor.core.marker.MarkerEventControllerInterface<com.arcgismaps.mapping.view.Graphic> createMarkerEventController(com.mapconductor.core.marker.StrategyMarkerController<com.arcgismaps.mapping.view.Graphic>);
+  public final void registerMarkerEventController(com.mapconductor.core.marker.MarkerEventControllerInterface<com.arcgismaps.mapping.view.Graphic>);
+  public void setMarkerAnimationOverlayHost(com.mapconductor.core.marker.MarkerAnimationOverlayHost);
+  public com.mapconductor.core.map.MapViewHolderInterface getHolder();
+}
+public final class com.mapconductor.arcgis.ArcGISMapView2DController$Companion {
+}
+public final class com.mapconductor.arcgis.ArcGISMapView2DControllerCameraKt {
+  public static final java.lang.Object onViewpointChange(com.mapconductor.arcgis.ArcGISMapView2DController, kotlin.coroutines.Continuation<? super kotlin.Unit>);
+  public static final java.lang.Object invokeCameraMoveStartCallback(com.mapconductor.arcgis.ArcGISMapView2DController, kotlin.coroutines.Continuation<? super kotlin.Unit>);
+  public static final java.lang.Object invokeCameraMoveCallback(com.mapconductor.arcgis.ArcGISMapView2DController, kotlin.coroutines.Continuation<? super kotlin.Unit>);
+  public static final java.lang.Object invokeCameraMoveEndCallback(com.mapconductor.arcgis.ArcGISMapView2DController, kotlin.coroutines.Continuation<? super kotlin.Unit>);
+  public static final void scheduleCameraMoveEndCallback(com.mapconductor.arcgis.ArcGISMapView2DController);
+  public static final java.lang.Object getMapCameraPosition(com.mapconductor.arcgis.ArcGISMapView2DController, kotlin.coroutines.Continuation<? super com.mapconductor.core.map.MapCameraPosition>);
+  public static final void handleMoveCamera(com.mapconductor.arcgis.ArcGISMapView2DController, com.mapconductor.core.map.MapCameraPosition);
+  public static final void handleAnimateCamera(com.mapconductor.arcgis.ArcGISMapView2DController, com.mapconductor.core.map.MapCameraPosition, long);
+  public static final void handleFitBounds(com.mapconductor.arcgis.ArcGISMapView2DController, com.mapconductor.core.features.GeoRectBounds, int);
+}
+public final class com.mapconductor.arcgis.ArcGISMapView2DControllerGesturesKt {
+  public static final java.lang.Object onMapPan(com.mapconductor.arcgis.ArcGISMapView2DController, com.arcgismaps.mapping.view.PanChangeEvent, kotlin.coroutines.Continuation<? super kotlin.Unit>);
+  public static final void onMapUp(com.mapconductor.arcgis.ArcGISMapView2DController, com.arcgismaps.mapping.view.UpEvent);
+  public static final java.lang.Object onMapLongPress(com.mapconductor.arcgis.ArcGISMapView2DController, com.arcgismaps.mapping.view.LongPressEvent, kotlin.coroutines.Continuation<? super kotlin.Unit>);
+  public static final void onMapTap(com.mapconductor.arcgis.ArcGISMapView2DController, com.arcgismaps.mapping.view.SingleTapConfirmedEvent);
+}
+public final class com.mapconductor.arcgis.ArcGISMapView2DHolder implements com.mapconductor.arcgis.ArcGISGeoViewHolder<com.mapconductor.arcgis.WrapMapView, com.arcgismaps.mapping.view.MapView> {
+  public com.mapconductor.arcgis.ArcGISMapView2DHolder(com.mapconductor.arcgis.WrapMapView, com.arcgismaps.mapping.view.MapView);
+  public com.mapconductor.arcgis.WrapMapView getMapView();
+  public com.arcgismaps.mapping.view.MapView getMap();
+  public android.widget.FrameLayout getRootView();
+  public com.arcgismaps.mapping.view.GeoView getGeoView();
+  public com.arcgismaps.geometry.SpatialReference getSpatialReference();
+  public java.util.List<com.arcgismaps.mapping.layers.Layer> getOperationalLayers();
+  public androidx.compose.ui.geometry.Offset toScreenOffset-x-9fifI(com.mapconductor.core.features.GeoPointInterface);
+  public java.lang.Object fromScreenOffset-3MmeM6k(long, kotlin.coroutines.Continuation<? super com.mapconductor.core.features.GeoPoint>);
+  public com.mapconductor.core.features.GeoPoint fromScreenOffsetSync-k-4lQ0M(long);
+  public void setNavigationEnabled(boolean);
+  public java.lang.Object getMapView();
+  public java.lang.Object getMap();
+}
+public final class com.mapconductor.arcgis.ArcGISMapView2DKt {
+  public static final void ArcGISMapView2D(com.mapconductor.arcgis.ArcGISMapViewState, androidx.compose.ui.Modifier, com.mapconductor.core.marker.MarkerTilingOptions, com.mapconductor.core.map.CameraRestriction, kotlin.jvm.functions.Function2<? super android.content.Context, ? super kotlin.coroutines.Continuation<? super java.lang.Boolean>, ? extends java.lang.Object>, kotlin.jvm.functions.Function1<? super com.mapconductor.core.map.MapViewStateInterface<?>, kotlin.Unit>, kotlin.jvm.functions.Function1<? super com.mapconductor.core.map.MapCameraPosition, kotlin.Unit>, kotlin.jvm.functions.Function1<? super com.mapconductor.core.map.MapCameraPosition, kotlin.Unit>, kotlin.jvm.functions.Function1<? super com.mapconductor.core.map.MapCameraPosition, kotlin.Unit>, kotlin.jvm.functions.Function1<? super com.mapconductor.core.features.GeoPoint, kotlin.Unit>, kotlin.jvm.functions.Function1<? super com.mapconductor.core.features.GeoPoint, kotlin.Unit>, kotlin.jvm.functions.Function3<? super com.mapconductor.arcgis.ArcGISMapViewScope, ? super androidx.compose.runtime.Composer, ? super java.lang.Integer, kotlin.Unit>, androidx.compose.runtime.Composer, int, int, int);
+}
+public final class com.mapconductor.arcgis.ArcGISMapViewController extends com.mapconductor.core.controller.BaseMapViewController implements com.mapconductor.arcgis.ArcGISMapViewControllerInterface {
+  public com.mapconductor.arcgis.ArcGISMapViewController(com.mapconductor.arcgis.ArcGISMapViewHolder, com.mapconductor.arcgis.marker.ArcGISMarkerController, com.mapconductor.arcgis.polyline.ArcGISPolylineOverlayController, com.mapconductor.arcgis.polygon.ArcGISPolygonOverlayController, com.mapconductor.arcgis.circle.ArcGISCircleOverlayController, com.mapconductor.arcgis.groundimage.ArcGISGroundImageController, com.mapconductor.arcgis.raster.ArcGISRasterLayerController, kotlinx.coroutines.CoroutineScope, kotlinx.coroutines.CoroutineScope);
+  public com.mapconductor.arcgis.ArcGISMapViewController(com.mapconductor.arcgis.ArcGISMapViewHolder, com.mapconductor.arcgis.marker.ArcGISMarkerController, com.mapconductor.arcgis.polyline.ArcGISPolylineOverlayController, com.mapconductor.arcgis.polygon.ArcGISPolygonOverlayController, com.mapconductor.arcgis.circle.ArcGISCircleOverlayController, com.mapconductor.arcgis.groundimage.ArcGISGroundImageController, com.mapconductor.arcgis.raster.ArcGISRasterLayerController, kotlinx.coroutines.CoroutineScope, kotlinx.coroutines.CoroutineScope, int, kotlin.jvm.internal.DefaultConstructorMarker);
+  public com.mapconductor.arcgis.ArcGISMapViewHolder getHolder();
+  public kotlinx.coroutines.CoroutineScope getDefaultCoroutine();
+  public kotlinx.coroutines.CoroutineScope getMainCoroutine();
+  public void moveCamera(com.mapconductor.core.map.MapCameraPosition);
+  public void animateCamera(com.mapconductor.core.map.MapCameraPosition, long);
+  public void fitBounds(com.mapconductor.core.features.GeoRectBounds, int);
+  public final void setupListeners();
+  public boolean hasMarker(com.mapconductor.core.marker.MarkerState);
+  public boolean hasPolyline(com.mapconductor.core.polyline.PolylineState);
+  public boolean hasPolygon(com.mapconductor.core.polygon.PolygonState);
+  public boolean hasCircle(com.mapconductor.core.circle.CircleState);
+  public boolean hasGroundImage(com.mapconductor.core.groundimage.GroundImageState);
+  public boolean hasRasterLayer(com.mapconductor.core.raster.RasterLayerState);
+  public void applyUISettings(com.mapconductor.core.map.MapUISettings);
+  public java.lang.Object clearOverlays(kotlin.coroutines.Continuation<? super kotlin.Unit>);
+  public java.lang.Object compositionMarkers(java.util.List<com.mapconductor.core.marker.MarkerState>, kotlin.coroutines.Continuation<? super kotlin.Unit>);
+  public void setMarkerAnimationOverlayHost(com.mapconductor.core.marker.MarkerAnimationOverlayHost);
+  public java.lang.Object updateMarker(com.mapconductor.core.marker.MarkerState, kotlin.coroutines.Continuation<? super kotlin.Unit>);
+  public java.lang.Object compositionPolylines(java.util.List<com.mapconductor.core.polyline.PolylineState>, kotlin.coroutines.Continuation<? super kotlin.Unit>);
+  public java.lang.Object updatePolyline(com.mapconductor.core.polyline.PolylineState, kotlin.coroutines.Continuation<? super kotlin.Unit>);
+  public java.lang.Object compositionPolygons(java.util.List<com.mapconductor.core.polygon.PolygonState>, kotlin.coroutines.Continuation<? super kotlin.Unit>);
+  public java.lang.Object updatePolygon(com.mapconductor.core.polygon.PolygonState, kotlin.coroutines.Continuation<? super kotlin.Unit>);
+  public java.lang.Object compositionCircles(java.util.List<com.mapconductor.core.circle.CircleState>, kotlin.coroutines.Continuation<? super kotlin.Unit>);
+  public java.lang.Object updateCircle(com.mapconductor.core.circle.CircleState, kotlin.coroutines.Continuation<? super kotlin.Unit>);
+  public java.lang.Object compositionGroundImages(java.util.List<com.mapconductor.core.groundimage.GroundImageState>, kotlin.coroutines.Continuation<? super kotlin.Unit>);
+  public java.lang.Object updateGroundImage(com.mapconductor.core.groundimage.GroundImageState, kotlin.coroutines.Continuation<? super kotlin.Unit>);
+  public java.lang.Object compositionRasterLayers(java.util.List<com.mapconductor.core.raster.RasterLayerState>, kotlin.coroutines.Continuation<? super kotlin.Unit>);
+  public java.lang.Object updateRasterLayer(com.mapconductor.core.raster.RasterLayerState, kotlin.coroutines.Continuation<? super kotlin.Unit>);
+  public void setOnCircleClickListener(kotlin.jvm.functions.Function1<? super com.mapconductor.core.circle.CircleEvent, kotlin.Unit>);
+  public void setOnGroundImageClickListener(kotlin.jvm.functions.Function1<? super com.mapconductor.core.groundimage.GroundImageEvent, kotlin.Unit>);
+  public void setOnMarkerDragStart(kotlin.jvm.functions.Function1<? super com.mapconductor.core.marker.MarkerState, kotlin.Unit>);
+  public void setOnMarkerDrag(kotlin.jvm.functions.Function1<? super com.mapconductor.core.marker.MarkerState, kotlin.Unit>);
+  public void setOnMarkerDragEnd(kotlin.jvm.functions.Function1<? super com.mapconductor.core.marker.MarkerState, kotlin.Unit>);
+  public void setOnMarkerAnimateStart(kotlin.jvm.functions.Function1<? super com.mapconductor.core.marker.MarkerState, kotlin.Unit>);
+  public void setOnMarkerAnimateEnd(kotlin.jvm.functions.Function1<? super com.mapconductor.core.marker.MarkerState, kotlin.Unit>);
+  public void setOnMarkerClickListener(kotlin.jvm.functions.Function1<? super com.mapconductor.core.marker.MarkerState, kotlin.Unit>);
+  public void setOnPolylineClickListener(kotlin.jvm.functions.Function1<? super com.mapconductor.core.polyline.PolylineEvent, kotlin.Unit>);
+  public void setOnPolygonClickListener(kotlin.jvm.functions.Function1<? super com.mapconductor.core.polygon.PolygonEvent, kotlin.Unit>);
+  public void setMapDesignType(com.mapconductor.arcgis.ArcGISDesignTypeInterface);
+  public void setMapDesignTypeChangeListener(kotlin.jvm.functions.Function1<? super com.mapconductor.arcgis.ArcGISDesignTypeInterface, kotlin.Unit>);
+  public final void markMapInitialized();
+  public final void sendInitialCameraUpdate();
+  public final com.mapconductor.core.marker.MarkerOverlayRendererInterface<com.arcgismaps.mapping.view.Graphic> createMarkerRenderer();
+  public final com.mapconductor.core.marker.MarkerEventControllerInterface<com.arcgismaps.mapping.view.Graphic> createMarkerEventController(com.mapconductor.core.marker.StrategyMarkerController<com.arcgismaps.mapping.view.Graphic>);
+  public final void registerMarkerEventController(com.mapconductor.core.marker.MarkerEventControllerInterface<com.arcgismaps.mapping.view.Graphic>);
+  public com.mapconductor.core.map.MapViewHolderInterface getHolder();
+}
+public final class com.mapconductor.arcgis.ArcGISMapViewControllerCameraKt {
+  public static final com.mapconductor.core.map.MapCameraPosition getFastMapCameraPosition(com.mapconductor.arcgis.ArcGISMapViewController);
+  public static final void invokeCameraMoveStartCallback(com.mapconductor.arcgis.ArcGISMapViewController);
+  public static final void invokeCameraMoveCallback(com.mapconductor.arcgis.ArcGISMapViewController);
+  public static final java.lang.Object invokeCameraMoveEndCallback(com.mapconductor.arcgis.ArcGISMapViewController, kotlin.coroutines.Continuation<? super kotlin.Unit>);
+  public static final void scheduleCameraMoveEndCallback(com.mapconductor.arcgis.ArcGISMapViewController);
+  public static final kotlin.Pair<java.lang.Integer, java.lang.Integer> currentViewportSizeInDp(com.mapconductor.arcgis.ArcGISMapViewController);
+  public static final java.lang.Object onViewpointChange(com.mapconductor.arcgis.ArcGISMapViewController, kotlin.coroutines.Continuation<? super kotlin.Unit>);
+  public static final java.lang.Object getMapCameraPosition(com.mapconductor.arcgis.ArcGISMapViewController, kotlin.coroutines.Continuation<? super com.mapconductor.core.map.MapCameraPosition>);
+  public static final void handleMoveCamera(com.mapconductor.arcgis.ArcGISMapViewController, com.mapconductor.core.map.MapCameraPosition);
+  public static final void handleAnimateCamera(com.mapconductor.arcgis.ArcGISMapViewController, com.mapconductor.core.map.MapCameraPosition, long);
+  public static final void handleFitBounds(com.mapconductor.arcgis.ArcGISMapViewController, com.mapconductor.core.features.GeoRectBounds, int);
+  public static final com.arcgismaps.mapping.view.Camera toCameraWithView(com.mapconductor.arcgis.ArcGISMapViewController, com.mapconductor.core.map.MapCameraPosition);
+}
+public final class com.mapconductor.arcgis.ArcGISMapViewControllerGesturesKt {
+  public static final void onMapPan(com.mapconductor.arcgis.ArcGISMapViewController, com.arcgismaps.mapping.view.PanChangeEvent);
+  public static final void onMapUp(com.mapconductor.arcgis.ArcGISMapViewController, com.arcgismaps.mapping.view.UpEvent);
+  public static final java.lang.Object onMapLongPress(com.mapconductor.arcgis.ArcGISMapViewController, com.arcgismaps.mapping.view.LongPressEvent, kotlin.coroutines.Continuation<? super kotlin.Unit>);
+  public static final java.lang.Object onMapTap(com.mapconductor.arcgis.ArcGISMapViewController, com.arcgismaps.mapping.view.SingleTapConfirmedEvent, kotlin.coroutines.Continuation<? super kotlin.Unit>);
+}
+public interface com.mapconductor.arcgis.ArcGISMapViewControllerInterface extends com.mapconductor.core.controller.MapViewControllerInterface,com.mapconductor.core.marker.MarkerCapableInterface,com.mapconductor.core.polyline.PolylineCapableInterface,com.mapconductor.core.polygon.PolygonCapableInterface,com.mapconductor.core.circle.CircleCapableInterface,com.mapconductor.core.groundimage.GroundImageCapableInterface,com.mapconductor.core.raster.RasterLayerCapableInterface {
+  public abstract void setMapDesignType(com.mapconductor.arcgis.ArcGISDesignTypeInterface);
+  public abstract void setMapDesignTypeChangeListener(kotlin.jvm.functions.Function1<? super com.mapconductor.arcgis.ArcGISDesignTypeInterface, kotlin.Unit>);
+}
+public final class com.mapconductor.arcgis.ArcGISMapViewControllerInterface$DefaultImpls {
+  public static void setCameraRestriction(com.mapconductor.arcgis.ArcGISMapViewControllerInterface, com.mapconductor.core.map.CameraRestriction);
+  public static void applyUISettings(com.mapconductor.arcgis.ArcGISMapViewControllerInterface, com.mapconductor.core.map.MapUISettings);
+  public static void setMarkerAnimationOverlayHost(com.mapconductor.arcgis.ArcGISMapViewControllerInterface, com.mapconductor.core.marker.MarkerAnimationOverlayHost);
+}
+public final class com.mapconductor.arcgis.ArcGISMapViewControllerInterfaceKt {
+}
+public final class com.mapconductor.arcgis.ArcGISMapViewHolder implements com.mapconductor.arcgis.ArcGISGeoViewHolder<com.mapconductor.arcgis.WrapSceneView, com.arcgismaps.mapping.view.SceneView> {
+  public com.mapconductor.arcgis.ArcGISMapViewHolder(com.mapconductor.arcgis.WrapSceneView, com.arcgismaps.mapping.view.SceneView);
+  public com.mapconductor.arcgis.WrapSceneView getMapView();
+  public com.arcgismaps.mapping.view.SceneView getMap();
+  public android.widget.FrameLayout getRootView();
+  public com.arcgismaps.mapping.view.GeoView getGeoView();
+  public com.arcgismaps.geometry.SpatialReference getSpatialReference();
+  public java.util.List<com.arcgismaps.mapping.layers.Layer> getOperationalLayers();
+  public androidx.compose.ui.geometry.Offset toScreenOffset-x-9fifI(com.mapconductor.core.features.GeoPointInterface);
+  public java.lang.Object fromScreenOffset-3MmeM6k(long, kotlin.coroutines.Continuation<? super com.mapconductor.core.features.GeoPoint>);
+  public com.mapconductor.core.features.GeoPoint fromScreenOffsetSync-k-4lQ0M(long);
+  public void setNavigationEnabled(boolean);
+  public java.lang.Object getMapView();
+  public java.lang.Object getMap();
+}
+public final class com.mapconductor.arcgis.ArcGISMapViewHolderImplKt {
+  public static final java.lang.String getArcGisApiKey(android.content.Context);
+}
+public final class com.mapconductor.arcgis.ArcGISMapViewInitOptions {
+  public com.mapconductor.arcgis.ArcGISMapViewInitOptions(com.arcgismaps.mapping.BasemapStyle, java.util.List<java.lang.String>);
+  public final com.arcgismaps.mapping.BasemapStyle getBasemapStyle();
+  public final java.util.List<java.lang.String> getElevationSources();
+  public final com.arcgismaps.mapping.BasemapStyle component1();
+  public final java.util.List<java.lang.String> component2();
+  public final com.mapconductor.arcgis.ArcGISMapViewInitOptions copy(com.arcgismaps.mapping.BasemapStyle, java.util.List<java.lang.String>);
+  public java.lang.String toString();
+  public int hashCode();
+  public boolean equals(java.lang.Object);
+}
+public final class com.mapconductor.arcgis.ArcGISMapViewKt {
+  public static final void ArcGISMapView(com.mapconductor.arcgis.ArcGISMapViewState, androidx.compose.ui.Modifier, com.mapconductor.core.marker.MarkerTilingOptions, com.mapconductor.core.map.CameraRestriction, kotlin.jvm.functions.Function2<? super android.content.Context, ? super kotlin.coroutines.Continuation<? super java.lang.Boolean>, ? extends java.lang.Object>, kotlin.jvm.functions.Function1<? super com.mapconductor.core.map.MapViewStateInterface<?>, kotlin.Unit>, kotlin.jvm.functions.Function1<? super com.mapconductor.core.map.MapCameraPosition, kotlin.Unit>, kotlin.jvm.functions.Function1<? super com.mapconductor.core.map.MapCameraPosition, kotlin.Unit>, kotlin.jvm.functions.Function1<? super com.mapconductor.core.map.MapCameraPosition, kotlin.Unit>, kotlin.jvm.functions.Function1<? super com.mapconductor.core.features.GeoPoint, kotlin.Unit>, kotlin.jvm.functions.Function1<? super com.mapconductor.core.features.GeoPoint, kotlin.Unit>, kotlin.jvm.functions.Function3<? super com.mapconductor.arcgis.ArcGISMapViewScope, ? super androidx.compose.runtime.Composer, ? super java.lang.Integer, kotlin.Unit>, androidx.compose.runtime.Composer, int, int, int);
+  public static final com.mapconductor.arcgis.circle.ArcGISCircleOverlayController getCircleController(com.mapconductor.arcgis.ArcGISGeoViewHolder<?, ?>, boolean);
+  public static final com.mapconductor.arcgis.polyline.ArcGISPolylineOverlayController getPolylineController(com.mapconductor.arcgis.ArcGISGeoViewHolder<?, ?>, boolean);
+  public static final com.mapconductor.arcgis.polygon.ArcGISPolygonOverlayController getPolygonController(com.mapconductor.arcgis.ArcGISGeoViewHolder<?, ?>, boolean);
+  public static final com.mapconductor.arcgis.marker.ArcGISMarkerController getMarkerController(com.mapconductor.arcgis.ArcGISGeoViewHolder<?, ?>, com.arcgismaps.mapping.view.GraphicsOverlay, com.mapconductor.core.marker.MarkerTilingOptions);
+  public static final com.mapconductor.arcgis.raster.ArcGISRasterLayerController getRasterLayerController(com.mapconductor.arcgis.ArcGISGeoViewHolder<?, ?>);
+  public static final com.mapconductor.arcgis.groundimage.ArcGISGroundImageController getGroundImageController(com.mapconductor.arcgis.ArcGISGeoViewHolder<?, ?>);
+  public static final boolean defaultArcGISInitialize(android.content.Context);
+}
+public final class com.mapconductor.arcgis.ArcGISMapViewSaver extends com.mapconductor.compose.map.BaseMapViewSaver<com.mapconductor.arcgis.ArcGISMapViewState> {
+  public com.mapconductor.arcgis.ArcGISMapViewSaver();
+  protected void saveMapDesign(com.mapconductor.arcgis.ArcGISMapViewState, android.os.Bundle);
+  protected com.mapconductor.arcgis.ArcGISMapViewState createState(java.lang.String, android.os.Bundle, com.mapconductor.core.map.MapCameraPosition);
+  protected java.lang.String getStateId(com.mapconductor.arcgis.ArcGISMapViewState);
+  public void saveMapDesign(com.mapconductor.core.map.MapViewStateInterface, android.os.Bundle);
+  public com.mapconductor.core.map.MapViewStateInterface createState(java.lang.String, android.os.Bundle, com.mapconductor.core.map.MapCameraPosition);
+  public java.lang.String getStateId(com.mapconductor.core.map.MapViewStateInterface);
+}
+public final class com.mapconductor.arcgis.ArcGISMapViewScope extends com.mapconductor.compose.MapViewScope {
+  public com.mapconductor.arcgis.ArcGISMapViewScope();
+}
+public final class com.mapconductor.arcgis.ArcGISMapViewState extends com.mapconductor.core.map.MapViewState<com.mapconductor.arcgis.ArcGISDesignTypeInterface> implements com.mapconductor.arcgis.ArcGISMapViewStateInterface {
+  public com.mapconductor.arcgis.ArcGISMapViewState(java.lang.String, com.mapconductor.arcgis.ArcGISDesignTypeInterface, com.mapconductor.core.map.MapCameraPosition);
+  public com.mapconductor.arcgis.ArcGISMapViewState(java.lang.String, com.mapconductor.arcgis.ArcGISDesignTypeInterface, com.mapconductor.core.map.MapCameraPosition, int, kotlin.jvm.internal.DefaultConstructorMarker);
+  public java.lang.String getId();
+  public com.mapconductor.core.map.MapCameraPosition getCameraPosition();
+  public final kotlinx.coroutines.flow.StateFlow<com.mapconductor.core.map.MapPaddingsInterface> getPadding();
+  public com.mapconductor.arcgis.ArcGISDesignTypeInterface getMapDesignType();
+  public void setMapDesignType(com.mapconductor.arcgis.ArcGISDesignTypeInterface);
+  public void moveCameraTo(com.mapconductor.core.map.MapCameraPosition, java.lang.Long);
+  public void fitBounds(com.mapconductor.core.features.GeoRectBounds, int);
+  public void moveCameraTo(com.mapconductor.core.features.GeoPoint, java.lang.Long);
+  public com.mapconductor.arcgis.ArcGISGeoViewHolder<?, ?> getMapViewHolder();
+  public final com.mapconductor.arcgis.ArcGISMapViewHolder getSceneViewHolder();
+  public final com.mapconductor.arcgis.ArcGISMapView2DHolder getMapView2DHolder();
+  public java.lang.Object getMapDesignType();
+  public void setMapDesignType(java.lang.Object);
+  public com.mapconductor.core.map.MapViewHolderInterface getMapViewHolder();
+}
+public final class com.mapconductor.arcgis.ArcGISMapViewStateImplKt {
+  public static final com.mapconductor.arcgis.ArcGISMapViewState rememberArcGISMapViewState(com.mapconductor.arcgis.ArcGISDesign, com.mapconductor.core.map.MapCameraPositionInterface, androidx.compose.runtime.Composer, int, int);
+  public static final android.app.Activity findActivity(android.content.Context);
+}
+public interface com.mapconductor.arcgis.ArcGISMapViewStateInterface extends com.mapconductor.core.map.MapViewStateInterface<com.mapconductor.arcgis.ArcGISDesignTypeInterface> {
+}
+public final class com.mapconductor.arcgis.ArcGISTypeAliasKt {
+}
+public final class com.mapconductor.arcgis.GeoPointKt {
+  public static final com.arcgismaps.geometry.Point toPoint(com.mapconductor.core.features.GeoPoint, com.arcgismaps.geometry.SpatialReference);
+  public static final com.mapconductor.core.features.GeoPoint fromLatLongAltitude(com.mapconductor.core.features.GeoPoint$Companion, double, double, double);
+  public static final com.mapconductor.core.features.GeoPoint fromLongLat(com.mapconductor.core.features.GeoPoint$Companion, double, double, double);
+  public static final com.mapconductor.core.features.GeoPoint toGeoPoint(com.arcgismaps.geometry.Point);
+}
+public final class com.mapconductor.arcgis.GeoRectBoundsKt {
+  public static final com.arcgismaps.geometry.Envelope toEnvelope(com.mapconductor.core.features.GeoRectBounds);
+}
+public final class com.mapconductor.arcgis.MapCameraPositionKt {
+  public static final double EARTH_MEAN_RADIUS_METERS;
+  public static final double DEFAULT_MAX_GMAPS_TILT;
+  public static final double ARCGIS_MAX_PITCH;
+  public static final double MIN_ANGLE;
+  public static final double toRadians(double);
+  public static final double toDegrees(double);
+  public static final com.mapconductor.core.features.GeoPoint calculateDestinationPoint(double, double, double, double);
+  public static final com.arcgismaps.mapping.view.Camera calculateCameraForOrbitParameters(com.arcgismaps.geometry.Point, double, double, double);
+  public static final com.mapconductor.core.map.MapCameraPosition from(com.mapconductor.core.map.MapCameraPosition$Companion, com.mapconductor.core.map.MapCameraPositionInterface);
+  public static final double getZoomLevel(com.arcgismaps.mapping.view.Camera);
+  public static final com.arcgismaps.mapping.view.Camera withZoomLevel(com.arcgismaps.mapping.view.Camera, double);
+  public static final com.mapconductor.core.map.MapCameraPosition toMapCameraPosition(com.arcgismaps.mapping.view.Camera);
+}
+public final class com.mapconductor.arcgis.WrapMapView extends android.widget.FrameLayout {
+  public static final com.mapconductor.arcgis.WrapMapView$Companion Companion;
+  public com.arcgismaps.mapping.view.MapView arcGISMapView;
+  public final com.arcgismaps.mapping.view.MapView getArcGISMapView();
+  public final void setArcGISMapView(com.arcgismaps.mapping.view.MapView);
+  public com.mapconductor.arcgis.WrapMapView(android.content.Context);
+  public com.mapconductor.arcgis.WrapMapView(android.content.Context, android.util.AttributeSet);
+  public com.mapconductor.arcgis.WrapMapView(android.content.Context, android.util.AttributeSet, int);
+  public final double getVisualTilt();
+  public final void setVisualTilt(double);
+  protected void onLayout(boolean, int, int, int, int);
+  public final void onCreate(androidx.lifecycle.LifecycleOwner);
+  public final void onPause(androidx.lifecycle.LifecycleOwner);
+  public final void onResume(androidx.lifecycle.LifecycleOwner);
+  public final void onStop(androidx.lifecycle.LifecycleOwner);
+  public final void onDestroy(androidx.lifecycle.LifecycleOwner);
+}
+public final class com.mapconductor.arcgis.WrapMapView$Companion {
+}
+public final class com.mapconductor.arcgis.WrapSceneView extends android.widget.FrameLayout {
+  public com.arcgismaps.mapping.view.SceneView sceneView;
+  public final com.arcgismaps.mapping.view.SceneView getSceneView();
+  public final void setSceneView(com.arcgismaps.mapping.view.SceneView);
+  public com.mapconductor.arcgis.WrapSceneView(android.content.Context);
+  public com.mapconductor.arcgis.WrapSceneView(android.content.Context, android.util.AttributeSet);
+  public com.mapconductor.arcgis.WrapSceneView(android.content.Context, android.util.AttributeSet, int);
+  public final void onCreate(androidx.lifecycle.LifecycleOwner);
+  public final void onPause(androidx.lifecycle.LifecycleOwner);
+  public final void onResume(androidx.lifecycle.LifecycleOwner);
+  public final void onStop(androidx.lifecycle.LifecycleOwner);
+  public final void onDestroy(androidx.lifecycle.LifecycleOwner);
+}
+public final class com.mapconductor.arcgis.authentication.ArcGISAuthenticationHelpersKt {
+  public static final java.lang.Object arcGISOAuthApplicationInitialize(java.lang.String, java.lang.String, java.lang.String, com.arcgismaps.toolkit.authentication.AuthenticatorState, kotlin.coroutines.Continuation<? super java.lang.Boolean>);
+  public static final java.lang.Object arcGISOAuthUserInitialize(com.arcgismaps.toolkit.authentication.AuthenticatorState, java.lang.String, java.lang.String, java.lang.String, kotlin.coroutines.Continuation<? super java.lang.Boolean>);
+  public static final java.lang.Object ArcGISOAuthHybridInitialize(com.arcgismaps.toolkit.authentication.AuthenticatorState, java.lang.String, java.lang.String, java.lang.String, java.lang.String, kotlin.coroutines.Continuation<? super java.lang.Boolean>);
+}
+public final class com.mapconductor.arcgis.circle.ArcGISCircleOverlayController extends com.mapconductor.core.circle.CircleController<com.arcgismaps.mapping.view.Graphic> {
+  public com.mapconductor.arcgis.circle.ArcGISCircleOverlayController(com.mapconductor.core.circle.CircleManagerInterface<com.arcgismaps.mapping.view.Graphic>, com.mapconductor.arcgis.circle.ArcGISCircleOverlayRenderer);
+  public com.mapconductor.arcgis.circle.ArcGISCircleOverlayController(com.mapconductor.core.circle.CircleManagerInterface, com.mapconductor.arcgis.circle.ArcGISCircleOverlayRenderer, int, kotlin.jvm.internal.DefaultConstructorMarker);
+  public com.mapconductor.arcgis.circle.ArcGISCircleOverlayRenderer getRenderer();
+  public com.mapconductor.core.circle.CircleOverlayRendererInterface getRenderer();
+}
+public final class com.mapconductor.arcgis.circle.ArcGISCircleOverlayRenderer extends com.mapconductor.core.circle.AbstractCircleOverlayRenderer<com.arcgismaps.mapping.view.Graphic> {
+  public com.mapconductor.arcgis.circle.ArcGISCircleOverlayRenderer(com.arcgismaps.mapping.view.GraphicsOverlay, com.mapconductor.arcgis.ArcGISGeoViewHolder<?, ?>, kotlinx.coroutines.CoroutineScope);
+  public com.mapconductor.arcgis.circle.ArcGISCircleOverlayRenderer(com.arcgismaps.mapping.view.GraphicsOverlay, com.mapconductor.arcgis.ArcGISGeoViewHolder, kotlinx.coroutines.CoroutineScope, int, kotlin.jvm.internal.DefaultConstructorMarker);
+  public final com.arcgismaps.mapping.view.GraphicsOverlay getCircleLayer();
+  public com.mapconductor.arcgis.ArcGISGeoViewHolder<?, ?> getHolder();
+  public kotlinx.coroutines.CoroutineScope getCoroutine();
+  public java.lang.Object createCircle(com.mapconductor.core.circle.CircleState, kotlin.coroutines.Continuation<? super com.arcgismaps.mapping.view.Graphic>);
+  public java.lang.Object removeCircle(com.mapconductor.core.circle.CircleEntityInterface<com.arcgismaps.mapping.view.Graphic>, kotlin.coroutines.Continuation<? super kotlin.Unit>);
+  public java.lang.Object updateCircleProperties(com.arcgismaps.mapping.view.Graphic, com.mapconductor.core.circle.CircleEntityInterface<com.arcgismaps.mapping.view.Graphic>, com.mapconductor.core.circle.CircleEntityInterface<com.arcgismaps.mapping.view.Graphic>, kotlin.coroutines.Continuation<? super com.arcgismaps.mapping.view.Graphic>);
+  public com.mapconductor.core.map.MapViewHolderInterface getHolder();
+  public java.lang.Object updateCircleProperties(java.lang.Object, com.mapconductor.core.circle.CircleEntityInterface, com.mapconductor.core.circle.CircleEntityInterface, kotlin.coroutines.Continuation);
+}
+public final class com.mapconductor.arcgis.groundimage.ArcGISGroundImageController extends com.mapconductor.core.groundimage.GroundImageController<com.mapconductor.arcgis.groundimage.ArcGISGroundImageHandle> {
+  public com.mapconductor.arcgis.groundimage.ArcGISGroundImageController(com.mapconductor.arcgis.groundimage.ArcGISGroundImageOverlayRenderer);
+}
+public final class com.mapconductor.arcgis.groundimage.ArcGISGroundImageHandle {
+  public com.mapconductor.arcgis.groundimage.ArcGISGroundImageHandle(java.lang.String, long, java.lang.String, com.mapconductor.core.groundimage.GroundImageTileProvider, com.arcgismaps.mapping.layers.WebTiledLayer);
+  public final java.lang.String getRouteId();
+  public final long getGeneration();
+  public final java.lang.String getCacheKey();
+  public final com.mapconductor.core.groundimage.GroundImageTileProvider getTileProvider();
+  public final com.arcgismaps.mapping.layers.WebTiledLayer getLayer();
+  public final java.lang.String component1();
+  public final long component2();
+  public final java.lang.String component3();
+  public final com.mapconductor.core.groundimage.GroundImageTileProvider component4();
+  public final com.arcgismaps.mapping.layers.WebTiledLayer component5();
+  public final com.mapconductor.arcgis.groundimage.ArcGISGroundImageHandle copy(java.lang.String, long, java.lang.String, com.mapconductor.core.groundimage.GroundImageTileProvider, com.arcgismaps.mapping.layers.WebTiledLayer);
+  public java.lang.String toString();
+  public int hashCode();
+  public boolean equals(java.lang.Object);
+}
+public final class com.mapconductor.arcgis.groundimage.ArcGISGroundImageOverlayRenderer extends com.mapconductor.core.groundimage.AbstractGroundImageOverlayRenderer<com.mapconductor.arcgis.groundimage.ArcGISGroundImageHandle> {
+  public static final com.mapconductor.arcgis.groundimage.ArcGISGroundImageOverlayRenderer$Companion Companion;
+  public com.mapconductor.arcgis.groundimage.ArcGISGroundImageOverlayRenderer(com.mapconductor.arcgis.ArcGISGeoViewHolder<?, ?>, com.mapconductor.core.tileserver.LocalTileServer, kotlinx.coroutines.CoroutineScope);
+  public com.mapconductor.arcgis.groundimage.ArcGISGroundImageOverlayRenderer(com.mapconductor.arcgis.ArcGISGeoViewHolder, com.mapconductor.core.tileserver.LocalTileServer, kotlinx.coroutines.CoroutineScope, int, kotlin.jvm.internal.DefaultConstructorMarker);
+  public com.mapconductor.arcgis.ArcGISGeoViewHolder<?, ?> getHolder();
+  public kotlinx.coroutines.CoroutineScope getCoroutine();
+  public java.lang.Object createGroundImage(com.mapconductor.core.groundimage.GroundImageState, kotlin.coroutines.Continuation<? super com.mapconductor.arcgis.groundimage.ArcGISGroundImageHandle>);
+  public java.lang.Object updateGroundImageProperties(com.mapconductor.arcgis.groundimage.ArcGISGroundImageHandle, com.mapconductor.core.groundimage.GroundImageEntityInterface<com.mapconductor.arcgis.groundimage.ArcGISGroundImageHandle>, com.mapconductor.core.groundimage.GroundImageEntityInterface<com.mapconductor.arcgis.groundimage.ArcGISGroundImageHandle>, kotlin.coroutines.Continuation<? super com.mapconductor.arcgis.groundimage.ArcGISGroundImageHandle>);
+  public java.lang.Object removeGroundImage(com.mapconductor.core.groundimage.GroundImageEntityInterface<com.mapconductor.arcgis.groundimage.ArcGISGroundImageHandle>, kotlin.coroutines.Continuation<? super kotlin.Unit>);
+  public com.mapconductor.core.map.MapViewHolderInterface getHolder();
+  public java.lang.Object updateGroundImageProperties(java.lang.Object, com.mapconductor.core.groundimage.GroundImageEntityInterface, com.mapconductor.core.groundimage.GroundImageEntityInterface, kotlin.coroutines.Continuation);
+}
+public final class com.mapconductor.arcgis.groundimage.ArcGISGroundImageOverlayRenderer$Companion {
+}
+public final class com.mapconductor.arcgis.marker.ArcGISMarkerController extends com.mapconductor.core.marker.AbstractMarkerController<com.arcgismaps.mapping.view.Graphic> implements com.mapconductor.core.controller.OnCameraChangeReceiverInterface {
+  public com.mapconductor.arcgis.marker.ArcGISMarkerController(com.mapconductor.core.marker.MarkerManager<com.arcgismaps.mapping.view.Graphic>, com.mapconductor.arcgis.marker.ArcGISMarkerRenderer, com.mapconductor.core.marker.MarkerTilingOptions, kotlinx.coroutines.CoroutineScope);
+  public com.mapconductor.arcgis.marker.ArcGISMarkerController(com.mapconductor.core.marker.MarkerManager, com.mapconductor.arcgis.marker.ArcGISMarkerRenderer, com.mapconductor.core.marker.MarkerTilingOptions, kotlinx.coroutines.CoroutineScope, int, kotlin.jvm.internal.DefaultConstructorMarker);
+  public final kotlinx.coroutines.CoroutineScope getCoroutine();
+  public final void refreshVerticalStretch();
+  public final void setRasterLayerCallback(com.mapconductor.core.marker.MarkerTileRasterLayerCallback);
+  public com.mapconductor.core.marker.MarkerEntityInterface<com.arcgismaps.mapping.view.Graphic> find(com.mapconductor.core.features.GeoPointInterface);
+  public java.lang.Object add(java.util.List<com.mapconductor.core.marker.MarkerState>, kotlin.coroutines.Continuation<? super kotlin.Unit>);
+  public java.lang.Object update(com.mapconductor.core.marker.MarkerState, kotlin.coroutines.Continuation<? super kotlin.Unit>);
+  public java.lang.Object clear(kotlin.coroutines.Continuation<? super kotlin.Unit>);
+  public java.lang.Object onCameraChanged(com.mapconductor.core.map.MapCameraPosition, kotlin.coroutines.Continuation<? super kotlin.Unit>);
+  public void destroy();
+  public java.lang.Object find(com.mapconductor.core.features.GeoPointInterface);
+  public java.lang.Object update(java.lang.Object, kotlin.coroutines.Continuation);
+}
+public interface com.mapconductor.arcgis.marker.ArcGISMarkerEventControllerInterface extends com.mapconductor.core.marker.MarkerEventControllerInterface<com.arcgismaps.mapping.view.Graphic> {
+  public abstract com.mapconductor.core.marker.MarkerEntityInterface<com.arcgismaps.mapping.view.Graphic> find(com.mapconductor.core.features.GeoPoint);
+  public abstract com.mapconductor.core.marker.MarkerState getSelectedState();
+  public abstract void startDrag(com.mapconductor.core.marker.MarkerEntityInterface<com.arcgismaps.mapping.view.Graphic>);
+  public abstract void updateDrag(com.arcgismaps.geometry.Point, com.mapconductor.core.features.GeoPoint);
+  public abstract void endDrag(com.arcgismaps.geometry.Point, com.mapconductor.core.features.GeoPoint);
+  public abstract void dispatchClick(com.mapconductor.core.marker.MarkerState);
+  public abstract void dispatchDragStart(com.mapconductor.core.marker.MarkerState);
+  public abstract void dispatchDrag(com.mapconductor.core.marker.MarkerState);
+  public abstract void dispatchDragEnd(com.mapconductor.core.marker.MarkerState);
+  public abstract void setClickListener(kotlin.jvm.functions.Function1<? super com.mapconductor.core.marker.MarkerState, kotlin.Unit>);
+  public abstract void setDragStartListener(kotlin.jvm.functions.Function1<? super com.mapconductor.core.marker.MarkerState, kotlin.Unit>);
+  public abstract void setDragListener(kotlin.jvm.functions.Function1<? super com.mapconductor.core.marker.MarkerState, kotlin.Unit>);
+  public abstract void setDragEndListener(kotlin.jvm.functions.Function1<? super com.mapconductor.core.marker.MarkerState, kotlin.Unit>);
+  public abstract void setAnimateStartListener(kotlin.jvm.functions.Function1<? super com.mapconductor.core.marker.MarkerState, kotlin.Unit>);
+  public abstract void setAnimateEndListener(kotlin.jvm.functions.Function1<? super com.mapconductor.core.marker.MarkerState, kotlin.Unit>);
+}
+public final class com.mapconductor.arcgis.marker.ArcGISMarkerRenderer extends com.mapconductor.core.marker.AbstractMarkerOverlayRenderer<com.mapconductor.arcgis.ArcGISGeoViewHolder<?, ?>, com.arcgismaps.mapping.view.Graphic> {
+  public static final com.mapconductor.arcgis.marker.ArcGISMarkerRenderer$Companion Companion;
+  public com.mapconductor.arcgis.marker.ArcGISMarkerRenderer(com.arcgismaps.mapping.view.GraphicsOverlay, com.mapconductor.arcgis.ArcGISGeoViewHolder<?, ?>, kotlinx.coroutines.CoroutineScope);
+  public com.mapconductor.arcgis.marker.ArcGISMarkerRenderer(com.arcgismaps.mapping.view.GraphicsOverlay, com.mapconductor.arcgis.ArcGISGeoViewHolder, kotlinx.coroutines.CoroutineScope, int, kotlin.jvm.internal.DefaultConstructorMarker);
+  public final com.arcgismaps.mapping.view.GraphicsOverlay getMarkerLayer();
+  public boolean getSupportsAnimationOverlay();
+  public final void refreshVerticalStretch();
+  public void setMarkerVisible(com.mapconductor.core.marker.MarkerEntityInterface<com.arcgismaps.mapping.view.Graphic>, boolean);
+  public void setMarkerPosition(com.mapconductor.core.marker.MarkerEntityInterface<com.arcgismaps.mapping.view.Graphic>, com.mapconductor.core.features.GeoPoint);
+  public java.lang.Object onAdd(java.util.List<? extends com.mapconductor.core.marker.MarkerOverlayRendererInterface$AddParamsInterface>, kotlin.coroutines.Continuation<? super java.util.List<com.arcgismaps.mapping.view.Graphic>>);
+  public java.lang.Object onRemove(java.util.List<? extends com.mapconductor.core.marker.MarkerEntityInterface<com.arcgismaps.mapping.view.Graphic>>, kotlin.coroutines.Continuation<? super kotlin.Unit>);
+  public java.lang.Object onPostProcess(kotlin.coroutines.Continuation<? super kotlin.Unit>);
+  public java.lang.Object onChange(java.util.List<? extends com.mapconductor.core.marker.MarkerOverlayRendererInterface$ChangeParamsInterface<com.arcgismaps.mapping.view.Graphic>>, kotlin.coroutines.Continuation<? super java.util.List<com.arcgismaps.mapping.view.Graphic>>);
+}
+public final class com.mapconductor.arcgis.marker.ArcGISMarkerRenderer$Companion {
+}
+public final class com.mapconductor.arcgis.marker.DefaultArcGISMarkerEventController implements com.mapconductor.arcgis.marker.ArcGISMarkerEventControllerInterface {
+  public com.mapconductor.arcgis.marker.DefaultArcGISMarkerEventController(com.mapconductor.arcgis.marker.ArcGISMarkerController);
+  public com.mapconductor.core.marker.MarkerEntityInterface<com.arcgismaps.mapping.view.Graphic> find(com.mapconductor.core.features.GeoPoint);
+  public com.mapconductor.core.marker.MarkerState getSelectedState();
+  public void startDrag(com.mapconductor.core.marker.MarkerEntityInterface<com.arcgismaps.mapping.view.Graphic>);
+  public void updateDrag(com.arcgismaps.geometry.Point, com.mapconductor.core.features.GeoPoint);
+  public void endDrag(com.arcgismaps.geometry.Point, com.mapconductor.core.features.GeoPoint);
+  public void dispatchClick(com.mapconductor.core.marker.MarkerState);
+  public void dispatchDragStart(com.mapconductor.core.marker.MarkerState);
+  public void dispatchDrag(com.mapconductor.core.marker.MarkerState);
+  public void dispatchDragEnd(com.mapconductor.core.marker.MarkerState);
+  public void setClickListener(kotlin.jvm.functions.Function1<? super com.mapconductor.core.marker.MarkerState, kotlin.Unit>);
+  public void setDragStartListener(kotlin.jvm.functions.Function1<? super com.mapconductor.core.marker.MarkerState, kotlin.Unit>);
+  public void setDragListener(kotlin.jvm.functions.Function1<? super com.mapconductor.core.marker.MarkerState, kotlin.Unit>);
+  public void setDragEndListener(kotlin.jvm.functions.Function1<? super com.mapconductor.core.marker.MarkerState, kotlin.Unit>);
+  public void setAnimateStartListener(kotlin.jvm.functions.Function1<? super com.mapconductor.core.marker.MarkerState, kotlin.Unit>);
+  public void setAnimateEndListener(kotlin.jvm.functions.Function1<? super com.mapconductor.core.marker.MarkerState, kotlin.Unit>);
+}
+public final class com.mapconductor.arcgis.marker.SelectedMarker {
+  public com.mapconductor.arcgis.marker.SelectedMarker(com.mapconductor.core.marker.MarkerState, com.arcgismaps.mapping.view.Graphic);
+  public final com.mapconductor.core.marker.MarkerState getState();
+  public final com.arcgismaps.mapping.view.Graphic getGraphic();
+  public final com.mapconductor.core.marker.MarkerState component1();
+  public final com.arcgismaps.mapping.view.Graphic component2();
+  public final com.mapconductor.arcgis.marker.SelectedMarker copy(com.mapconductor.core.marker.MarkerState, com.arcgismaps.mapping.view.Graphic);
+  public java.lang.String toString();
+  public int hashCode();
+  public boolean equals(java.lang.Object);
+}
+public final class com.mapconductor.arcgis.marker.StrategyArcGISMarkerEventController implements com.mapconductor.arcgis.marker.ArcGISMarkerEventControllerInterface {
+  public com.mapconductor.arcgis.marker.StrategyArcGISMarkerEventController(com.mapconductor.core.marker.StrategyMarkerController<com.arcgismaps.mapping.view.Graphic>);
+  public com.mapconductor.core.marker.MarkerEntityInterface<com.arcgismaps.mapping.view.Graphic> find(com.mapconductor.core.features.GeoPoint);
+  public com.mapconductor.core.marker.MarkerState getSelectedState();
+  public void startDrag(com.mapconductor.core.marker.MarkerEntityInterface<com.arcgismaps.mapping.view.Graphic>);
+  public void updateDrag(com.arcgismaps.geometry.Point, com.mapconductor.core.features.GeoPoint);
+  public void endDrag(com.arcgismaps.geometry.Point, com.mapconductor.core.features.GeoPoint);
+  public void dispatchClick(com.mapconductor.core.marker.MarkerState);
+  public void dispatchDragStart(com.mapconductor.core.marker.MarkerState);
+  public void dispatchDrag(com.mapconductor.core.marker.MarkerState);
+  public void dispatchDragEnd(com.mapconductor.core.marker.MarkerState);
+  public void setClickListener(kotlin.jvm.functions.Function1<? super com.mapconductor.core.marker.MarkerState, kotlin.Unit>);
+  public void setDragStartListener(kotlin.jvm.functions.Function1<? super com.mapconductor.core.marker.MarkerState, kotlin.Unit>);
+  public void setDragListener(kotlin.jvm.functions.Function1<? super com.mapconductor.core.marker.MarkerState, kotlin.Unit>);
+  public void setDragEndListener(kotlin.jvm.functions.Function1<? super com.mapconductor.core.marker.MarkerState, kotlin.Unit>);
+  public void setAnimateStartListener(kotlin.jvm.functions.Function1<? super com.mapconductor.core.marker.MarkerState, kotlin.Unit>);
+  public void setAnimateEndListener(kotlin.jvm.functions.Function1<? super com.mapconductor.core.marker.MarkerState, kotlin.Unit>);
+}
+public final class com.mapconductor.arcgis.polygon.ArcGISPolygonOverlayController extends com.mapconductor.core.polygon.PolygonController<com.arcgismaps.mapping.view.Graphic> {
+  public com.mapconductor.arcgis.polygon.ArcGISPolygonOverlayController(com.mapconductor.core.polygon.PolygonManagerInterface<com.arcgismaps.mapping.view.Graphic>, com.mapconductor.arcgis.polygon.ArcGISPolygonOverlayRenderer);
+  public com.mapconductor.arcgis.polygon.ArcGISPolygonOverlayController(com.mapconductor.core.polygon.PolygonManagerInterface, com.mapconductor.arcgis.polygon.ArcGISPolygonOverlayRenderer, int, kotlin.jvm.internal.DefaultConstructorMarker);
+  public com.mapconductor.arcgis.polygon.ArcGISPolygonOverlayRenderer getRenderer();
+  public com.mapconductor.core.polygon.PolygonOverlayRendererInterface getRenderer();
+}
+public final class com.mapconductor.arcgis.polygon.ArcGISPolygonOverlayRenderer extends com.mapconductor.core.polygon.AbstractPolygonOverlayRenderer<com.arcgismaps.mapping.view.Graphic> {
+  public com.mapconductor.arcgis.polygon.ArcGISPolygonOverlayRenderer(com.arcgismaps.mapping.view.GraphicsOverlay, com.mapconductor.arcgis.ArcGISGeoViewHolder<?, ?>, kotlinx.coroutines.CoroutineScope);
+  public com.mapconductor.arcgis.polygon.ArcGISPolygonOverlayRenderer(com.arcgismaps.mapping.view.GraphicsOverlay, com.mapconductor.arcgis.ArcGISGeoViewHolder, kotlinx.coroutines.CoroutineScope, int, kotlin.jvm.internal.DefaultConstructorMarker);
+  public final com.arcgismaps.mapping.view.GraphicsOverlay getPolygonLayer();
+  public com.mapconductor.arcgis.ArcGISGeoViewHolder<?, ?> getHolder();
+  public kotlinx.coroutines.CoroutineScope getCoroutine();
+  public java.lang.Object createPolygon(com.mapconductor.core.polygon.PolygonState, kotlin.coroutines.Continuation<? super com.arcgismaps.mapping.view.Graphic>);
+  public java.lang.Object updatePolygonProperties(com.arcgismaps.mapping.view.Graphic, com.mapconductor.core.polygon.PolygonEntityInterface<com.arcgismaps.mapping.view.Graphic>, com.mapconductor.core.polygon.PolygonEntityInterface<com.arcgismaps.mapping.view.Graphic>, kotlin.coroutines.Continuation<? super com.arcgismaps.mapping.view.Graphic>);
+  public java.lang.Object removePolygon(com.mapconductor.core.polygon.PolygonEntityInterface<com.arcgismaps.mapping.view.Graphic>, kotlin.coroutines.Continuation<? super kotlin.Unit>);
+  public java.lang.Object onPostProcess(kotlin.coroutines.Continuation<? super kotlin.Unit>);
+  public com.mapconductor.core.map.MapViewHolderInterface getHolder();
+  public java.lang.Object updatePolygonProperties(java.lang.Object, com.mapconductor.core.polygon.PolygonEntityInterface, com.mapconductor.core.polygon.PolygonEntityInterface, kotlin.coroutines.Continuation);
+}
+public final class com.mapconductor.arcgis.polyline.ArcGISPolylineOverlayController extends com.mapconductor.core.polyline.PolylineController<com.arcgismaps.mapping.view.Graphic> {
+  public com.mapconductor.arcgis.polyline.ArcGISPolylineOverlayController(com.mapconductor.core.polyline.PolylineManagerInterface<com.arcgismaps.mapping.view.Graphic>, com.mapconductor.arcgis.polyline.ArcGISPolylineOverlayRenderer);
+  public com.mapconductor.arcgis.polyline.ArcGISPolylineOverlayController(com.mapconductor.core.polyline.PolylineManagerInterface, com.mapconductor.arcgis.polyline.ArcGISPolylineOverlayRenderer, int, kotlin.jvm.internal.DefaultConstructorMarker);
+  public com.mapconductor.arcgis.polyline.ArcGISPolylineOverlayRenderer getRenderer();
+  public com.mapconductor.core.polyline.PolylineOverlayRendererInterface getRenderer();
+}
+public final class com.mapconductor.arcgis.polyline.ArcGISPolylineOverlayRenderer extends com.mapconductor.core.polyline.AbstractPolylineOverlayRenderer<com.arcgismaps.mapping.view.Graphic> {
+  public com.mapconductor.arcgis.polyline.ArcGISPolylineOverlayRenderer(com.arcgismaps.mapping.view.GraphicsOverlay, com.mapconductor.arcgis.ArcGISGeoViewHolder<?, ?>, kotlinx.coroutines.CoroutineScope);
+  public com.mapconductor.arcgis.polyline.ArcGISPolylineOverlayRenderer(com.arcgismaps.mapping.view.GraphicsOverlay, com.mapconductor.arcgis.ArcGISGeoViewHolder, kotlinx.coroutines.CoroutineScope, int, kotlin.jvm.internal.DefaultConstructorMarker);
+  public final com.arcgismaps.mapping.view.GraphicsOverlay getPolylineLayer();
+  public com.mapconductor.arcgis.ArcGISGeoViewHolder<?, ?> getHolder();
+  public kotlinx.coroutines.CoroutineScope getCoroutine();
+  public java.lang.Object createPolyline(com.mapconductor.core.polyline.PolylineState, kotlin.coroutines.Continuation<? super com.arcgismaps.mapping.view.Graphic>);
+  public java.lang.Object updatePolylineProperties(com.arcgismaps.mapping.view.Graphic, com.mapconductor.core.polyline.PolylineEntityInterface<com.arcgismaps.mapping.view.Graphic>, com.mapconductor.core.polyline.PolylineEntityInterface<com.arcgismaps.mapping.view.Graphic>, kotlin.coroutines.Continuation<? super com.arcgismaps.mapping.view.Graphic>);
+  public java.lang.Object removePolyline(com.mapconductor.core.polyline.PolylineEntityInterface<com.arcgismaps.mapping.view.Graphic>, kotlin.coroutines.Continuation<? super kotlin.Unit>);
+  public com.mapconductor.core.map.MapViewHolderInterface getHolder();
+  public java.lang.Object updatePolylineProperties(java.lang.Object, com.mapconductor.core.polyline.PolylineEntityInterface, com.mapconductor.core.polyline.PolylineEntityInterface, kotlin.coroutines.Continuation);
+}
+public final class com.mapconductor.arcgis.raster.ArcGISRasterLayerController extends com.mapconductor.core.raster.RasterLayerController<com.arcgismaps.mapping.layers.Layer> {
+  public com.mapconductor.arcgis.raster.ArcGISRasterLayerController(com.mapconductor.core.raster.RasterLayerManagerInterface<com.arcgismaps.mapping.layers.Layer>, com.mapconductor.arcgis.raster.ArcGISRasterLayerOverlayRenderer);
+  public com.mapconductor.arcgis.raster.ArcGISRasterLayerController(com.mapconductor.core.raster.RasterLayerManagerInterface, com.mapconductor.arcgis.raster.ArcGISRasterLayerOverlayRenderer, int, kotlin.jvm.internal.DefaultConstructorMarker);
+}
+public final class com.mapconductor.arcgis.raster.ArcGISRasterLayerOverlayRenderer implements com.mapconductor.core.raster.RasterLayerOverlayRendererInterface<com.arcgismaps.mapping.layers.Layer> {
+  public static final com.mapconductor.arcgis.raster.ArcGISRasterLayerOverlayRenderer$Companion Companion;
+  public com.mapconductor.arcgis.raster.ArcGISRasterLayerOverlayRenderer(com.mapconductor.arcgis.ArcGISGeoViewHolder<?, ?>, kotlinx.coroutines.CoroutineScope);
+  public com.mapconductor.arcgis.raster.ArcGISRasterLayerOverlayRenderer(com.mapconductor.arcgis.ArcGISGeoViewHolder, kotlinx.coroutines.CoroutineScope, int, kotlin.jvm.internal.DefaultConstructorMarker);
+  public kotlinx.coroutines.CoroutineScope getCoroutine();
+  public java.lang.Object onAdd(java.util.List<? extends com.mapconductor.core.raster.RasterLayerOverlayRendererInterface$AddParamsInterface>, kotlin.coroutines.Continuation<? super java.util.List<? extends com.arcgismaps.mapping.layers.Layer>>);
+  public java.lang.Object onChange(java.util.List<? extends com.mapconductor.core.raster.RasterLayerOverlayRendererInterface$ChangeParamsInterface<com.arcgismaps.mapping.layers.Layer>>, kotlin.coroutines.Continuation<? super java.util.List<? extends com.arcgismaps.mapping.layers.Layer>>);
+  public java.lang.Object onRemove(java.util.List<? extends com.mapconductor.core.raster.RasterLayerEntityInterface<com.arcgismaps.mapping.layers.Layer>>, kotlin.coroutines.Continuation<? super kotlin.Unit>);
+  public java.lang.Object onPostProcess(kotlin.coroutines.Continuation<? super kotlin.Unit>);
+  public java.lang.Object onCameraChanged(com.mapconductor.core.map.MapCameraPosition, kotlin.coroutines.Continuation<? super kotlin.Unit>);
+}
+public final class com.mapconductor.arcgis.raster.ArcGISRasterLayerOverlayRenderer$Companion {
+}
+public final class com.mapconductor.arcgis.zoom.ZoomAltitudeConverter extends com.mapconductor.core.zoom.AbstractZoomAltitudeConverter {
+  public static final com.mapconductor.arcgis.zoom.ZoomAltitudeConverter$Companion Companion;
+  public static final double ARCGIS_OPTIMIZED_ZOOM0_ALTITUDE;
+  public com.mapconductor.arcgis.zoom.ZoomAltitudeConverter(double);
+  public com.mapconductor.arcgis.zoom.ZoomAltitudeConverter(double, int, kotlin.jvm.internal.DefaultConstructorMarker);
+  public double zoomLevelToAltitude(double, double, double);
+  public double altitudeToZoomLevel(double, double, double);
+  public final double zoomLevelToAltitude(double, double, double, int, int);
+  public final double altitudeToZoomLevel(double, double, double, int, int);
+  public final double zoomLevelToAltitude(double);
+  public final double zoomLevelToAltitude(double, double);
+  public final double zoomLevelToDistance(double, double);
+  public final double zoomLevelToDistance(double, double, int, int);
+  public final double altitudeToZoomLevel(double);
+  public final double altitudeToZoomLevel(double, double);
+  public com.mapconductor.arcgis.zoom.ZoomAltitudeConverter();
+}
+public final class com.mapconductor.arcgis.zoom.ZoomAltitudeConverter$Companion {
+}
