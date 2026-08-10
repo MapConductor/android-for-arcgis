@@ -7,10 +7,8 @@ import com.arcgismaps.mapping.view.GraphicsOverlay
 import com.mapconductor.arcgis.circle.ArcGISCircleOverlayController
 import com.mapconductor.arcgis.groundimage.ArcGISGroundImageController
 import com.mapconductor.arcgis.marker.ArcGISMarkerController
-import com.mapconductor.arcgis.marker.ArcGISMarkerEventControllerInterface
+import com.mapconductor.arcgis.marker.ArcGISMarkerEventController
 import com.mapconductor.arcgis.marker.ArcGISMarkerRenderer
-import com.mapconductor.arcgis.marker.DefaultArcGISMarkerEventController
-import com.mapconductor.arcgis.marker.StrategyArcGISMarkerEventController
 import com.mapconductor.arcgis.polygon.ArcGISPolygonOverlayController
 import com.mapconductor.arcgis.polyline.ArcGISPolylineOverlayController
 import com.mapconductor.arcgis.raster.ArcGISRasterLayerController
@@ -55,8 +53,8 @@ class ArcGISMapView2DController(
     override val mainCoroutine: CoroutineScope = CoroutineScope(Dispatchers.Main),
 ) : BaseMapViewController(),
     ArcGISMapViewControllerInterface {
-    internal val markerEventControllers = mutableListOf<ArcGISMarkerEventControllerInterface>()
-    internal var activeDragController: ArcGISMarkerEventControllerInterface? = null
+    internal val markerEventControllers = mutableListOf<ArcGISMarkerEventController>()
+    internal var activeDragController: ArcGISMarkerEventController? = null
     internal var markerClickListener: OnMarkerEventHandler? = null
     internal var markerDragStartListener: OnMarkerEventHandler? = null
     internal var markerDragListener: OnMarkerEventHandler? = null
@@ -86,7 +84,7 @@ class ArcGISMapView2DController(
         registerOverlayController(circleController)
         registerOverlayController(groundImageController)
         registerOverlayController(rasterLayerController)
-        registerMarkerEventController(DefaultArcGISMarkerEventController(markerController))
+        registerMarkerEventController(ArcGISMarkerEventController(markerController))
 
         markerController.setRasterLayerCallback { state ->
             if (state != null) {
@@ -313,7 +311,7 @@ class ArcGISMapView2DController(
         }
     }
 
-    internal fun registerMarkerEventController(controller: ArcGISMarkerEventControllerInterface) {
+    internal fun registerMarkerEventController(controller: ArcGISMarkerEventController) {
         if (markerEventControllers.contains(controller)) return
         markerEventControllers.add(controller)
         controller.setClickListener(markerClickListener)
@@ -335,10 +333,10 @@ class ArcGISMapView2DController(
 
     fun createMarkerEventController(
         controller: StrategyMarkerController<ArcGISActualMarker>,
-    ): MarkerEventControllerInterface<ArcGISActualMarker> = StrategyArcGISMarkerEventController(controller)
+    ): MarkerEventControllerInterface<ArcGISActualMarker> = ArcGISMarkerEventController(controller)
 
     fun registerMarkerEventController(controller: MarkerEventControllerInterface<ArcGISActualMarker>) {
-        val typed = controller as? ArcGISMarkerEventControllerInterface ?: return
+        val typed = controller as? ArcGISMarkerEventController ?: return
         registerMarkerEventController(typed)
     }
 

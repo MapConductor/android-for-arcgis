@@ -1,6 +1,5 @@
 package com.mapconductor.arcgis.marker
 
-import com.arcgismaps.mapping.view.Graphic
 import com.mapconductor.arcgis.ArcGISActualMarker
 import com.mapconductor.core.controller.OnCameraChangeReceiverInterface
 import com.mapconductor.core.map.MapCameraPosition
@@ -28,11 +27,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.withPermit
 
-internal data class SelectedMarker(
-    val state: MarkerState,
-    val graphic: Graphic,
-)
-
 class ArcGISMarkerController(
     markerManager: MarkerManager<ArcGISActualMarker>,
     renderer: ArcGISMarkerRenderer,
@@ -47,8 +41,6 @@ class ArcGISMarkerController(
     fun refreshVerticalStretch() {
         (renderer as? ArcGISMarkerRenderer)?.refreshVerticalStretch()
     }
-
-    private var internalSelectedMarker: SelectedMarker? = null
 
     private val defaultMarkerIcon: BitmapIcon = DefaultMarkerIcon().toBitmapIcon()
     private val tiledMarkerIds = LinkedHashSet<String>()
@@ -78,16 +70,6 @@ class ArcGISMarkerController(
             setTileLayerVisible = ::setTileLayerVisible,
             invalidateTiles = ::updateRasterLayerSource,
         )
-
-    internal var selectedMarker: SelectedMarker?
-        set(value) {
-            if (value == null) {
-                internalSelectedMarker = null
-                return
-            }
-            internalSelectedMarker = value
-        }
-        get() = internalSelectedMarker
 
     fun setRasterLayerCallback(callback: MarkerTileRasterLayerCallback?) {
         rasterLayerCallback = callback
