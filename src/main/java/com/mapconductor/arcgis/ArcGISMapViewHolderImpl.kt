@@ -27,6 +27,11 @@ interface ArcGISGeoViewHolder<ActualMapView : FrameLayout, ActualMap : GeoView> 
     val spatialReference: SpatialReference?
     val operationalLayers: MutableList<Layer>?
 
+    /** 3D（SceneView）なら true。ラスターの LOD の組み方が 2D と 3D で逆になる
+     * （`ArcGISRasterLayerOverlayRenderer.buildWebMercatorTileInfo` を参照）。 */
+    val usesSceneView: Boolean
+        get() = geoView is SceneView
+
     fun setNavigationEnabled(enabled: Boolean) {
         geoView.interactionOptions.isPanEnabled = enabled
         geoView.interactionOptions.isRotateEnabled = enabled
