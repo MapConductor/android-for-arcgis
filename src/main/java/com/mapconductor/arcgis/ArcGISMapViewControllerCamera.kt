@@ -19,7 +19,7 @@ import kotlinx.coroutines.launch
 // API が無く、停止時に矩形内へクランプして再適用する。
 internal fun ArcGISMapViewController.getFastMapCameraPosition(): MapCameraPosition? =
     try {
-        holder.map.getCurrentViewpointCamera().toMapCameraPosition()
+        holder.map.getCurrentViewpointCamera()?.toMapCameraPosition()
     } catch (_: Exception) {
         null
     }
@@ -116,7 +116,7 @@ internal suspend fun ArcGISMapViewController.getMapCameraPosition(): MapCameraPo
             farRight = farRight,
         )
 
-    val arcCamera = holder.map.getCurrentViewpointCamera()
+    val arcCamera = holder.map.getCurrentViewpointCamera() ?: return null
     val lat = arcCamera.location.y
     val lon = arcCamera.location.x
     val alt = arcCamera.location.z ?: 0.0
