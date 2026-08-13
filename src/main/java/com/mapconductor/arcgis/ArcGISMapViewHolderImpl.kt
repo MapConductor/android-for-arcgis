@@ -14,6 +14,7 @@ import com.mapconductor.core.map.MapViewHolderInterface
 import kotlin.math.abs
 import kotlin.math.max
 import android.content.Context
+import android.graphics.Matrix
 import android.content.pm.PackageManager
 import android.util.AttributeSet
 import android.view.Gravity
@@ -282,26 +283,65 @@ class ArcGISMapView2DHolder(
                     mapPoint = GeoPoint.from(position).toPoint(SpatialReference.wgs84()),
                 )
             }.getOrNull() ?: return null
-        return Offset(result.x.toFloat(), result.y.toFloat())
+        return toRootOffset(Offset(result.x.toFloat(), result.y.toFloat()))
     }
 
-    override suspend fun fromScreenOffset(offset: Offset): GeoPoint? =
-        map
+    override suspend fun fromScreenOffset(offset: Offset): GeoPoint? {
+        val local = fromRootOffset(offset)
+        return map
             .screenToLocation(
                 DoubleXY(
-                    x = offset.x.toDouble(),
-                    y = offset.y.toDouble(),
+                    x = local.x.toDouble(),
+                    y = local.y.toDouble(),
                 ),
             )?.toGeoPoint()
+    }
 
-    override fun fromScreenOffsetSync(offset: Offset): GeoPoint? =
-        map
+    override fun fromScreenOffsetSync(offset: Offset): GeoPoint? {
+        val local = fromRootOffset(offset)
+        return map
             .screenToLocation(
                 DoubleXY(
-                    x = offset.x.toDouble(),
-                    y = offset.y.toDouble(),
+                    x = local.x.toDouble(),
+                    y = local.y.toDouble(),
                 ),
             )?.toGeoPoint()
+    }
+
+    /*
+     * Esri の `locationToScreen` / `screenToLocation` が扱うのは**内側の `MapView` の座標系**。
+     * 2D の疑似 tilt（[WrapMapView]）では、その `MapView` が一定倍率で
+     * 広げられて中央寄せされ、さらに `rotationX` で回っている。したがって内側の座標は
+     * [rootView] の座標とは一致しない。
+     *
+     * tilt が 0 のときは拡大も回転も無く両者が一致するため、これまで表面化していなかった。
+     * tilt を付けると InfoBubble やマーカー追従が地図とずれる（中心の点が右下隅に置かれる）。
+     *
+     * 変換にはビュー自身の行列を使う。`rotationX` と `cameraDistance` が畳み込まれており、
+     * Android が実際に描画・ヒットテストに使っているものと同じなので、近似ではなく一致する。
+     */
+    private fun toRootOffset(local: Offset): Offset {
+        val point = floatArrayOf(local.x, local.y)
+        map.matrix.mapPoints(point)
+        return Offset(
+            point[0] + map.left - map.scrollX,
+            point[1] + map.top - map.scrollY,
+        )
+    }
+
+    private fun fromRootOffset(root: Offset): Offset {
+        val point =
+            floatArrayOf(
+                root.x - map.left + map.scrollX,
+                root.y - map.top + map.scrollY,
+            )
+        val matrix = map.matrix
+        if (!matrix.isIdentity) {
+            val inverse = Matrix()
+            if (matrix.invert(inverse)) inverse.mapPoints(point)
+        }
+        return Offset(point[0], point[1])
+    }
 }
 
 internal fun Context.getArcGisApiKey(): String? =
