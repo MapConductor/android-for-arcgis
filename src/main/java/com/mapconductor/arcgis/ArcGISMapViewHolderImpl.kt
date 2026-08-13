@@ -91,8 +91,31 @@ class WrapMapView : FrameLayout {
         set(value) {
             if (field == value) return
             field = value
+            // 平面の拡大率が変わるので測り直す（反映は onMeasure）。
+            requestLayout()
+            // 回転そのものはレイアウトを待たずに当てる。
             applyVisualTilt()
         }
+
+    /**
+     * 内側の `MapView` の大きさは**この測定パスの中で**決める。
+     *
+     * 以前は `onLayout` の中で `layoutParams` を差し替えていたが、それが効くには
+     * 「次のレイアウトパス」が要る。Compose ホストなら来るが、**React Native は
+     * ビューのフレームを直接書き換えるだけでパスを回さない**ため来ない。結果、
+     * 画面回転で内側の `MapView` が回転前のピクセルサイズのまま残り、
+     * `Gravity.CENTER` で中央に寄った横長の地図が画面からはみ出していた。
+     */
+    override fun onMeasure(
+        widthMeasureSpec: Int,
+        heightMeasureSpec: Int,
+    ) {
+        updateVisualTiltLayoutParams(
+            MeasureSpec.getSize(widthMeasureSpec),
+            MeasureSpec.getSize(heightMeasureSpec),
+        )
+        super.onMeasure(widthMeasureSpec, heightMeasureSpec)
+    }
 
     override fun onLayout(
         changed: Boolean,
@@ -102,22 +125,27 @@ class WrapMapView : FrameLayout {
         bottom: Int,
     ) {
         super.onLayout(changed, left, top, right, bottom)
-        if (changed) applyVisualTilt()
+        // `changed` で絞らない。React Native では自分のフレームが変わらないまま
+        // 内側の `MapView` だけ測り直されることがあり、そこで回転を当て直す必要がある。
+        applyVisualTilt()
     }
 
     /**
-     * 回した平面が元のフレームを覆うよう [PLANE_SCALE] 倍に広げてから回し、
-     * 親（この FrameLayout）でクリップする。拡大しても縮尺は変わらない（縮尺は解像度で
-     * 決まる）ので、単に地図が広く映る＝傾いたカメラがより広い地表を見るのと同じになる。
+     * 回した平面が元のフレームを覆うよう [PLANE_SCALE] 倍に広げる。親（この FrameLayout）で
+     * クリップする。拡大しても縮尺は変わらない（縮尺は解像度で決まる）ので、単に地図が
+     * 広く映る＝傾いたカメラがより広い地表を見るのと同じになる。
      */
-    private fun applyVisualTilt() {
+    private fun updateVisualTiltLayoutParams(
+        frameWidth: Int,
+        frameHeight: Int,
+    ) {
         if (!this::arcGISMapView.isInitialized) return
-        if (width <= 0 || height <= 0) return
+        if (frameWidth <= 0 || frameHeight <= 0) return
 
         val angle = abs(visualTilt).coerceIn(0.0, MAX_TILT_DEGREES).toFloat()
         val scale = if (angle > 0f) PLANE_SCALE else 1.0f
-        val targetWidth = (width * scale).toInt()
-        val targetHeight = (height * scale).toInt()
+        val targetWidth = (frameWidth * scale).toInt()
+        val targetHeight = (frameHeight * scale).toInt()
 
         val params = arcGISMapView.layoutParams as LayoutParams
         if (params.width != targetWidth || params.height != targetHeight || params.gravity != Gravity.CENTER) {
@@ -126,12 +154,21 @@ class WrapMapView : FrameLayout {
             params.gravity = Gravity.CENTER
             arcGISMapView.layoutParams = params
         }
+    }
+
+    /** 回転そのもの。大きさは [updateVisualTiltLayoutParams] が測定時に決めている。 */
+    private fun applyVisualTilt() {
+        if (!this::arcGISMapView.isInitialized) return
+        if (width <= 0 || height <= 0) return
+
+        val angle = abs(visualTilt).coerceIn(0.0, MAX_TILT_DEGREES).toFloat()
 
         // 遠近は掛けない（正射影）。react-for-leaflet / react-for-openlayers の CSS も
         // `perspective` を置いておらず、[PLANE_SCALE] = 1 / cos(60°) がちょうど効く前提。
         // 遠近を入れると遠方が縮んで平面が上辺を覆えなくなる。Android は正射影を直接
         // 指定できないため、視点距離を十分大きく取って近似する。
-        arcGISMapView.cameraDistance = max(targetWidth, targetHeight) * ORTHOGRAPHIC_DISTANCE_FACTOR
+        arcGISMapView.cameraDistance =
+            max(arcGISMapView.width, arcGISMapView.height) * ORTHOGRAPHIC_DISTANCE_FACTOR
         arcGISMapView.rotationX = angle
     }
 
