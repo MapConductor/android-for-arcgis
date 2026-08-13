@@ -34,7 +34,13 @@ internal fun ArcGISMapView2DController.onMapUp(event: UpEvent) {
         controller.endDrag(point, position)
         selectedState?.let { state -> controller.dispatchDragEnd(state) }
         activeDragController = null
-        holder.setNavigationEnabled(true)
+        // 全 ON に戻すと uiSettings で無効にしたジェスチャまで復活してしまう。
+        // 3D の ArcGISMapViewControllerGestures と同じく設定値から戻す。
+        with(holder.map) {
+            interactionOptions.isPanEnabled = appliedUISettings.scrollGesture
+            interactionOptions.isRotateEnabled = appliedUISettings.rotateGesture
+            interactionOptions.isZoomEnabled = appliedUISettings.zoomGesture
+        }
     }
 }
 

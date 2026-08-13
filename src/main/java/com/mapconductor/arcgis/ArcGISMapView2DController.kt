@@ -22,6 +22,9 @@ import com.mapconductor.core.groundimage.GroundImageState
 import com.mapconductor.core.groundimage.OnGroundImageEventHandler
 import com.mapconductor.core.map.CameraRestriction
 import com.mapconductor.core.map.MapCameraPosition
+import com.mapconductor.core.map.MapGesture
+import com.mapconductor.core.map.MapUISettings
+import com.mapconductor.core.map.MapUISettingsDiagnostics
 import com.mapconductor.core.marker.MarkerEventControllerInterface
 import com.mapconductor.core.marker.MarkerOverlayRendererInterface
 import com.mapconductor.core.marker.MarkerState
@@ -190,6 +193,30 @@ class ArcGISMapView2DController(
             holder.map.map?.let { arcGISMap ->
                 arcGISMap.minScale = restriction?.minZoom?.let { zoomToScale(it) }
                 arcGISMap.maxScale = restriction?.maxZoom?.let { zoomToScale(it) }
+            }
+        }
+    }
+
+    internal var appliedUISettings: MapUISettings = MapUISettings.Default
+
+    /**
+     * 3D（[ArcGISMapViewController]）と同じ実装。2D の `MapView` も同じ
+     * `interactionOptions` を持つため、有効/無効の対応は完全に一致する。
+     */
+    override fun applyUISettings(settings: MapUISettings) {
+        appliedUISettings = settings
+        MapUISettingsDiagnostics.warnIfRequested(
+            settings.tiltGesture,
+            gesture = MapGesture.Tilt,
+            provider = "ArcGIS",
+            reason = "InteractionOptions has no separate tilt toggle",
+        )
+        // ビュー破棄後はネイティブアクセサが例外を投げるため runCatching で保護する。
+        runCatching {
+            with(holder.map) {
+                interactionOptions.isPanEnabled = settings.scrollGesture
+                interactionOptions.isRotateEnabled = settings.rotateGesture
+                interactionOptions.isZoomEnabled = settings.zoomGesture
             }
         }
     }
