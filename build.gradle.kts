@@ -76,6 +76,9 @@ val libraryArtifactId = "for-arcgis"
 val libraryVersion = project.findProperty("libraryVersion") as String? ?: "1.0.0"
 
 dependencies {
+    // CancellableContinuation.resume の 3 引数 onCancellation は coroutines 1.9 以降。
+    // 明示しないと推移的に古い版が入り、単体ビルドだけがコンパイルエラーになる。
+    implementation(libs.kotlinx.coroutines.android)
 
     implementation(platform(libs.androidx.compose.bom)) // BOM manages Compose artifact versions.
     implementation(libs.androidx.compose.runtime)
