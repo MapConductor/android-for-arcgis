@@ -100,9 +100,11 @@ public interface com.mapconductor.arcgis.ArcGISGeoViewHolder<ActualMapView exten
   public abstract com.arcgismaps.mapping.view.GeoView getGeoView();
   public abstract com.arcgismaps.geometry.SpatialReference getSpatialReference();
   public abstract java.util.List<com.arcgismaps.mapping.layers.Layer> getOperationalLayers();
+  public default boolean getUsesSceneView();
   public default void setNavigationEnabled(boolean);
 }
 public final class com.mapconductor.arcgis.ArcGISGeoViewHolder$DefaultImpls {
+  public static <ActualMapView extends android.widget.FrameLayout, ActualMap extends com.arcgismaps.mapping.view.GeoView> boolean getUsesSceneView(com.mapconductor.arcgis.ArcGISGeoViewHolder<ActualMapView, ActualMap>);
   public static <ActualMapView extends android.widget.FrameLayout, ActualMap extends com.arcgismaps.mapping.view.GeoView> void setNavigationEnabled(com.mapconductor.arcgis.ArcGISGeoViewHolder<ActualMapView, ActualMap>, boolean);
   public static <ActualMapView extends android.widget.FrameLayout, ActualMap extends com.arcgismaps.mapping.view.GeoView> java.lang.Object fromScreenOffset-3MmeM6k(com.mapconductor.arcgis.ArcGISGeoViewHolder<ActualMapView, ActualMap>, long, kotlin.coroutines.Continuation<? super com.mapconductor.core.features.GeoPoint>);
   public static <ActualMapView extends android.widget.FrameLayout, ActualMap extends com.arcgismaps.mapping.view.GeoView> com.mapconductor.core.features.GeoPoint fromScreenOffsetSync-k-4lQ0M(com.mapconductor.arcgis.ArcGISGeoViewHolder<ActualMapView, ActualMap>, long);
@@ -126,6 +128,7 @@ public final class com.mapconductor.arcgis.ArcGISMapView2DController extends com
   public boolean hasGroundImage(com.mapconductor.core.groundimage.GroundImageState);
   public boolean hasRasterLayer(com.mapconductor.core.raster.RasterLayerState);
   public void setCameraRestriction(com.mapconductor.core.map.CameraRestriction);
+  public void applyUISettings(com.mapconductor.core.map.MapUISettings);
   public java.lang.Object clearOverlays(kotlin.coroutines.Continuation<? super kotlin.Unit>);
   public void setOnCircleClickListener(kotlin.jvm.functions.Function1<? super com.mapconductor.core.circle.CircleEvent, kotlin.Unit>);
   public void setOnGroundImageClickListener(kotlin.jvm.functions.Function1<? super com.mapconductor.core.groundimage.GroundImageEvent, kotlin.Unit>);
@@ -176,6 +179,7 @@ public final class com.mapconductor.arcgis.ArcGISMapView2DHolder implements com.
   public androidx.compose.ui.geometry.Offset toScreenOffset-x-9fifI(com.mapconductor.core.features.GeoPointInterface);
   public java.lang.Object fromScreenOffset-3MmeM6k(long, kotlin.coroutines.Continuation<? super com.mapconductor.core.features.GeoPoint>);
   public com.mapconductor.core.features.GeoPoint fromScreenOffsetSync-k-4lQ0M(long);
+  public boolean getUsesSceneView();
   public void setNavigationEnabled(boolean);
   public java.lang.Object getMapView();
   public java.lang.Object getMap();
@@ -260,6 +264,7 @@ public final class com.mapconductor.arcgis.ArcGISMapViewHolder implements com.ma
   public androidx.compose.ui.geometry.Offset toScreenOffset-x-9fifI(com.mapconductor.core.features.GeoPointInterface);
   public java.lang.Object fromScreenOffset-3MmeM6k(long, kotlin.coroutines.Continuation<? super com.mapconductor.core.features.GeoPoint>);
   public com.mapconductor.core.features.GeoPoint fromScreenOffsetSync-k-4lQ0M(long);
+  public boolean getUsesSceneView();
   public void setNavigationEnabled(boolean);
   public java.lang.Object getMapView();
   public java.lang.Object getMap();
@@ -355,6 +360,7 @@ public final class com.mapconductor.arcgis.WrapMapView extends android.widget.Fr
   public com.mapconductor.arcgis.WrapMapView(android.content.Context, android.util.AttributeSet, int);
   public final double getVisualTilt();
   public final void setVisualTilt(double);
+  protected void onMeasure(int, int);
   protected void onLayout(boolean, int, int, int, int);
   public final void onCreate(androidx.lifecycle.LifecycleOwner);
   public final void onPause(androidx.lifecycle.LifecycleOwner);

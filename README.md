@@ -9,7 +9,7 @@ Even you use the wrapper API, but you can still access to the native ArcGIS view
 
 ## Setup
 
-https://docs-android.mapconductor.com/setup/arcgis/
+https://mapconductor.com/setup/android/arcgis/
 
 ## Usage
 
@@ -65,7 +65,7 @@ fun MapView(modifier: Modifier = Modifier) {
 
 ## Components
 
-### ArcGISMapView [[docs]](https://docs-android.mapconductor.com/components/mapviewstate/)
+### ArcGISMapView [[docs]](https://mapconductor.com/mapview/)
 
 ```kotlin
 @Composable
@@ -90,7 +90,7 @@ fun MapExample() {
 
 ------------------------------------------------------------------------
 
-### Marker [[docs]](https://docs-android.mapconductor.com/components/marker/)
+### Marker [[docs]](https://mapconductor.com/markers/)
 
 ```kotlin
 @Composable
@@ -114,7 +114,7 @@ fun MarkerExample() {
 
 ------------------------------------------------------------------------
 
-### InfoBubble [[docs]](https://docs-android.mapconductor.com/components/infobubble/)
+### InfoBubble [[docs]](https://mapconductor.com/info-bubble/)
 
 ```kotlin
 @Composable
@@ -144,7 +144,7 @@ fun InfoBubbleExample() {
 
 ------------------------------------------------------------------------
 
-### Circle [[docs]](https://docs-android.mapconductor.com/components/circle/)
+### Circle [[docs]](https://mapconductor.com/circle/)
 
 ```kotlin
 @Composable
@@ -168,7 +168,7 @@ fun CircleExample() {
 
 ------------------------------------------------------------------------
 
-### Polyline [[docs]](https://docs-android.mapconductor.com/components/polyline/)
+### Polyline [[docs]](https://mapconductor.com/polyline/)
 
 ```kotlin
 @Composable
@@ -189,7 +189,7 @@ fun PolylineExample() {
 
 ------------------------------------------------------------------------
 
-### Polygon [[docs]](https://docs-android.mapconductor.com/components/polygon/)
+### Polygon [[docs]](https://mapconductor.com/polygon/)
 
 ```kotlin
 @Composable
@@ -238,7 +238,7 @@ fun PolygonExample() {
 ![](docs/images/polygon-hole.png)
 
 ------------------------------------------------------------------------
-### GroundImage [[docs]](https://docs-android.mapconductor.com/components/groundimage/)
+### GroundImage [[docs]](https://mapconductor.com/ground-image/)
 
 ```kotlin
 @Composable
