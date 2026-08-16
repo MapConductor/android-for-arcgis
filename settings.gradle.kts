@@ -46,4 +46,11 @@ dependencyResolutionManagement {
 }
 
 rootProject.name = "android-for-arcgis"
-include(":sample-app")
+if (providers
+        .gradleProperty("skipSampleApp")
+        .map(String::toBoolean)
+        .getOrElse(false)
+        .not()
+) {
+    include(":sample-app")
+}
