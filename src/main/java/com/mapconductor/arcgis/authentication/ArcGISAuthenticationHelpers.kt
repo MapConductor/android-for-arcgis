@@ -104,11 +104,13 @@ suspend fun arcGISOAuthUserInitialize(
             ArcGISEnvironment.apiKey = null
 
             // OAuthUserConfigurationを設定
-            authenticatorState.oAuthUserConfiguration =
-                OAuthUserConfiguration(
-                    portalUrl = portalUrl,
-                    clientId = clientId,
-                    redirectUrl = redirectUrl,
+            authenticatorState.oAuthUserConfigurations =
+                listOf(
+                    OAuthUserConfiguration(
+                        portalUrl = portalUrl,
+                        clientId = clientId,
+                        redirectUrl = redirectUrl,
+                    ),
                 )
 
             // AuthenticatorStateをチャレンジハンドラーとして設定
@@ -164,11 +166,13 @@ suspend fun ArcGISOAuthHybridInitialize(
             ArcGISEnvironment.apiKey = null
 
             // まず、User認証を設定（フォールバック用）
-            authenticatorState.oAuthUserConfiguration =
-                OAuthUserConfiguration(
-                    portalUrl = portalUrl,
-                    clientId = clientId,
-                    redirectUrl = redirectUrl,
+            authenticatorState.oAuthUserConfigurations =
+                listOf(
+                    OAuthUserConfiguration(
+                        portalUrl = portalUrl,
+                        clientId = clientId,
+                        redirectUrl = redirectUrl,
+                    ),
                 )
 
             // AuthenticatorStateをチャレンジハンドラーとして設定

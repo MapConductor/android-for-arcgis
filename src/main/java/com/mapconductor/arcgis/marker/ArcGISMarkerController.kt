@@ -1,16 +1,13 @@
 package com.mapconductor.arcgis.marker
 
-import com.arcgismaps.mapping.view.Graphic
 import com.mapconductor.arcgis.ArcGISActualMarker
 import com.mapconductor.core.controller.OnCameraChangeReceiverInterface
-import com.mapconductor.core.features.GeoPointInterface
 import com.mapconductor.core.map.MapCameraPosition
 import com.mapconductor.core.marker.AbstractMarkerController
 import com.mapconductor.core.marker.BitmapIcon
 import com.mapconductor.core.marker.DefaultMarkerIcon
 import com.mapconductor.core.marker.MarkerEntity
 import com.mapconductor.core.marker.MarkerEntityInterface
-import com.mapconductor.core.marker.MarkerHitTest
 import com.mapconductor.core.marker.MarkerIngestionEngine
 import com.mapconductor.core.marker.MarkerManager
 import com.mapconductor.core.marker.MarkerOverlayRendererInterface
@@ -30,11 +27,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.withPermit
 
-internal data class SelectedMarker(
-    val state: MarkerState,
-    val graphic: Graphic,
-)
-
 class ArcGISMarkerController(
     markerManager: MarkerManager<ArcGISActualMarker>,
     renderer: ArcGISMarkerRenderer,
@@ -49,8 +41,6 @@ class ArcGISMarkerController(
     fun refreshVerticalStretch() {
         (renderer as? ArcGISMarkerRenderer)?.refreshVerticalStretch()
     }
-
-    private var internalSelectedMarker: SelectedMarker? = null
 
     private val defaultMarkerIcon: BitmapIcon = DefaultMarkerIcon().toBitmapIcon()
     private val tiledMarkerIds = LinkedHashSet<String>()
@@ -81,31 +71,8 @@ class ArcGISMarkerController(
             invalidateTiles = ::updateRasterLayerSource,
         )
 
-    internal var selectedMarker: SelectedMarker?
-        set(value) {
-            if (value == null) {
-                internalSelectedMarker = null
-                return
-            }
-            internalSelectedMarker = value
-        }
-        get() = internalSelectedMarker
-
     fun setRasterLayerCallback(callback: MarkerTileRasterLayerCallback?) {
         rasterLayerCallback = callback
-    }
-
-    override fun find(position: GeoPointInterface): MarkerEntityInterface<ArcGISActualMarker>? {
-        val nearest = markerManager.findNearest(position) ?: return null
-
-        val touchScreen = renderer.holder.toScreenOffset(position) ?: return null
-        val markerScreen = renderer.holder.toScreenOffset(nearest.state.position) ?: return null
-
-        return if (MarkerHitTest.hitsIcon(touchScreen, markerScreen, nearest.state)) {
-            nearest
-        } else {
-            null
-        }
     }
 
     override suspend fun add(data: List<MarkerState>) {

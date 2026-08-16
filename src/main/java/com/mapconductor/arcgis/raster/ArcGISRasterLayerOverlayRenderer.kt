@@ -131,11 +131,22 @@ class ArcGISRasterLayerOverlayRenderer(
     ): TileInfo {
         val spatialReference = SpatialReference(WEB_MERCATOR_WKID)
         val origin = Point(WEB_MERCATOR_MIN, WEB_MERCATOR_MAX, spatialReference)
-        // ArcGIS WebTiledLayer appears to compute tile (col,row) using a 256px grid regardless of
-        // the TileInfo tileWidth/tileHeight, which causes (z,x,y) mismatches when tileSize=512.
-        // Workaround: keep tileWidth/tileHeight as-is (so the SDK expects 512px images), but build
-        // the LOD resolutions using a 256px reference grid so the requested (z,x,y) matches XYZ.
-        val levels = buildWebMercatorLevels(resolveLodReferenceTileSize(tileSize), minZoom, maxZoom)
+        // LOD の基準は 2D と 3D で**逆**。実機（Lenovo TB520FU）で両方向を計測した:
+        //
+        // | ビュー | 素直な tileSize 基準 | 256 基準（旧 workaround） |
+        // |---|---|---|
+        // | 3D SceneView | 何も要求しない | 描画される |
+        // | 2D MapView | 描画される（線 6px = MapLibre と一致） | z=0 を 1 枚だけ要求して止まる |
+        //
+        // 旧コメントの「WebTiledLayer は tileWidth に関係なく 256 グリッドで (col,row) を
+        // 計算する」は **SceneView の挙動**で、MapView には当てはまらない。iOS の 2D も
+        // 素直な TileInfo で位置まで一致することを確認済み（ios-for-arcgis の同名レンダラ）。
+        val levels =
+            if (holder.usesSceneView) {
+                buildWebMercatorLevels(resolveLodReferenceTileSize(tileSize), minZoom, maxZoom)
+            } else {
+                buildWebMercatorLevels(tileSize, minZoom, maxZoom)
+            }
         return TileInfo(
             DEFAULT_DPI,
             TileImageFormat.Png,

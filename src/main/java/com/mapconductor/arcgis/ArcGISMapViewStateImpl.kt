@@ -5,8 +5,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import com.mapconductor.compose.map.BaseMapViewSaver
-import com.mapconductor.core.features.GeoPoint
-import com.mapconductor.core.features.GeoRectBounds
 import com.mapconductor.core.map.MapCameraPosition
 import com.mapconductor.core.map.MapCameraPositionInterface
 import com.mapconductor.core.map.MapPaddings
@@ -28,12 +26,8 @@ class ArcGISMapViewState(
     override val id: String,
     mapDesignType: ArcGISDesignTypeInterface,
     cameraPosition: MapCameraPosition = MapCameraPosition.Default,
-) : MapViewState<ArcGISDesignTypeInterface>(),
+) : MapViewState<ArcGISDesignTypeInterface>(cameraPosition),
     ArcGISMapViewStateInterface {
-    private var _cameraPosition: MapCameraPosition = cameraPosition
-    override val cameraPosition: MapCameraPosition
-        get() = _cameraPosition
-
     // Map padding
     private val _padding = MutableStateFlow(MapPaddings.Zeros)
     val padding: StateFlow<MapPaddingsInterface> = _padding.asStateFlow()
@@ -50,6 +44,7 @@ class ArcGISMapViewState(
 
     internal fun setController(controller: ArcGISMapViewControllerInterface) {
         this.controller = controller
+        attachController(controller, moveToInitialCamera = false)
         // setMapDesignType is intentionally omitted here: the Scene was already created
         // with the correct basemap style in holderProvider. Replacing the Basemap while
         // the Scene is loading causes viewpointChanged to fire with zoom~0, overwriting
@@ -58,48 +53,14 @@ class ArcGISMapViewState(
 
     internal fun clearController() {
         this.controller = null
+        detachController()
     }
 
     internal fun onMapDesignTypeChange(value: ArcGISDesignTypeInterface) {
         _mapDesignType = value
     }
 
-    override fun moveCameraTo(
-        cameraPosition: MapCameraPosition,
-        durationMillis: Long?,
-    ) {
-        controller?.let { ctrl ->
-            val dstCameraPosition = MapCameraPosition.from(cameraPosition)
-            if (durationMillis == null || durationMillis == 0L) {
-                ctrl.moveCamera(dstCameraPosition)
-            } else {
-                ctrl.animateCamera(dstCameraPosition, durationMillis)
-            }
-            return@let
-        }
-        this._cameraPosition = cameraPosition
-    }
-
-    override fun fitBounds(
-        bounds: GeoRectBounds,
-        padding: Int,
-    ) {
-        controller?.fitBounds(bounds, padding)
-    }
-
-    override fun moveCameraTo(
-        position: GeoPoint,
-        durationMillis: Long?,
-    ) {
-        val currentPosition = this.cameraPosition
-        val newPosition =
-            currentPosition.copy(
-                position = position,
-            )
-        this.moveCameraTo(newPosition, durationMillis)
-    }
-
-    override fun getMapViewHolder(): ArcGISGeoViewHolder<*, *>? = controller?.holder as? ArcGISGeoViewHolder<*, *>
+    override fun getMapViewHolder(): ArcGISGeoViewHolder<*, *>? = super.getMapViewHolder() as? ArcGISGeoViewHolder<*, *>
 
     /** Holder while the 3D [ArcGISMapView] (SceneView) is attached; null in 2D mode. */
     fun getSceneViewHolder(): ArcGISMapViewHolder? = controller?.holder as? ArcGISMapViewHolder
@@ -108,7 +69,7 @@ class ArcGISMapViewState(
     fun getMapView2DHolder(): ArcGISMapView2DHolder? = controller?.holder as? ArcGISMapView2DHolder
 
     internal fun updateCameraPosition(cameraPosition: MapCameraPosition) {
-        this._cameraPosition = cameraPosition
+        setCameraPositionInternal(cameraPosition)
     }
 }
 

@@ -6,16 +6,13 @@ import com.arcgismaps.mapping.view.SingleTapConfirmedEvent
 import com.arcgismaps.mapping.view.UpEvent
 import com.arcgismaps.mapping.view.extensions.motionEvent
 import com.mapconductor.arcgis.marker.ArcGISMarkerRenderer
-import com.mapconductor.core.circle.CircleEvent
-import com.mapconductor.core.groundimage.GroundImageEvent
-import com.mapconductor.core.polygon.PolygonEvent
-import com.mapconductor.core.polyline.PolylineEvent
 import com.mapconductor.settings.Settings
 import android.view.MotionEvent
 
 // タップ・長押し・パンの処理。
-// タップは**マーカーが先**で、どのマーカーにも当たらなかったときだけ
-// 地図のタップとして扱う（android の他プロバイダと同じ順序）。
+// タップのカスケード（marker → circle → groundImage → polyline → polygon → map）は
+// コアの BaseMapViewController.dispatchTap が回すので、ここは ArcGIS の
+// ScreenCoordinate を地理座標へ直して渡すだけ。長押しはドラッグ開始の判定が要るので残す。
 internal fun ArcGISMapViewController.onMapPan(event: PanChangeEvent) {
     val controller = activeDragController
     if (controller != null) {
@@ -110,61 +107,10 @@ internal suspend fun ArcGISMapViewController.onMapLongPress(event: LongPressEven
 }
 
 internal suspend fun ArcGISMapViewController.onMapTap(event: SingleTapConfirmedEvent) {
-    val screenPoint = event.screenCoordinate
     val touchPosition =
         holder.map
-            .screenToLocation(screenPoint)
+            .screenToLocation(event.screenCoordinate)
             .getOrNull()
             ?.toGeoPoint() ?: return
-
-    markerEventControllers.forEach { controller ->
-        controller.find(touchPosition)?.let { markerEntity ->
-            controller.dispatchClick(markerEntity.state)
-            return
-        }
-    }
-
-    circleController.find(touchPosition)?.let { circleEntity ->
-        val event =
-            CircleEvent(
-                state = circleEntity.state,
-                clicked = touchPosition,
-            )
-        circleController.dispatchClick(event)
-        return
-    }
-
-    groundImageController.find(touchPosition)?.let { entity ->
-        val event =
-            GroundImageEvent(
-                state = entity.state,
-                clicked = touchPosition,
-            )
-        groundImageController.dispatchClick(event)
-        return
-    }
-
-    polylineController.findWithClosestPoint(touchPosition)?.let { hitResult ->
-        val event =
-            PolylineEvent(
-                state = hitResult.entity.state,
-                clicked = hitResult.closestPoint,
-            )
-        polylineController.dispatchClick(event)
-        return
-    }
-
-    polygonController.find(touchPosition)?.let { polygonEntity ->
-        val event =
-            PolygonEvent(
-                state = polygonEntity.state,
-                clicked = touchPosition,
-            )
-        polygonController.dispatchClick(event)
-        return
-    }
-
-    holder.map.screenToLocation(screenPoint).getOrNull()?.also {
-        emitMapClick(it.toGeoPoint())
-    }
+    dispatchTap(touchPosition)
 }

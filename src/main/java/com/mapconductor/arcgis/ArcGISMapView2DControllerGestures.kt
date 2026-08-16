@@ -6,16 +6,13 @@ import com.arcgismaps.mapping.view.SingleTapConfirmedEvent
 import com.arcgismaps.mapping.view.UpEvent
 import com.arcgismaps.mapping.view.extensions.motionEvent
 import com.mapconductor.arcgis.marker.ArcGISMarkerRenderer
-import com.mapconductor.core.circle.CircleEvent
-import com.mapconductor.core.groundimage.GroundImageEvent
-import com.mapconductor.core.polygon.PolygonEvent
-import com.mapconductor.core.polyline.PolylineEvent
 import com.mapconductor.settings.Settings
 import android.view.MotionEvent
 
-// タップ・長押し・パンの処理（2D の MapView 版）。
-// タップは**マーカーが先**で、どのマーカーにも当たらなかったときだけ
-// 地図のタップとして扱う。
+// タップ・長押し・パンの処理。
+// タップのカスケード（marker → circle → groundImage → polyline → polygon → map）は
+// コアの BaseMapViewController.dispatchTap が回すので、ここは ArcGIS の
+// ScreenCoordinate を地理座標へ直して渡すだけ。長押しはドラッグ開始の判定が要るので残す。
 internal suspend fun ArcGISMapView2DController.onMapPan(event: PanChangeEvent) {
     val controller = activeDragController
     if (controller != null) {
@@ -37,7 +34,13 @@ internal fun ArcGISMapView2DController.onMapUp(event: UpEvent) {
         controller.endDrag(point, position)
         selectedState?.let { state -> controller.dispatchDragEnd(state) }
         activeDragController = null
-        holder.setNavigationEnabled(true)
+        // 全 ON に戻すと uiSettings で無効にしたジェスチャまで復活してしまう。
+        // 3D の ArcGISMapViewControllerGestures と同じく設定値から戻す。
+        with(holder.map) {
+            interactionOptions.isPanEnabled = appliedUISettings.scrollGesture
+            interactionOptions.isRotateEnabled = appliedUISettings.rotateGesture
+            interactionOptions.isZoomEnabled = appliedUISettings.zoomGesture
+        }
     }
 }
 
@@ -87,40 +90,6 @@ internal suspend fun ArcGISMapView2DController.onMapLongPress(event: LongPressEv
 }
 
 internal fun ArcGISMapView2DController.onMapTap(event: SingleTapConfirmedEvent) {
-    val screenPoint = event.screenCoordinate
-    val touchPosition = holder.map.screenToLocation(screenPoint)?.toGeoPoint() ?: return
-
-    markerEventControllers.forEach { controller ->
-        controller.find(touchPosition)?.let { markerEntity ->
-            controller.dispatchClick(markerEntity.state)
-            return
-        }
-    }
-
-    circleController.find(touchPosition)?.let { circleEntity ->
-        circleController.dispatchClick(CircleEvent(state = circleEntity.state, clicked = touchPosition))
-        return
-    }
-
-    groundImageController.find(touchPosition)?.let { entity ->
-        groundImageController.dispatchClick(GroundImageEvent(state = entity.state, clicked = touchPosition))
-        return
-    }
-
-    polylineController.findWithClosestPoint(touchPosition)?.let { hitResult ->
-        polylineController.dispatchClick(
-            PolylineEvent(
-                state = hitResult.entity.state,
-                clicked = hitResult.closestPoint,
-            ),
-        )
-        return
-    }
-
-    polygonController.find(touchPosition)?.let { polygonEntity ->
-        polygonController.dispatchClick(PolygonEvent(state = polygonEntity.state, clicked = touchPosition))
-        return
-    }
-
-    emitMapClick(touchPosition)
+    val touchPosition = holder.map.screenToLocation(event.screenCoordinate)?.toGeoPoint() ?: return
+    dispatchTap(touchPosition)
 }

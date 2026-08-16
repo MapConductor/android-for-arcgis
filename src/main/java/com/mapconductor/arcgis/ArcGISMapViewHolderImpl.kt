@@ -14,6 +14,7 @@ import com.mapconductor.core.map.MapViewHolderInterface
 import kotlin.math.abs
 import kotlin.math.max
 import android.content.Context
+import android.graphics.Matrix
 import android.content.pm.PackageManager
 import android.util.AttributeSet
 import android.view.Gravity
@@ -26,6 +27,11 @@ interface ArcGISGeoViewHolder<ActualMapView : FrameLayout, ActualMap : GeoView> 
     val geoView: GeoView
     val spatialReference: SpatialReference?
     val operationalLayers: MutableList<Layer>?
+
+    /** 3D（SceneView）なら true。ラスターの LOD の組み方が 2D と 3D で逆になる
+     * （`ArcGISRasterLayerOverlayRenderer.buildWebMercatorTileInfo` を参照）。 */
+    val usesSceneView: Boolean
+        get() = geoView is SceneView
 
     fun setNavigationEnabled(enabled: Boolean) {
         geoView.interactionOptions.isPanEnabled = enabled
@@ -86,8 +92,31 @@ class WrapMapView : FrameLayout {
         set(value) {
             if (field == value) return
             field = value
+            // 平面の拡大率が変わるので測り直す（反映は onMeasure）。
+            requestLayout()
+            // 回転そのものはレイアウトを待たずに当てる。
             applyVisualTilt()
         }
+
+    /**
+     * 内側の `MapView` の大きさは**この測定パスの中で**決める。
+     *
+     * 以前は `onLayout` の中で `layoutParams` を差し替えていたが、それが効くには
+     * 「次のレイアウトパス」が要る。Compose ホストなら来るが、**React Native は
+     * ビューのフレームを直接書き換えるだけでパスを回さない**ため来ない。結果、
+     * 画面回転で内側の `MapView` が回転前のピクセルサイズのまま残り、
+     * `Gravity.CENTER` で中央に寄った横長の地図が画面からはみ出していた。
+     */
+    override fun onMeasure(
+        widthMeasureSpec: Int,
+        heightMeasureSpec: Int,
+    ) {
+        updateVisualTiltLayoutParams(
+            MeasureSpec.getSize(widthMeasureSpec),
+            MeasureSpec.getSize(heightMeasureSpec),
+        )
+        super.onMeasure(widthMeasureSpec, heightMeasureSpec)
+    }
 
     override fun onLayout(
         changed: Boolean,
@@ -97,22 +126,27 @@ class WrapMapView : FrameLayout {
         bottom: Int,
     ) {
         super.onLayout(changed, left, top, right, bottom)
-        if (changed) applyVisualTilt()
+        // `changed` で絞らない。React Native では自分のフレームが変わらないまま
+        // 内側の `MapView` だけ測り直されることがあり、そこで回転を当て直す必要がある。
+        applyVisualTilt()
     }
 
     /**
-     * 回した平面が元のフレームを覆うよう [PLANE_SCALE] 倍に広げてから回し、
-     * 親（この FrameLayout）でクリップする。拡大しても縮尺は変わらない（縮尺は解像度で
-     * 決まる）ので、単に地図が広く映る＝傾いたカメラがより広い地表を見るのと同じになる。
+     * 回した平面が元のフレームを覆うよう [PLANE_SCALE] 倍に広げる。親（この FrameLayout）で
+     * クリップする。拡大しても縮尺は変わらない（縮尺は解像度で決まる）ので、単に地図が
+     * 広く映る＝傾いたカメラがより広い地表を見るのと同じになる。
      */
-    private fun applyVisualTilt() {
+    private fun updateVisualTiltLayoutParams(
+        frameWidth: Int,
+        frameHeight: Int,
+    ) {
         if (!this::arcGISMapView.isInitialized) return
-        if (width <= 0 || height <= 0) return
+        if (frameWidth <= 0 || frameHeight <= 0) return
 
         val angle = abs(visualTilt).coerceIn(0.0, MAX_TILT_DEGREES).toFloat()
         val scale = if (angle > 0f) PLANE_SCALE else 1.0f
-        val targetWidth = (width * scale).toInt()
-        val targetHeight = (height * scale).toInt()
+        val targetWidth = (frameWidth * scale).toInt()
+        val targetHeight = (frameHeight * scale).toInt()
 
         val params = arcGISMapView.layoutParams as LayoutParams
         if (params.width != targetWidth || params.height != targetHeight || params.gravity != Gravity.CENTER) {
@@ -121,12 +155,21 @@ class WrapMapView : FrameLayout {
             params.gravity = Gravity.CENTER
             arcGISMapView.layoutParams = params
         }
+    }
+
+    /** 回転そのもの。大きさは [updateVisualTiltLayoutParams] が測定時に決めている。 */
+    private fun applyVisualTilt() {
+        if (!this::arcGISMapView.isInitialized) return
+        if (width <= 0 || height <= 0) return
+
+        val angle = abs(visualTilt).coerceIn(0.0, MAX_TILT_DEGREES).toFloat()
 
         // 遠近は掛けない（正射影）。react-for-leaflet / react-for-openlayers の CSS も
         // `perspective` を置いておらず、[PLANE_SCALE] = 1 / cos(60°) がちょうど効く前提。
         // 遠近を入れると遠方が縮んで平面が上辺を覆えなくなる。Android は正射影を直接
         // 指定できないため、視点距離を十分大きく取って近似する。
-        arcGISMapView.cameraDistance = max(targetWidth, targetHeight) * ORTHOGRAPHIC_DISTANCE_FACTOR
+        arcGISMapView.cameraDistance =
+            max(arcGISMapView.width, arcGISMapView.height) * ORTHOGRAPHIC_DISTANCE_FACTOR
         arcGISMapView.rotationX = angle
     }
 
@@ -240,26 +283,65 @@ class ArcGISMapView2DHolder(
                     mapPoint = GeoPoint.from(position).toPoint(SpatialReference.wgs84()),
                 )
             }.getOrNull() ?: return null
-        return Offset(result.x.toFloat(), result.y.toFloat())
+        return toRootOffset(Offset(result.x.toFloat(), result.y.toFloat()))
     }
 
-    override suspend fun fromScreenOffset(offset: Offset): GeoPoint? =
-        map
+    override suspend fun fromScreenOffset(offset: Offset): GeoPoint? {
+        val local = fromRootOffset(offset)
+        return map
             .screenToLocation(
                 DoubleXY(
-                    x = offset.x.toDouble(),
-                    y = offset.y.toDouble(),
+                    x = local.x.toDouble(),
+                    y = local.y.toDouble(),
                 ),
             )?.toGeoPoint()
+    }
 
-    override fun fromScreenOffsetSync(offset: Offset): GeoPoint? =
-        map
+    override fun fromScreenOffsetSync(offset: Offset): GeoPoint? {
+        val local = fromRootOffset(offset)
+        return map
             .screenToLocation(
                 DoubleXY(
-                    x = offset.x.toDouble(),
-                    y = offset.y.toDouble(),
+                    x = local.x.toDouble(),
+                    y = local.y.toDouble(),
                 ),
             )?.toGeoPoint()
+    }
+
+    /*
+     * Esri の `locationToScreen` / `screenToLocation` が扱うのは**内側の `MapView` の座標系**。
+     * 2D の疑似 tilt（[WrapMapView]）では、その `MapView` が一定倍率で
+     * 広げられて中央寄せされ、さらに `rotationX` で回っている。したがって内側の座標は
+     * [rootView] の座標とは一致しない。
+     *
+     * tilt が 0 のときは拡大も回転も無く両者が一致するため、これまで表面化していなかった。
+     * tilt を付けると InfoBubble やマーカー追従が地図とずれる（中心の点が右下隅に置かれる）。
+     *
+     * 変換にはビュー自身の行列を使う。`rotationX` と `cameraDistance` が畳み込まれており、
+     * Android が実際に描画・ヒットテストに使っているものと同じなので、近似ではなく一致する。
+     */
+    private fun toRootOffset(local: Offset): Offset {
+        val point = floatArrayOf(local.x, local.y)
+        map.matrix.mapPoints(point)
+        return Offset(
+            point[0] + map.left - map.scrollX,
+            point[1] + map.top - map.scrollY,
+        )
+    }
+
+    private fun fromRootOffset(root: Offset): Offset {
+        val point =
+            floatArrayOf(
+                root.x - map.left + map.scrollX,
+                root.y - map.top + map.scrollY,
+            )
+        val matrix = map.matrix
+        if (!matrix.isIdentity) {
+            val inverse = Matrix()
+            if (matrix.invert(inverse)) inverse.mapPoints(point)
+        }
+        return Offset(point[0], point[1])
+    }
 }
 
 internal fun Context.getArcGisApiKey(): String? =

@@ -195,23 +195,25 @@ data class ArcGISDesign(
                 HumanGeographyDarkDetail.id -> BasemapStyle.ArcGISHumanGeographyDarkDetail
                 HumanGeographyDarkLabels.id -> BasemapStyle.ArcGISHumanGeographyDarkLabels
                 Outdoor.id -> BasemapStyle.ArcGISOutdoor
-                OsmStandard.id -> BasemapStyle.OsmStandard
-                OsmStandardRelief.id -> BasemapStyle.OsmStandardRelief
-                OsmStandardReliefBase.id -> BasemapStyle.OsmStandardReliefBase
-                OsmStreets.id -> BasemapStyle.OsmStreets
-                OsmStreetsRelief.id -> BasemapStyle.OsmStreetsRelief
-                OsmLightGray.id -> BasemapStyle.OsmLightGray
-                OsmLightGrayBase.id -> BasemapStyle.OsmLightGrayBase
-                OsmLightGrayLabels.id -> BasemapStyle.OsmLightGrayLabels
-                OsmDarkGray.id -> BasemapStyle.OsmDarkGray
-                OsmDarkGrayBase.id -> BasemapStyle.OsmDarkGrayBase
-                OsmDarkGrayLabels.id -> BasemapStyle.OsmDarkGrayLabels
-                OsmStreetsReliefBase.id -> BasemapStyle.OsmStreetsReliefBase
-                OsmBlueprint.id -> BasemapStyle.OsmBlueprint
-                OsmHybrid.id -> BasemapStyle.OsmHybrid
-                OsmHybridDetail.id -> BasemapStyle.OsmHybridDetail
-                OsmNavigation.id -> BasemapStyle.OsmNavigation
-                OsmNavigationDark.id -> BasemapStyle.OsmNavigationDark
+                // ArcGIS Maps SDK 300.x renamed the Osm* basemap styles to Open*;
+                // the MapConductor design ids stay stable across that rename.
+                OsmStandard.id -> BasemapStyle.OpenOsmStyle
+                OsmStandardRelief.id -> BasemapStyle.OpenOsmStyleRelief
+                OsmStandardReliefBase.id -> BasemapStyle.OpenOsmStyleReliefBase
+                OsmStreets.id -> BasemapStyle.OpenStreets
+                OsmStreetsRelief.id -> BasemapStyle.OpenStreetsRelief
+                OsmLightGray.id -> BasemapStyle.OpenLightGray
+                OsmLightGrayBase.id -> BasemapStyle.OpenLightGrayBase
+                OsmLightGrayLabels.id -> BasemapStyle.OpenLightGrayLabels
+                OsmDarkGray.id -> BasemapStyle.OpenDarkGray
+                OsmDarkGrayBase.id -> BasemapStyle.OpenDarkGrayBase
+                OsmDarkGrayLabels.id -> BasemapStyle.OpenDarkGrayLabels
+                OsmStreetsReliefBase.id -> BasemapStyle.OpenStreetsReliefBase
+                OsmBlueprint.id -> BasemapStyle.OpenBlueprint
+                OsmHybrid.id -> BasemapStyle.OpenHybrid
+                OsmHybridDetail.id -> BasemapStyle.OpenHybridDetail
+                OsmNavigation.id -> BasemapStyle.OpenNavigation
+                OsmNavigationDark.id -> BasemapStyle.OpenNavigationDark
                 else -> throw Throwable("unknown design id: \"$designType.id\"")
             }
     }

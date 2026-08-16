@@ -15,12 +15,21 @@ ktlint {
     }
 }
 
+// ドライバー実装点（@InternalMapConductorApi）を使うためのオプトイン。
+// android-for-* は地図SDKドライバーなので、モジュール単位で許可する。
+kotlin {
+    compilerOptions {
+        optIn.add("com.mapconductor.core.InternalMapConductorApi")
+    }
+}
+
 android {
     namespace = "com.mapconductor.arcgis"
     compileSdk = project.property("compileSdk").toString().toInt()
 
     defaultConfig {
-        minSdk = project.property("minSdk").toString().toInt()
+        // ArcGIS Maps SDK for Kotlin 300.x requires minSdk 28.
+        minSdk = maxOf(28, project.property("minSdk").toString().toInt())
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         consumerProguardFiles("consumer-rules.pro")

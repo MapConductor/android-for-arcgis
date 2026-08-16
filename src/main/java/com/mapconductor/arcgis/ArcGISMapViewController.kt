@@ -5,17 +5,14 @@ import com.arcgismaps.mapping.view.GraphicsOverlay
 import com.mapconductor.arcgis.circle.ArcGISCircleOverlayController
 import com.mapconductor.arcgis.groundimage.ArcGISGroundImageController
 import com.mapconductor.arcgis.marker.ArcGISMarkerController
-import com.mapconductor.arcgis.marker.ArcGISMarkerEventControllerInterface
+import com.mapconductor.arcgis.marker.ArcGISMarkerEventController
 import com.mapconductor.arcgis.marker.ArcGISMarkerRenderer
-import com.mapconductor.arcgis.marker.DefaultArcGISMarkerEventController
-import com.mapconductor.arcgis.marker.StrategyArcGISMarkerEventController
 import com.mapconductor.arcgis.polygon.ArcGISPolygonOverlayController
 import com.mapconductor.arcgis.polyline.ArcGISPolylineOverlayController
 import com.mapconductor.arcgis.raster.ArcGISRasterLayerController
-import com.mapconductor.core.circle.CircleState
 import com.mapconductor.core.circle.OnCircleEventHandler
 import com.mapconductor.core.controller.BaseMapViewController
-import com.mapconductor.core.features.GeoPoint
+import com.mapconductor.core.features.GeoPointInterface
 import com.mapconductor.core.features.GeoRectBounds
 import com.mapconductor.core.groundimage.GroundImageState
 import com.mapconductor.core.groundimage.OnGroundImageEventHandler
@@ -26,14 +23,12 @@ import com.mapconductor.core.map.MapUISettingsDiagnostics
 import com.mapconductor.core.marker.MarkerAnimationOverlayHost
 import com.mapconductor.core.marker.MarkerEventControllerInterface
 import com.mapconductor.core.marker.MarkerOverlayRendererInterface
-import com.mapconductor.core.marker.MarkerState
 import com.mapconductor.core.marker.OnMarkerEventHandler
 import com.mapconductor.core.marker.StrategyMarkerController
+import com.mapconductor.core.marker.dispatchGeoMarkerClick
 import com.mapconductor.core.polygon.OnPolygonEventHandler
-import com.mapconductor.core.polygon.PolygonState
 import com.mapconductor.core.polyline.OnPolylineEventHandler
 import com.mapconductor.core.polyline.PolylineState
-import com.mapconductor.core.raster.RasterLayerState
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -51,8 +46,8 @@ class ArcGISMapViewController(
     override val mainCoroutine: CoroutineScope = CoroutineScope(Dispatchers.Main),
 ) : BaseMapViewController(),
     ArcGISMapViewControllerInterface {
-    internal val markerEventControllers = mutableListOf<ArcGISMarkerEventControllerInterface>()
-    internal var activeDragController: ArcGISMarkerEventControllerInterface? = null
+    internal val markerEventControllers = mutableListOf<ArcGISMarkerEventController>()
+    internal var activeDragController: ArcGISMarkerEventController? = null
     internal var markerClickListener: OnMarkerEventHandler? = null
     internal var markerDragStartListener: OnMarkerEventHandler? = null
     internal var markerDragListener: OnMarkerEventHandler? = null
@@ -78,7 +73,7 @@ class ArcGISMapViewController(
         registerOverlayController(circleController)
         registerOverlayController(groundImageController)
         registerOverlayController(rasterLayerController)
-        registerMarkerEventController(DefaultArcGISMarkerEventController(markerController))
+        registerMarkerEventController(ArcGISMarkerEventController(markerController))
 
         markerController.setRasterLayerCallback { state ->
             if (state != null) {
@@ -105,6 +100,16 @@ class ArcGISMapViewController(
         padding: Int,
     ) = handleFitBounds(bounds, padding)
 
+    /**
+     * マーカーのヒットテスト。クリックカスケードの先頭。
+     *
+     * ArcGIS は地図タップの座標からそのまま引けるので、コアの
+     * [dispatchGeoMarkerClick] に委ねる（`clickable = false` の透過もそちら）。
+     * 長押し（ドラッグ開始）だけは identifyGraphicsOverlay を使うので Gestures 側に残る。
+     */
+    override fun dispatchMarkerTap(position: GeoPointInterface): Boolean =
+        markerEventControllers.dispatchGeoMarkerClick(position)
+
     // 拡張ファイル（Camera / Gestures）からは基底クラスの protected へ触れないため、
     // ここで internal の入口を用意しておく。
     internal fun cameraMoveStartHandler(): ((MapCameraPosition) -> Unit)? = cameraMoveStartCallback
@@ -115,14 +120,6 @@ class ArcGISMapViewController(
 
     internal fun emitCameraMoveEnd(position: MapCameraPosition) {
         cameraMoveEndCallback?.invoke(position)
-    }
-
-    internal fun emitMapClick(point: GeoPoint) {
-        mapClickCallback?.invoke(point)
-    }
-
-    internal fun emitMapLongClick(point: GeoPoint) {
-        mapLongClickCallback?.invoke(point)
     }
 
     internal fun emitMapInitialized() {
@@ -160,22 +157,13 @@ class ArcGISMapViewController(
         }
     }
 
-    override fun hasMarker(state: MarkerState): Boolean = this.markerController.markerManager.hasEntity(state.id)
-
     override fun hasPolyline(state: PolylineState): Boolean =
         this.polylineController.polylineManager
             .hasEntity(state.id)
 
-    override fun hasPolygon(state: PolygonState): Boolean = this.polygonController.polygonManager.hasEntity(state.id)
-
-    override fun hasCircle(state: CircleState): Boolean = this.circleController.circleManager.hasEntity(state.id)
-
     override fun hasGroundImage(state: GroundImageState): Boolean =
         this.groundImageController.groundImageManager
             .hasEntity(state.id)
-
-    override fun hasRasterLayer(state: RasterLayerState): Boolean =
-        this.rasterLayerController.rasterLayerManager.hasEntity(state.id)
 
     internal var appliedUISettings: MapUISettings = MapUISettings.Default
 
@@ -203,33 +191,9 @@ class ArcGISMapViewController(
         rasterLayerController.clear()
     }
 
-    override suspend fun compositionMarkers(data: List<MarkerState>) = markerController.add(data)
-
     override fun setMarkerAnimationOverlayHost(host: MarkerAnimationOverlayHost?) {
         (markerController.renderer as ArcGISMarkerRenderer).animationOverlayHost = host
     }
-
-    override suspend fun updateMarker(state: MarkerState) = markerController.update(state)
-
-    override suspend fun compositionPolylines(data: List<PolylineState>) = polylineController.add(data)
-
-    override suspend fun updatePolyline(state: PolylineState) = polylineController.update(state)
-
-    override suspend fun compositionPolygons(data: List<PolygonState>) = polygonController.add(data)
-
-    override suspend fun updatePolygon(state: PolygonState) = polygonController.update(state)
-
-    override suspend fun compositionCircles(data: List<CircleState>) = circleController.add(data)
-
-    override suspend fun updateCircle(state: CircleState) = circleController.update(state)
-
-    override suspend fun compositionGroundImages(data: List<GroundImageState>) = groundImageController.add(data)
-
-    override suspend fun updateGroundImage(state: GroundImageState) = groundImageController.update(state)
-
-    override suspend fun compositionRasterLayers(data: List<RasterLayerState>) = rasterLayerController.add(data)
-
-    override suspend fun updateRasterLayer(state: RasterLayerState) = rasterLayerController.update(state)
 
     @Deprecated("Use CircleState.onClick instead.")
     override fun setOnCircleClickListener(listener: OnCircleEventHandler?) {
@@ -340,7 +304,7 @@ class ArcGISMapViewController(
         }
     }
 
-    internal fun registerMarkerEventController(controller: ArcGISMarkerEventControllerInterface) {
+    internal fun registerMarkerEventController(controller: ArcGISMarkerEventController) {
         if (markerEventControllers.contains(controller)) return
         markerEventControllers.add(controller)
         controller.setClickListener(markerClickListener)
@@ -363,10 +327,10 @@ class ArcGISMapViewController(
 
     fun createMarkerEventController(
         controller: StrategyMarkerController<ArcGISActualMarker>,
-    ): MarkerEventControllerInterface<ArcGISActualMarker> = StrategyArcGISMarkerEventController(controller)
+    ): MarkerEventControllerInterface<ArcGISActualMarker> = ArcGISMarkerEventController(controller)
 
     fun registerMarkerEventController(controller: MarkerEventControllerInterface<ArcGISActualMarker>) {
-        val typed = controller as? ArcGISMarkerEventControllerInterface ?: return
+        val typed = controller as? ArcGISMarkerEventController ?: return
         registerMarkerEventController(typed)
     }
 
