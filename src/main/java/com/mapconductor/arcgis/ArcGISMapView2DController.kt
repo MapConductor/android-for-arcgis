@@ -20,6 +20,7 @@ import com.mapconductor.core.features.GeoPointInterface
 import com.mapconductor.core.features.GeoRectBounds
 import com.mapconductor.core.groundimage.GroundImageState
 import com.mapconductor.core.groundimage.OnGroundImageEventHandler
+import com.mapconductor.core.map.CameraBearing
 import com.mapconductor.core.map.CameraRestriction
 import com.mapconductor.core.map.MapCameraPosition
 import com.mapconductor.core.map.MapGesture
@@ -251,7 +252,12 @@ class ArcGISMapView2DController(
         return Viewpoint(
             center = point,
             scale = zoomToScale(zoom),
-            rotation = position.bearing,
+            // ArcGIS Maps SDK for Kotlin の Viewpoint.rotation は反時計回り、つまり
+            // カメラの heading と同じ向きである（**JS の MapView.rotation とは逆**。
+            // @arcgis/core の型定義は "due north is rotated 90 degrees, pointing to the
+            // right side of the view" と書いており、そちらは rotation 系）。
+            // 実機（TB520FU / Tilt ページ）で MapLibre と並べて確認した結果がこれ。
+            rotation = CameraBearing.toNativeHeading(position.bearing),
         )
     }
 

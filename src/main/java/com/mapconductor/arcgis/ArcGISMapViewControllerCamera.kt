@@ -6,6 +6,7 @@ import com.arcgismaps.mapping.view.Camera
 import com.mapconductor.arcgis.zoom.ZoomAltitudeConverter
 import com.mapconductor.core.features.GeoPoint
 import com.mapconductor.core.features.GeoRectBounds
+import com.mapconductor.core.map.CameraBearing
 import com.mapconductor.core.map.MapCameraPosition
 import com.mapconductor.core.map.MapPaddings
 import com.mapconductor.core.map.VisibleRegion
@@ -121,7 +122,7 @@ internal suspend fun ArcGISMapViewController.getMapCameraPosition(): MapCameraPo
     val lon = arcCamera.location.x
     val alt = arcCamera.location.z ?: 0.0
     val tilt = arcCamera.pitch
-    val bearing = ((arcCamera.heading % 360) + 360) % 360
+    val bearing = CameraBearing.bearingFromNativeHeading(arcCamera.heading)
 
     val conv = ZoomAltitudeConverter()
     val (viewportWidthDp, viewportHeightDp) = currentViewportSizeInDp()
@@ -208,7 +209,7 @@ internal fun ArcGISMapViewController.toCameraWithView(position: MapCameraPositio
     return calculateCameraForOrbitParameters(
         targetPoint = targetPoint,
         distance = distance,
-        cameraHeadingOffset = position.bearing + 180,
+        cameraHeadingOffset = CameraBearing.toNativeHeading(position.bearing) + 180,
         cameraPitchOffset = position.tilt,
     )
 }

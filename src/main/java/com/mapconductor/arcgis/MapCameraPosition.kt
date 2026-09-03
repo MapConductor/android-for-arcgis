@@ -3,6 +3,7 @@ package com.mapconductor.arcgis
 import com.arcgismaps.mapping.view.Camera
 import com.mapconductor.arcgis.zoom.ZoomAltitudeConverter
 import com.mapconductor.core.features.GeoPoint
+import com.mapconductor.core.map.CameraBearing
 import com.mapconductor.core.map.MapCameraPosition
 import com.mapconductor.core.map.MapCameraPositionInterface
 import com.mapconductor.core.map.MapPaddings
@@ -161,7 +162,7 @@ fun Camera.toMapCameraPosition(): MapCameraPosition =
                     latitude = this.location.y,
                     tilt = this.pitch,
                 ),
-        bearing = ((this.heading % 360) + 360) % 360,
+        bearing = CameraBearing.bearingFromNativeHeading(this.heading),
         tilt = this.pitch,
         paddings = MapPaddings.Zeros,
         visibleRegion = null,

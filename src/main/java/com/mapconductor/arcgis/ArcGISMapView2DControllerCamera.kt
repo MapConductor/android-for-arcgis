@@ -2,6 +2,7 @@ package com.mapconductor.arcgis
 
 import androidx.compose.ui.geometry.Offset
 import com.mapconductor.core.features.GeoRectBounds
+import com.mapconductor.core.map.CameraBearing
 import com.mapconductor.core.map.MapCameraPosition
 import com.mapconductor.core.map.MapPaddings
 import com.mapconductor.core.map.VisibleRegion
@@ -82,7 +83,7 @@ internal suspend fun ArcGISMapView2DController.getMapCameraPosition(): MapCamera
 
     // 2D はカメラピッチを持てないため tilt は擬似表現（[ArcGIS2DTiltEmulation]）。
     // 直近に要求した論理 tilt を手掛かりに、前進させた中心とズームを巻き戻して返す。
-    val bearing = ((holder.map.mapRotation.value % 360) + 360) % 360
+    val bearing = CameraBearing.bearingFromNativeHeading(holder.map.mapRotation.value)
     val logicalTilt = lastLogicalCameraPosition?.tilt ?: 0.0
     val (restoredCenter, restoredZoom) =
         ArcGIS2DTiltEmulation.restoreLogicalCamera(

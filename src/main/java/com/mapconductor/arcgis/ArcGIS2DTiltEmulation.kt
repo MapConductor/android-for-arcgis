@@ -3,6 +3,7 @@ package com.mapconductor.arcgis
 import com.mapconductor.arcgis.zoom.ZoomAltitudeConverter
 import com.mapconductor.core.features.GeoPoint
 import com.mapconductor.core.features.GeoPointInterface
+import com.mapconductor.core.map.CameraBearing
 import com.mapconductor.core.map.MapCameraPosition
 import com.mapconductor.core.spherical.Spherical
 import com.mapconductor.core.zoom.AbstractZoomAltitudeConverter
@@ -56,7 +57,7 @@ internal object ArcGIS2DTiltEmulation {
         val tiltAbsRad = Math.toRadians(tiltAbsDeg)
         val altitude = converter.zoomLevelToAltitude(position.zoom, position.position.latitude, 0.0)
         val distanceForward = altitude * cos(tiltAbsRad) * tan(tiltAbsRad) * TARGET_DISTANCE_SCALE
-        val target = Spherical.computeOffset(position.position, distanceForward, position.bearing)
+        val target = Spherical.computeOffset(position.position, distanceForward, CameraBearing.toNativeHeading(position.bearing))
         return target to zoom
     }
 
@@ -81,7 +82,7 @@ internal object ArcGIS2DTiltEmulation {
         val tiltAbsRad = Math.toRadians(tiltAbsDeg)
         val altitude = converter.zoomLevelToAltitude(originalZoom, center.latitude, 0.0)
         val distanceBackward = altitude * cos(tiltAbsRad) * tan(tiltAbsRad) * TARGET_DISTANCE_SCALE
-        val originalPosition: GeoPoint = Spherical.computeOffset(center, distanceBackward, bearing + 180.0)
+        val originalPosition: GeoPoint = Spherical.computeOffset(center, distanceBackward, CameraBearing.toNativeHeading(bearing) + 180.0)
         return originalPosition to originalZoom
     }
 }

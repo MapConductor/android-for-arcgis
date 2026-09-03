@@ -63,12 +63,15 @@ class ArcGIS2DTiltEmulationTest {
     }
 
     @Test
-    fun shiftDirection_followsBearing() {
-        val (east, _) = ArcGIS2DTiltEmulation.shiftedCamera(camera(-45.0, bearing = 90.0))
-        assertTrue(east.longitude > tokyo.longitude)
-        // 大円に沿って東進するため緯度はわずかに下がる
-        assertTrue(abs(east.latitude - tokyo.latitude) < 1e-3)
+    fun shiftDirection_followsCameraHeading() {
+        // bearing は「地図を時計回りに回す量」なので、カメラが向く方位はその符号反転。
+        // bearing 90（地図が右へ 90 度）のとき画面の上＝カメラの向きは西。
+        val (west, _) = ArcGIS2DTiltEmulation.shiftedCamera(camera(-45.0, bearing = 90.0))
+        assertTrue(west.longitude < tokyo.longitude)
+        // 大円に沿って西進するため緯度はわずかに下がる
+        assertTrue(abs(west.latitude - tokyo.latitude) < 1e-3)
 
+        // bearing 180 は符号反転しても 180（真南のまま）。
         val (south, _) = ArcGIS2DTiltEmulation.shiftedCamera(camera(-45.0, bearing = 180.0))
         assertTrue(south.latitude < tokyo.latitude)
     }
