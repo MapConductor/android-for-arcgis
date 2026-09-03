@@ -42,6 +42,9 @@ arcgis-maps-kotlin-toolkit-authentication = { group = "com.esri", name = "arcgis
 # Sample app
 androidx-activity-compose = { group = "androidx.activity", name = "activity-compose", version.ref = "activityCompose" }
 androidx-material3 = { group = "androidx.compose.material3", name = "material3", version.ref = "material3" }
+# sample-app が Icons.AutoMirrored を使う。material3 は material-icons を推移的に持ってこないので
+# 明示的に足す。版は compose BOM 任せ（集約ビルドの catalog と同じ形）。
+androidx-material-icons-core = { group = "androidx.compose.material", name = "material-icons-core" }
 androidx-ui-tooling = { group = "androidx.compose.ui", name = "ui-tooling", version.ref = "composeLibs" }
 
 # Test
