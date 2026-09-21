@@ -292,6 +292,7 @@ class ArcGISMarkerController(
                 cacheSizeBytes = markerTiling.cacheSize,
                 debugTileOverlay = markerTiling.debugTileOverlay,
                 iconScaleCallback = markerTiling.iconScaleCallback,
+                declutterPx = markerTiling.declutterPx,
                 // ArcGIS displays one 96dpi/256px LOD tile over 256dp on screen,
                 // matching the renderer's density-scaled output 1:1 — no extra
                 // icon scaling needed. (0.5 predates the MarkerTileRenderer fix
