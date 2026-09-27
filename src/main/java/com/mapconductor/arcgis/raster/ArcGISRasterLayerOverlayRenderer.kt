@@ -10,7 +10,6 @@ import com.arcgismaps.mapping.layers.TileImageFormat
 import com.arcgismaps.mapping.layers.TileInfo
 import com.arcgismaps.mapping.layers.WebTiledLayer
 import com.mapconductor.arcgis.ArcGISGeoViewHolder
-import com.mapconductor.core.projection.Earth
 import com.mapconductor.core.projection.WEB_MERCATOR_MAX_EXTENT_METERS
 import com.mapconductor.core.raster.RasterHeaderRuleSet
 import com.mapconductor.core.raster.RasterLayerEntityInterface
@@ -18,7 +17,8 @@ import com.mapconductor.core.raster.RasterLayerOverlayRendererInterface
 import com.mapconductor.core.raster.RasterLayerSource
 import com.mapconductor.core.raster.RasterLayerState
 import com.mapconductor.core.raster.TileScheme
-import kotlin.math.PI
+import com.mapconductor.core.zoom.AbstractZoomAltitudeConverter
+import kotlin.math.log2
 import kotlin.math.pow
 import android.util.Log
 import kotlinx.coroutines.CoroutineScope
@@ -155,21 +155,48 @@ class ArcGISRasterLayerOverlayRenderer(
         )
     }
 
+    /**
+     * レベルの梯子を**統一ズーム**（Google Maps 基準・256px タイル）から組む。
+     *
+     * MapConductor のズームはどのプロバイダでも Google のズームなので、level `z` の
+     * タイルが持つべき解像度も 1 本の物差しから出す:
+     * [AbstractZoomAltitudeConverter.WEB_MERCATOR_INITIAL_MPP_256] が統一ズーム 0 の
+     * 1px あたりメートル数（256px タイル基準）。
+     *
+     * 512px のタイルは 1 枚で 256px タイル 2 枚ぶんを覆うので、level `z` は統一ズーム
+     * `z + 1` に対応する（コアの `WebMercatorZoomAltitudeConverter` が言う
+     * `zoomOffset`。MapLibre / Mapbox / MapTiler が 1.0、Google / MapKit が 0.0）。
+     * その対応を [unifiedZoomForLevel] に書き下しておけば、解像度も縮尺も
+     * 「統一ズームいくつのときにこの level を引くか」から一意に決まる。
+     *
+     * 自前で `2πR / tileSize` と DPI を掛け合わせても同じ数にはなるが、どの物差しに
+     * 合わせているのかがコードから消える。実際、以前ここには 512 のときだけ 256 基準へ
+     * 読み替える細工が入っていて、(z,x,y) が噛み合わずに地球の裏側のタイルを引いていた。
+     */
     private fun buildWebMercatorLevels(
         tileSize: Int,
         minZoom: Int,
         maxZoom: Int,
     ): List<LevelOfDetail> {
-        val initialResolution =
-            (2.0 * PI * WEB_MERCATOR_RADIUS_METERS) / tileSize.toDouble()
         val levels = mutableListOf<LevelOfDetail>()
         for (level in minZoom..maxZoom) {
-            val resolution = initialResolution / 2.0.pow(level.toDouble())
+            val unifiedZoom = unifiedZoomForLevel(level, tileSize)
+            val resolution =
+                AbstractZoomAltitudeConverter.WEB_MERCATOR_INITIAL_MPP_256 /
+                    2.0.pow(unifiedZoom)
+            // 縮尺の分母。ArcGIS は画面の縮尺に一番近い level を選ぶので、
+            // 解像度と同じ比率で刻んでいないと 1 段ずれる。
             val scale = resolution * DEFAULT_DPI * INCHES_PER_METER
             levels.add(LevelOfDetail(level, resolution, scale))
         }
         return levels
     }
+
+    /** この level のタイルを引くべき統一ズーム。256px なら level そのもの。 */
+    private fun unifiedZoomForLevel(
+        level: Int,
+        tileSize: Int,
+    ): Double = level + log2(tileSize.toDouble() / UNIFIED_TILE_SIZE)
 
     private fun buildWebMercatorExtent(): Envelope =
         Envelope(
@@ -182,11 +209,13 @@ class ArcGISRasterLayerOverlayRenderer(
 
     companion object {
         private const val WEB_MERCATOR_WKID = 3857
-        private const val WEB_MERCATOR_RADIUS_METERS = Earth.RADIUS_METERS
         private const val WEB_MERCATOR_MAX = WEB_MERCATOR_MAX_EXTENT_METERS
         private const val WEB_MERCATOR_MIN = -WEB_MERCATOR_MAX
         private const val DEFAULT_DPI = 96
         private const val INCHES_PER_METER = 39.37
+
+        /** 統一ズームが基準にしているタイルの一辺（Google 準拠の 256px）。 */
+        private const val UNIFIED_TILE_SIZE = 256.0
         private const val DEFAULT_MIN_ZOOM = 0
         private const val DEFAULT_MAX_ZOOM = 22
     }
