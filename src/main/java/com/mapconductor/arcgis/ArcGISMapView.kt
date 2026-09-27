@@ -42,6 +42,8 @@ import com.mapconductor.core.marker.MarkerOverlayRendererInterface
 import com.mapconductor.core.marker.MarkerRenderingStrategyInterface
 import com.mapconductor.core.marker.MarkerRenderingSupport
 import com.mapconductor.core.marker.MarkerRenderingSupportKey
+import com.mapconductor.core.raster.RasterTilePreference
+import com.mapconductor.core.raster.RasterTilePreferenceKey
 import com.mapconductor.core.marker.MarkerTilingOptions
 import com.mapconductor.core.marker.StrategyMarkerController
 import com.mapconductor.core.tileserver.TileServerRegistry
@@ -205,6 +207,21 @@ fun ArcGISMapView(
                         }
                     },
                 )
+
+                // 3D SceneView は「タイルは 256px」という前提でレベルを選ぶ。
+                // 512px のタイルを渡すと 1 段深いレベルを取りに行き、同じ画面を
+                // 4 倍の枚数で覆う（実測: 統一ズーム 12 で 2D は z=11、3D は z=12）。
+                // 絵は正しいので気づかないが、タイル 1 枚あたりの固定費がそのぶん効く。
+                // 2D は好みが無いので宣言しない — 供給側の既定に任せる。
+                if (holder.usesSceneView) {
+                    state.serviceRegistry.put(
+                        RasterTilePreferenceKey,
+                        object : RasterTilePreference {
+                            // 統一ズームが基準にしているタイルの一辺（Google 準拠）。
+                            override val preferredTileSize: Int = 256
+                        },
+                    )
+                }
 
                 controllerRef.value = mapController
                 mapController.setMapClickListener(onMapClick)
