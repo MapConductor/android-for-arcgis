@@ -131,22 +131,19 @@ class ArcGISRasterLayerOverlayRenderer(
     ): TileInfo {
         val spatialReference = SpatialReference(WEB_MERCATOR_WKID)
         val origin = Point(WEB_MERCATOR_MIN, WEB_MERCATOR_MAX, spatialReference)
-        // LOD の基準は 2D と 3D で**逆**。実機（Lenovo TB520FU）で両方向を計測した:
+        // LOD の解像度は **必ず tileSize 基準**で刻む。1 枚のタイルが覆う地面は
+        // `resolution * tileWidth` なので、ここを 256 基準にしたまま tileWidth に
+        // 512 を渡すと、レベル L のタイルが L-1 の広さを覆う。**番号だけ 1 段深い
+        // 格子**になり、ArcGIS は「z=13, x=3637」のような噛み合わない組を要求する
+        // （東京の z=13 は x=7276、x=3637 は z=12 の値）。実機の Pixel 5a では
+        // ベクタータイルのサンプルが大西洋のタイルを引いて真っ青になった。
         //
-        // | ビュー | 素直な tileSize 基準 | 256 基準（旧 workaround） |
-        // |---|---|---|
-        // | 3D SceneView | 何も要求しない | 描画される |
-        // | 2D MapView | 描画される（線 6px = MapLibre と一致） | z=0 を 1 枚だけ要求して止まる |
-        //
-        // 旧コメントの「WebTiledLayer は tileWidth に関係なく 256 グリッドで (col,row) を
-        // 計算する」は **SceneView の挙動**で、MapView には当てはまらない。iOS の 2D も
-        // 素直な TileInfo で位置まで一致することを確認済み（ios-for-arcgis の同名レンダラ）。
-        val levels =
-            if (holder.usesSceneView) {
-                buildWebMercatorLevels(resolveLodReferenceTileSize(tileSize), minZoom, maxZoom)
-            } else {
-                buildWebMercatorLevels(tileSize, minZoom, maxZoom)
-            }
+        // 以前ここには「3D SceneView は 256 基準でないと何も要求しない」という
+        // 計測メモがあり、512 のときだけ 256 へ読み替えていた。ArcGIS 300 では
+        // 再現しない: 素直な tileSize 基準で 3D も 2D も 256/512 の両方を正しく
+        // 引く（z=11 を要求し、MapLibre と一致）。256 のときは読み替えが恒等だった
+        // ので、この分岐が壊していたのは 512 だけだった。
+        val levels = buildWebMercatorLevels(tileSize, minZoom, maxZoom)
         return TileInfo(
             DEFAULT_DPI,
             TileImageFormat.Png,
@@ -173,12 +170,6 @@ class ArcGISRasterLayerOverlayRenderer(
         }
         return levels
     }
-
-    private fun resolveLodReferenceTileSize(tileSize: Int): Int =
-        when (tileSize) {
-            512 -> 256
-            else -> tileSize
-        }
 
     private fun buildWebMercatorExtent(): Envelope =
         Envelope(
