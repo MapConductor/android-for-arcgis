@@ -42,6 +42,8 @@ import com.mapconductor.core.marker.MarkerOverlayRendererInterface
 import com.mapconductor.core.marker.MarkerRenderingStrategyInterface
 import com.mapconductor.core.marker.MarkerRenderingSupport
 import com.mapconductor.core.marker.MarkerRenderingSupportKey
+import com.mapconductor.core.raster.RasterTilePreference
+import com.mapconductor.core.raster.RasterTilePreferenceKey
 import com.mapconductor.core.marker.MarkerTilingOptions
 import com.mapconductor.core.marker.StrategyMarkerController
 import com.mapconductor.core.tileserver.TileServerRegistry
@@ -206,20 +208,21 @@ fun ArcGISMapView(
                     },
                 )
 
-                // ここで 256 を宣言したいが、まだできない。
-                //
-                // 3D SceneView は「タイルは 256px」という前提でレベルを選ぶので、
+                // 3D SceneView は「タイルは 256px」という前提でレベルを選ぶ。
                 // 512px のタイルを渡すと 1 段深いレベルを 4 倍の枚数で引く
-                // （実測: 統一ズーム 12 で 2D は z=11、3D は z=12）。枚数だけの
-                // 問題なら 256 を要求すればよい。
-                //
-                // ところがベクタータイルのラスタライザ（mvt-render）は**タイルが
-                // 512dp で表示される**前提で、`paint_scale = 出力px / 512`、
-                // style の式は `zoom = z` で評価する。256dp のタイルを渡すと
-                // 文字も線も半分の大きさで描かれ、style の評価ズームも 1 段ずれる
-                // （実機で確認済み: ラベルが MapLibre の半分になった）。
-                // ラスタライザが「表示 dp」を受け取れるようになるまで、ここは
-                // 宣言しない — 供給側の既定 512 が正しく見えるほうを取る。
+                // （実測: 統一ズーム 12 で 2D は z=11、3D は z=12）。絵は正しい
+                // ので気づきにくいが、タイル 1 枚あたりの固定費がそのぶん効く。
+                // 2D は好みが無いので宣言しない — 供給側の既定に任せる。
+                if (holder.usesSceneView) {
+                    state.serviceRegistry.put(
+                        RasterTilePreferenceKey,
+                        object : RasterTilePreference {
+                            // 統一ズームが基準にしているタイルの一辺（Google 準拠）。
+                            override val preferredTileSize: Int = 256
+                        },
+                    )
+                }
+
                 controllerRef.value = mapController
                 mapController.setMapClickListener(onMapClick)
                 mapController.setMapLongClickListener(onMapLongClick)
