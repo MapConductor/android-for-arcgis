@@ -43,9 +43,9 @@ import com.mapconductor.core.marker.MarkerRenderingStrategyInterface
 import com.mapconductor.core.marker.MarkerRenderingSupport
 import com.mapconductor.core.marker.MarkerRenderingSupportKey
 import com.mapconductor.core.marker.MarkerTilingOptions
-import com.mapconductor.core.marker.StrategyMarkerController
 import com.mapconductor.core.raster.RasterTilePreference
 import com.mapconductor.core.raster.RasterTilePreferenceKey
+import com.mapconductor.core.marker.StrategyMarkerController
 import com.mapconductor.core.tileserver.TileServerRegistry
 import java.util.concurrent.atomic.AtomicLong
 import android.content.Context
@@ -213,11 +213,19 @@ fun ArcGISMapView(
                 // （実測: 統一ズーム 12 で 2D は z=11、3D は z=12）。絵は正しい
                 // ので気づきにくいが、タイル 1 枚あたりの固定費がそのぶん効く。
                 // 2D は好みが無いので宣言しない — 供給側の既定に任せる。
+                // 3D SceneView は「タイルは 256px」という自前の梯子で level を
+                // 選び、こちらが申告する縮尺では動かせない（実機で確認）。同じ
+                // カメラで 2D より 1 段深い level を引くので、512dp のつもりで
+                // 描いたタイルは半分の枠に入って文字も線も半分になる。
+                //
+                // 256 を要求すると、選ばれる level と描画の前提が噛み合い、
+                // 文字の大きさは MapLibre と一致する（実測）。残るのは元データの
+                // 違い — 1 段深いソースタイルには大きな地名が入っていないことが
+                // あり、低ズームで「新潟市」のような表示が落ちる。
                 if (holder.usesSceneView) {
                     state.serviceRegistry.put(
                         RasterTilePreferenceKey,
                         object : RasterTilePreference {
-                            // 統一ズームが基準にしているタイルの一辺（Google 準拠）。
                             override val preferredTileSize: Int = 256
                         },
                     )

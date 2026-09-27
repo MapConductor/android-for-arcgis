@@ -184,8 +184,14 @@ class ArcGISRasterLayerOverlayRenderer(
             val resolution =
                 AbstractZoomAltitudeConverter.WEB_MERCATOR_INITIAL_MPP_256 /
                     2.0.pow(unifiedZoom)
-            // 縮尺の分母。ArcGIS は画面の縮尺に一番近い level を選ぶので、
+            // 縮尺の分母。2D の MapView はこの梯子を見て level を選ぶので、
             // 解像度と同じ比率で刻んでいないと 1 段ずれる。
+            //
+            // 3D の SceneView は**見ていない**。1 段浅い縮尺を申告して選択を
+            // 2D とそろえられないか実機で試したが、要求される level は変わらな
+            // かった（統一ズーム 6.5 で z=7 のまま）。SceneView は自前の
+            // 「タイルは 256px」という梯子で選ぶ。解像度のほうは見ているので、
+            // タイルの位置は申告どおりに決まる。
             val scale = resolution * DEFAULT_DPI * INCHES_PER_METER
             levels.add(LevelOfDetail(level, resolution, scale))
         }
