@@ -14,8 +14,8 @@ import com.mapconductor.core.map.MapViewHolderInterface
 import kotlin.math.abs
 import kotlin.math.max
 import android.content.Context
-import android.graphics.Matrix
 import android.content.pm.PackageManager
+import android.graphics.Matrix
 import android.util.AttributeSet
 import android.view.Gravity
 import android.widget.FrameLayout
@@ -246,7 +246,7 @@ class ArcGISMapViewHolder(
                         y = offset.y.toDouble(),
                     ),
             )
-        return result.getOrNull()?.toGeoPoint()
+        return result.getOrNull()?.toGeoPoint()?.orNullIfNotFinite()
     }
 
     override fun fromScreenOffsetSync(offset: Offset): GeoPoint? =
@@ -295,6 +295,7 @@ class ArcGISMapView2DHolder(
                     y = local.y.toDouble(),
                 ),
             )?.toGeoPoint()
+            ?.orNullIfNotFinite()
     }
 
     override fun fromScreenOffsetSync(offset: Offset): GeoPoint? {
@@ -306,6 +307,7 @@ class ArcGISMapView2DHolder(
                     y = local.y.toDouble(),
                 ),
             )?.toGeoPoint()
+            ?.orNullIfNotFinite()
     }
 
     /*
