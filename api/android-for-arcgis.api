@@ -23,6 +23,7 @@ public final class com.mapconductor.arcgis.ArcGISDesign implements com.mapconduc
   public java.lang.Object getValue();
 }
 public final class com.mapconductor.arcgis.ArcGISDesign$Companion {
+  public final com.mapconductor.arcgis.ArcGISDesign getNone();
   public final com.mapconductor.arcgis.ArcGISDesign getStreets();
   public final com.mapconductor.arcgis.ArcGISDesign getImagery();
   public final com.mapconductor.arcgis.ArcGISDesign getImageryStandard();
@@ -84,6 +85,8 @@ public final class com.mapconductor.arcgis.ArcGISDesign$Companion {
   public final com.mapconductor.arcgis.ArcGISDesign getOsmNavigation();
   public final com.mapconductor.arcgis.ArcGISDesign getOsmNavigationDark();
   public final com.mapconductor.arcgis.ArcGISDesign Create(java.lang.String, java.util.List<java.lang.String>);
+  public final com.arcgismaps.mapping.Basemap toBasemap(com.mapconductor.arcgis.ArcGISDesignTypeInterface);
+  public final com.arcgismaps.mapping.BasemapStyle toBasemapStyleOrNull(com.mapconductor.arcgis.ArcGISDesignTypeInterface);
   public final com.arcgismaps.mapping.BasemapStyle toBasemapStyle(com.mapconductor.arcgis.ArcGISDesignTypeInterface);
 }
 public interface com.mapconductor.arcgis.ArcGISDesignTypeInterface extends com.mapconductor.core.map.MapDesignTypeInterface<java.lang.String> {
@@ -332,6 +335,7 @@ public final class com.mapconductor.arcgis.GeoPointKt {
   public static final com.mapconductor.core.features.GeoPoint fromLatLongAltitude(com.mapconductor.core.features.GeoPoint$Companion, double, double, double);
   public static final com.mapconductor.core.features.GeoPoint fromLongLat(com.mapconductor.core.features.GeoPoint$Companion, double, double, double);
   public static final com.mapconductor.core.features.GeoPoint toGeoPoint(com.arcgismaps.geometry.Point);
+  public static final com.mapconductor.core.features.GeoPoint orNullIfNotFinite(com.mapconductor.core.features.GeoPoint);
 }
 public final class com.mapconductor.arcgis.GeoRectBoundsKt {
   public static final com.arcgismaps.geometry.Envelope toEnvelope(com.mapconductor.core.features.GeoRectBounds);

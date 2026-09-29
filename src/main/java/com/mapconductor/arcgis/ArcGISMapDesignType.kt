@@ -1,5 +1,6 @@
 package com.mapconductor.arcgis
 
+import com.arcgismaps.mapping.Basemap
 import com.arcgismaps.mapping.BasemapStyle
 import com.mapconductor.core.map.AttributionRule
 import com.mapconductor.core.map.MapDesignTypeInterface
@@ -21,6 +22,16 @@ data class ArcGISDesign(
         )
 
     companion object {
+        /**
+         * ベースマップ無し。シーンにはアプリが載せたものだけが描かれる。
+         *
+         * 画面全体を自前のラスターで覆う地図（端末で描いたベクタータイルなど）では、
+         * 下のベースマップは誰にも見えないのに取得・復号・描画される。Google Maps の
+         * [com.mapconductor.googlemaps.GoogleMapDesign.None] と同じ意味で、MapLibre は
+         * 空のスタイルで同じことを言う。ios-sdk / react-sdk も同じ `"none"` を持つ。
+         */
+        val None = ArcGISDesign("none")
+
         val Streets = ArcGISDesign("arc_gis_streets")
         val Imagery = ArcGISDesign("arc_gis_imagery")
         val ImageryStandard = ArcGISDesign("arc_gis_imagery_standard")
@@ -147,8 +158,23 @@ data class ArcGISDesign(
                 OsmHybridDetail.id -> OsmHybridDetail
                 OsmNavigation.id -> OsmNavigation
                 OsmNavigationDark.id -> OsmNavigationDark
+                None.id -> None
                 else -> throw Throwable("unknown design id: \"$id\"")
             }
+
+        /**
+         * この設計が求めるベースマップ。[None] なら null。
+         *
+         * 呼ぶたびに新しい [Basemap] を返す。ArcGIS の Basemap は載せた Scene/Map に
+         * 所有され、二つ目に渡すと `ObjectAlreadyOwnedException` で落ちる（実機で確認）。
+         * 保持して使い回さず、載せる直前に作ること。
+         */
+        fun toBasemap(designType: ArcGISDesignTypeInterface): Basemap? =
+            toBasemapStyleOrNull(designType)?.let { Basemap(it) }
+
+        /** この設計のベースマップスタイル。[None] なら null。値なので保持してよい。 */
+        fun toBasemapStyleOrNull(designType: ArcGISDesignTypeInterface): BasemapStyle? =
+            if (designType.getValue() == None.id) null else toBasemapStyle(designType)
 
         fun toBasemapStyle(designType: ArcGISDesignTypeInterface): BasemapStyle =
             when (designType.getValue()) {

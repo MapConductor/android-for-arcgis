@@ -256,8 +256,7 @@ class ArcGISMapViewController(
 
     override fun setMapDesignType(value: ArcGISDesignTypeInterface) {
         holder.map.scene?.let { scene ->
-            val baseMapStyle = ArcGISDesign.toBasemapStyle(value)
-            val baseMap = Basemap(baseMapStyle)
+            val baseMap = ArcGISDesign.toBasemap(value)
             defaultCoroutine.launch {
                 scene.setBasemap(baseMap)
                 // Basemap changes can reset the viewpoint; mark the current request as pending so that

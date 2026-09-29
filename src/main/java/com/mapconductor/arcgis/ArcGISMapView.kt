@@ -76,7 +76,7 @@ fun ArcGISMapView(
     val context = LocalContext.current // Context will be available from MapViewBase too if needed
     val registry = remember { scope.buildRegistry() }
     val owner = LocalLifecycleOwner.current
-    val basemapStyle = remember { ArcGISDesign.toBasemapStyle(state.mapDesignType) }
+    val basemapStyle = remember { ArcGISDesign.toBasemapStyleOrNull(state.mapDesignType) }
     val cameraState = remember { mutableStateOf<MapCameraPositionInterface?>(state.cameraPosition) }
     val controllerRef = remember { Ref<ArcGISMapViewController>() }
     val controllerGeneration = remember { AtomicLong(0L) }
@@ -107,7 +107,8 @@ fun ArcGISMapView(
                     elevationSources = state.mapDesignType.elevationSources,
                 )
 
-            val scene = ArcGISScene(options.basemapStyle)
+            // No basemap is a scene with only what the app puts on it.
+            val scene = options.basemapStyle?.let { ArcGISScene(it) } ?: ArcGISScene()
 
             options.elevationSources.forEach {
                 val source = ArcGISTiledElevationSource(it)

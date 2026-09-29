@@ -55,7 +55,7 @@ fun ArcGISMapView2D(
     val context = LocalContext.current
     val registry = remember { scope.buildRegistry() }
     val owner = LocalLifecycleOwner.current
-    val basemapStyle = remember { ArcGISDesign.toBasemapStyle(state.mapDesignType) }
+    val basemapStyle = remember { ArcGISDesign.toBasemapStyleOrNull(state.mapDesignType) }
     val cameraState = remember { mutableStateOf<MapCameraPositionInterface?>(state.cameraPosition) }
     val controllerRef = remember { Ref<ArcGISMapView2DController>() }
     val controllerGeneration = remember { AtomicLong(0L) }
@@ -78,7 +78,7 @@ fun ArcGISMapView2D(
         scope = scope,
         registry = registry,
         holderProvider = { wrapView ->
-            val map = ArcGISMap(basemapStyle)
+            val map = basemapStyle?.let { ArcGISMap(it) } ?: ArcGISMap()
             wrapView.arcGISMapView.map = map
 
             val coroutine = CoroutineScope(Dispatchers.Default)

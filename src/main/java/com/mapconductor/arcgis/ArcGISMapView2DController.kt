@@ -308,7 +308,7 @@ class ArcGISMapView2DController(
     }
 
     override fun setMapDesignType(value: ArcGISDesignTypeInterface) {
-        val baseMap = Basemap(ArcGISDesign.toBasemapStyle(value))
+        val baseMap = ArcGISDesign.toBasemap(value)
         holder.map.map?.setBasemap(baseMap)
     }
 
