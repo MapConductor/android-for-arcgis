@@ -2,6 +2,7 @@ package com.mapconductor.arcgis.raster
 
 import com.arcgismaps.mapping.layers.Layer
 import com.mapconductor.core.raster.RasterLayerController
+import com.mapconductor.core.raster.RasterLayerEntity
 import com.mapconductor.core.raster.RasterLayerManager
 import com.mapconductor.core.raster.RasterLayerManagerInterface
 
@@ -16,14 +17,16 @@ class ArcGISRasterLayerController(
      */
     suspend fun rebuildLocalLayersIfNeeded() {
         if (!renderer.localLayersNeedRebuild()) return
-        val states =
+        val entities =
             rasterLayerManager.allEntities()
-                .map { it.state }
-                .filter { renderer.isLocalLayer(it) }
-                .sortedBy { it.zIndex }
-        for (state in states) {
-            removeById(state.id)
-            upsert(state)
+                .filter { renderer.isLocalLayer(it.state) }
+                .sortedBy { it.state.zIndex }
+        for (entity in entities) {
+            // In place, over the old one; the renderer removes the old layer
+            // once the new one has had time to draw.
+            val layer = renderer.rebuildLayer(entity) ?: continue
+            rasterLayerManager.removeEntity(entity.state.id)
+            rasterLayerManager.registerEntity(RasterLayerEntity(layer, entity.state))
         }
         renderer.localLayersRebuilt()
     }

@@ -537,6 +537,7 @@ public final class com.mapconductor.arcgis.raster.ArcGISRasterLayerOverlayRender
   public java.lang.Object onChange(java.util.List<? extends com.mapconductor.core.raster.RasterLayerOverlayRendererInterface$ChangeParamsInterface<com.arcgismaps.mapping.layers.Layer>>, kotlin.coroutines.Continuation<? super java.util.List<? extends com.arcgismaps.mapping.layers.Layer>>);
   public java.lang.Object onRemove(java.util.List<? extends com.mapconductor.core.raster.RasterLayerEntityInterface<com.arcgismaps.mapping.layers.Layer>>, kotlin.coroutines.Continuation<? super kotlin.Unit>);
   public java.lang.Object onPostProcess(kotlin.coroutines.Continuation<? super kotlin.Unit>);
+  public final java.lang.Object rebuildLayer(com.mapconductor.core.raster.RasterLayerEntityInterface<com.arcgismaps.mapping.layers.Layer>, kotlin.coroutines.Continuation<? super com.arcgismaps.mapping.layers.Layer>);
   public java.lang.Object onCameraChanged(com.mapconductor.core.map.MapCameraPosition, kotlin.coroutines.Continuation<? super kotlin.Unit>);
 }
 public final class com.mapconductor.arcgis.raster.ArcGISRasterLayerOverlayRenderer$AncestorGate {

@@ -1,5 +1,6 @@
 package com.mapconductor.arcgis.raster
 
+import kotlinx.coroutines.launch
 import com.mapconductor.arcgis.ArcGISMapViewHolder
 import com.mapconductor.core.tileserver.TileServerRegistry
 import com.arcgismaps.arcgisservices.LevelOfDetail
@@ -84,6 +85,9 @@ class ArcGISRasterLayerOverlayRenderer(
     }
 
     private val ancestors = AncestorGate()
+
+    /** How long a replaced layer stays under its replacement. */
+    private val HANDOVER_MS = 1200L
 
     /** The tile server route each local layer was built from, for its gate. */
     private val localRoutes = java.util.IdentityHashMap<Layer, String>()
@@ -191,7 +195,49 @@ class ArcGISRasterLayerOverlayRenderer(
 
     private fun removeLayer(entity: RasterLayerEntityInterface<Layer>) {
         holder.operationalLayers?.remove(entity.layer)
-        localRoutes.remove(entity.layer)?.let { TileServerRegistry.get().setLevelGate(it, null) }
+        forgetGate(entity.layer)
+    }
+
+    private fun forgetGate(layer: Layer) {
+        val routeId = localRoutes.remove(layer) ?: return
+        // Another layer (its replacement) may still be on the same route.
+        if (routeId !in localRoutes.values) TileServerRegistry.get().setLevelGate(routeId, null)
+    }
+
+    /**
+     * Builds this entity's layer again, in place: the new one goes directly
+     * above the old, which stays for [HANDOVER_MS] and is then removed.
+     * Replacing by remove-then-add left the map bare until the new tiles
+     * landed -- a flicker on every rebuild.
+     */
+    suspend fun rebuildLayer(entity: RasterLayerEntityInterface<Layer>): Layer? {
+        val operationalLayers = holder.operationalLayers ?: return null
+        val state = entity.state
+        val source = state.source as? RasterLayerSource.UrlTemplate ?: return null
+        val layer = buildWebTiledLayer(source, state.id) ?: return null
+        val loadResult = layer.load()
+        if (loadResult.isFailure) {
+            Log.e("ArcGIS", "Failed to load raster layer id=${state.id}: ${loadResult.exceptionOrNull()?.message}")
+            return null
+        }
+        updateLayer(layer, state)
+        val index = operationalLayers.indexOf(entity.layer)
+        if (index >= 0) operationalLayers.add(index + 1, layer) else operationalLayers.add(layer)
+        localRouteOf(state)?.let { routeId ->
+            if (isSceneView) {
+                localRoutes[layer] = routeId
+                TileServerRegistry.get().setLevelGate(routeId) { level ->
+                    ancestors.isAncestor(level).also { if (it) ancestors.markStubbed(level) }
+                }
+            }
+        }
+        val old = entity.layer
+        coroutine.launch {
+            kotlinx.coroutines.delay(HANDOVER_MS)
+            operationalLayers.remove(old)
+            forgetGate(old)
+        }
+        return layer
     }
 
     private fun buildWebTiledLayer(
