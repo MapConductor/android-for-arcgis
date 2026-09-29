@@ -249,11 +249,18 @@ fun ArcGISMapView(
                 mapController.setCameraMoveListener {
                     cameraState.value = it
                     state.updateCameraPosition(it)
+                    // The tile server's ancestor gate needs to know which level
+                    // the camera looks at.
+                    mapController.rasterLayerController.renderer.cameraMoved(it.zoom)
                     onCameraMove?.invoke(it)
                 }
                 mapController.setCameraMoveEndListener {
                     cameraState.value = it
                     state.updateCameraPosition(it)
+                    mapController.rasterLayerController.renderer.cameraMoved(it.zoom)
+                    mapController.mainCoroutine.launch {
+                        mapController.rasterLayerController.rebuildLocalLayersIfNeeded()
+                    }
                     onCameraMoveEnd?.invoke(it)
                 }
 

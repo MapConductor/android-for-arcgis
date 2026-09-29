@@ -1,5 +1,7 @@
 package com.mapconductor.arcgis.raster
 
+import com.mapconductor.arcgis.ArcGISMapViewHolder
+import com.mapconductor.core.tileserver.TileServerRegistry
 import com.arcgismaps.arcgisservices.LevelOfDetail
 import com.arcgismaps.geometry.Envelope
 import com.arcgismaps.geometry.Point
@@ -28,6 +30,85 @@ class ArcGISRasterLayerOverlayRenderer(
     private val holder: ArcGISGeoViewHolder<*, *>,
     override val coroutine: CoroutineScope = CoroutineScope(Dispatchers.Main),
 ) : RasterLayerOverlayRendererInterface<Layer> {
+    /**
+     * Which level the camera looks at, and which levels were answered with a
+     * transparent tile since the local layers were last built.
+     *
+     * The 3D view asks for every level above the one on screen and draws none
+     * of them once that level is in, so a request two or more levels above the
+     * camera is answered transparent, without a render. ArcGIS keeps what it
+     * is given, so a level answered that way stays blank if the camera later
+     * lands on it -- unless the layer is rebuilt, which [takeRebuildWanted]
+     * asks for. The 3D view sizes its levels in dp, so the level is the
+     * unified zoom itself (ios-for-arcgis adds log2 of the screen scale).
+     */
+    internal class AncestorGate {
+        private var level: Int? = null
+        private val stubbed = HashSet<Int>()
+        private var rebuildWanted = false
+
+        @Synchronized
+        fun set(unifiedZoom: Double) {
+            val wanted = Math.round(unifiedZoom).toInt()
+            if (wanted != level) {
+                level = wanted
+                if (stubbed.contains(wanted) || stubbed.contains(wanted - 1) || stubbed.contains(wanted + 1)) {
+                    rebuildWanted = true
+                }
+            }
+        }
+
+        @Synchronized
+        fun isAncestor(requested: Int): Boolean {
+            val level = level ?: return false
+            return requested < level - 1
+        }
+
+        @Synchronized
+        fun markStubbed(requested: Int) {
+            stubbed.add(requested)
+        }
+
+        @Synchronized
+        fun layerRebuilt() {
+            stubbed.clear()
+            rebuildWanted = false
+        }
+
+        @Synchronized
+        fun takeRebuildWanted(): Boolean {
+            val wanted = rebuildWanted
+            rebuildWanted = false
+            return wanted
+        }
+    }
+
+    private val ancestors = AncestorGate()
+
+    /** The tile server route each local layer was built from, for its gate. */
+    private val localRoutes = java.util.IdentityHashMap<Layer, String>()
+
+    /** Only the 3D view loads the pyramid above the level on screen. */
+    private val isSceneView: Boolean get() = holder is ArcGISMapViewHolder
+
+    fun cameraMoved(unifiedZoom: Double) {
+        if (isSceneView) ancestors.set(unifiedZoom)
+    }
+
+    /** Once per need: whether the camera settled on a level answered transparent. */
+    fun localLayersNeedRebuild(): Boolean = ancestors.takeRebuildWanted()
+
+    fun localLayersRebuilt() = ancestors.layerRebuilt()
+
+    /** Whether this layer is served by the in-process tile server. */
+    fun isLocalLayer(state: RasterLayerState): Boolean = localRouteOf(state) != null
+
+    private fun localRouteOf(state: RasterLayerState): String? {
+        val template = (state.source as? RasterLayerSource.UrlTemplate)?.template ?: return null
+        val base = TileServerRegistry.get().baseUrl + "/tiles/"
+        if (!template.startsWith(base)) return null
+        return template.removePrefix(base).substringBefore('/')
+    }
     override suspend fun onAdd(data: List<RasterLayerOverlayRendererInterface.AddParamsInterface>): List<Layer?> {
         val results = ArrayList<Layer?>(data.size)
         for (params in data) {
@@ -89,6 +170,14 @@ class ArcGISRasterLayerOverlayRenderer(
         // Add to scene only after successful initialization
         updateLayer(layer, state)
         operationalLayers.add(layer)
+        localRouteOf(state)?.let { routeId ->
+            if (isSceneView) {
+                localRoutes[layer] = routeId
+                TileServerRegistry.get().setLevelGate(routeId) { level ->
+                    ancestors.isAncestor(level).also { if (it) ancestors.markStubbed(level) }
+                }
+            }
+        }
         return layer
     }
 
@@ -102,6 +191,7 @@ class ArcGISRasterLayerOverlayRenderer(
 
     private fun removeLayer(entity: RasterLayerEntityInterface<Layer>) {
         holder.operationalLayers?.remove(entity.layer)
+        localRoutes.remove(entity.layer)?.let { TileServerRegistry.get().setLevelGate(it, null) }
     }
 
     private fun buildWebTiledLayer(

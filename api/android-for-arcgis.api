@@ -520,17 +520,31 @@ public final class com.mapconductor.arcgis.polyline.ArcGISPolylineOverlayRendere
 public final class com.mapconductor.arcgis.raster.ArcGISRasterLayerController extends com.mapconductor.core.raster.RasterLayerController<com.arcgismaps.mapping.layers.Layer> {
   public com.mapconductor.arcgis.raster.ArcGISRasterLayerController(com.mapconductor.core.raster.RasterLayerManagerInterface<com.arcgismaps.mapping.layers.Layer>, com.mapconductor.arcgis.raster.ArcGISRasterLayerOverlayRenderer);
   public com.mapconductor.arcgis.raster.ArcGISRasterLayerController(com.mapconductor.core.raster.RasterLayerManagerInterface, com.mapconductor.arcgis.raster.ArcGISRasterLayerOverlayRenderer, int, kotlin.jvm.internal.DefaultConstructorMarker);
+  public com.mapconductor.arcgis.raster.ArcGISRasterLayerOverlayRenderer getRenderer();
+  public final java.lang.Object rebuildLocalLayersIfNeeded(kotlin.coroutines.Continuation<? super kotlin.Unit>);
+  public com.mapconductor.core.raster.RasterLayerOverlayRendererInterface getRenderer();
 }
 public final class com.mapconductor.arcgis.raster.ArcGISRasterLayerOverlayRenderer implements com.mapconductor.core.raster.RasterLayerOverlayRendererInterface<com.arcgismaps.mapping.layers.Layer> {
   public static final com.mapconductor.arcgis.raster.ArcGISRasterLayerOverlayRenderer$Companion Companion;
   public com.mapconductor.arcgis.raster.ArcGISRasterLayerOverlayRenderer(com.mapconductor.arcgis.ArcGISGeoViewHolder<?, ?>, kotlinx.coroutines.CoroutineScope);
   public com.mapconductor.arcgis.raster.ArcGISRasterLayerOverlayRenderer(com.mapconductor.arcgis.ArcGISGeoViewHolder, kotlinx.coroutines.CoroutineScope, int, kotlin.jvm.internal.DefaultConstructorMarker);
   public kotlinx.coroutines.CoroutineScope getCoroutine();
+  public final void cameraMoved(double);
+  public final boolean localLayersNeedRebuild();
+  public final void localLayersRebuilt();
+  public final boolean isLocalLayer(com.mapconductor.core.raster.RasterLayerState);
   public java.lang.Object onAdd(java.util.List<? extends com.mapconductor.core.raster.RasterLayerOverlayRendererInterface$AddParamsInterface>, kotlin.coroutines.Continuation<? super java.util.List<? extends com.arcgismaps.mapping.layers.Layer>>);
   public java.lang.Object onChange(java.util.List<? extends com.mapconductor.core.raster.RasterLayerOverlayRendererInterface$ChangeParamsInterface<com.arcgismaps.mapping.layers.Layer>>, kotlin.coroutines.Continuation<? super java.util.List<? extends com.arcgismaps.mapping.layers.Layer>>);
   public java.lang.Object onRemove(java.util.List<? extends com.mapconductor.core.raster.RasterLayerEntityInterface<com.arcgismaps.mapping.layers.Layer>>, kotlin.coroutines.Continuation<? super kotlin.Unit>);
   public java.lang.Object onPostProcess(kotlin.coroutines.Continuation<? super kotlin.Unit>);
   public java.lang.Object onCameraChanged(com.mapconductor.core.map.MapCameraPosition, kotlin.coroutines.Continuation<? super kotlin.Unit>);
+}
+public final class com.mapconductor.arcgis.raster.ArcGISRasterLayerOverlayRenderer$AncestorGate {
+  public final synchronized void set(double);
+  public final synchronized boolean isAncestor(int);
+  public final synchronized void markStubbed(int);
+  public final synchronized void layerRebuilt();
+  public final synchronized boolean takeRebuildWanted();
 }
 public final class com.mapconductor.arcgis.raster.ArcGISRasterLayerOverlayRenderer$Companion {
 }
