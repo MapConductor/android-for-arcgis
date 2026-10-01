@@ -1,5 +1,7 @@
 package com.mapconductor.arcgis
 
+import android.util.Log
+import com.arcgismaps.LoadStatus
 import com.arcgismaps.geometry.SpatialReference
 import com.arcgismaps.mapping.Basemap
 import com.arcgismaps.mapping.Viewpoint
@@ -308,8 +310,17 @@ class ArcGISMapView2DController(
     }
 
     override fun setMapDesignType(value: ArcGISDesignTypeInterface) {
-        val baseMap = ArcGISDesign.toBasemap(value)
-        holder.map.map?.setBasemap(baseMap)
+        val map = holder.map.map ?: return
+        map.setBasemap(ArcGISDesign.toBasemap(value))
+        // A map that failed to load -- its basemap was out of reach -- gets
+        // another go with the new basemap, or with none, which needs no
+        // network at all.
+        if (map.loadStatus.value is LoadStatus.FailedToLoad) {
+            defaultCoroutine.launch {
+                val result = map.retryLoad()
+                Log.d("ArcGISMapView2D", "map reloaded with basemap=${value.getValue()}: ${result.isSuccess} ${result.exceptionOrNull()?.message ?: ""}")
+            }
+        }
     }
 
     override fun setMapDesignTypeChangeListener(listener: ArcGISDesignTypeChangeHandler) {

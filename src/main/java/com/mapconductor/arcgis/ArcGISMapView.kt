@@ -13,6 +13,7 @@ import com.arcgismaps.ArcGISEnvironment
 import com.arcgismaps.LoadStatus
 import com.arcgismaps.mapping.ArcGISScene
 import com.arcgismaps.mapping.ArcGISTiledElevationSource
+import com.arcgismaps.mapping.Basemap
 import com.arcgismaps.mapping.view.GraphicsOverlay
 import com.arcgismaps.mapping.view.GraphicsRenderingMode
 import com.arcgismaps.mapping.view.SceneView
@@ -76,7 +77,9 @@ fun ArcGISMapView(
     val context = LocalContext.current // Context will be available from MapViewBase too if needed
     val registry = remember { scope.buildRegistry() }
     val owner = LocalLifecycleOwner.current
-    val basemapStyle = remember { ArcGISDesign.toBasemapStyleOrNull(state.mapDesignType) }
+    // The design the scene was built with; a design set on the state before
+    // the controller existed is applied once it does.
+    val createdDesign = remember { Ref<String>() }
     val cameraState = remember { mutableStateOf<MapCameraPositionInterface?>(state.cameraPosition) }
     val controllerRef = remember { Ref<ArcGISMapViewController>() }
     val controllerGeneration = remember { AtomicLong(0L) }
@@ -101,14 +104,20 @@ fun ArcGISMapView(
         scope = scope,
         registry = registry,
         holderProvider = { wrapView ->
+            val design = state.mapDesignType
+            createdDesign.value = design.getValue()
             val options =
                 ArcGISMapViewInitOptions(
-                    basemapStyle = basemapStyle,
-                    elevationSources = state.mapDesignType.elevationSources,
+                    basemapStyle = ArcGISDesign.toBasemapStyleOrNull(design),
+                    elevationSources = design.elevationSources,
                 )
 
-            // No basemap is a scene with only what the app puts on it.
-            val scene = options.basemapStyle?.let { ArcGISScene(it) } ?: ArcGISScene()
+            // No basemap is a scene with only what the app puts on it. The
+            // basemap is set on an empty scene rather than built into it, so
+            // a scene whose basemap is out of reach is still a scene (a
+            // global one is always WGS84) that can draw its own layers.
+            val scene = ArcGISScene()
+            options.basemapStyle?.let { scene.setBasemap(Basemap(it)) }
 
             options.elevationSources.forEach {
                 val source = ArcGISTiledElevationSource(it)
@@ -116,6 +125,7 @@ fun ArcGISMapView(
             }
 
             wrapView.sceneView.scene = scene
+            var retried = false
 
             val coroutine = CoroutineScope(Dispatchers.Default)
 
@@ -133,6 +143,16 @@ fun ArcGISMapView(
                                 cont.resume(holder) { _, _, _ -> }
                             }
                             is LoadStatus.FailedToLoad -> {
+                                Log.w("ArcGISMapView", "scene failed to load: ${it.error.message}")
+                                // The basemap was taken away while it was being
+                                // fetched (the app went basemap-less, say for an
+                                // offline raster): without one the scene needs no
+                                // network, so it gets one more go.
+                                if (scene.basemap.value == null && !retried) {
+                                    retried = true
+                                    scene.retryLoad()
+                                    return@collect
+                                }
                                 // Offline or network error: resume with a holder anyway so
                                 // the scene view is displayed (possibly with cached tiles)
                                 // without crashing. The ArcGIS view may be blank but usable.
@@ -238,6 +258,7 @@ fun ArcGISMapView(
                 mapController.setMapDesignTypeChangeListener(state::onMapDesignTypeChange)
                 cameraRestriction?.let { mapController.setCameraRestriction(it) }
                 state.setController(mapController)
+                if (state.mapDesignType.getValue() != createdDesign.value) mapController.setMapDesignType(state.mapDesignType)
 
                 // Set camera listeners immediately so they are ready to receive
                 // camera updates from external sources (e.g. camera sync scenarios).

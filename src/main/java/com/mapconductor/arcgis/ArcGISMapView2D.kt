@@ -9,7 +9,9 @@ import androidx.compose.ui.node.Ref
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.arcgismaps.LoadStatus
+import com.arcgismaps.geometry.SpatialReference
 import com.arcgismaps.mapping.ArcGISMap
+import com.arcgismaps.mapping.Basemap
 import com.arcgismaps.mapping.view.GraphicsOverlay
 import com.arcgismaps.mapping.view.GraphicsRenderingMode
 import com.arcgismaps.mapping.view.MapView
@@ -29,6 +31,7 @@ import com.mapconductor.core.marker.MarkerTilingOptions
 import com.mapconductor.core.marker.StrategyMarkerController
 import java.util.concurrent.atomic.AtomicLong
 import android.content.Context
+import android.util.Log
 import android.widget.FrameLayout
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -55,7 +58,9 @@ fun ArcGISMapView2D(
     val context = LocalContext.current
     val registry = remember { scope.buildRegistry() }
     val owner = LocalLifecycleOwner.current
-    val basemapStyle = remember { ArcGISDesign.toBasemapStyleOrNull(state.mapDesignType) }
+    // The design the map was built with; a design set on the state before the
+    // controller existed is applied once it does.
+    val createdDesign = remember { Ref<String>() }
     val cameraState = remember { mutableStateOf<MapCameraPositionInterface?>(state.cameraPosition) }
     val controllerRef = remember { Ref<ArcGISMapView2DController>() }
     val controllerGeneration = remember { AtomicLong(0L) }
@@ -78,8 +83,19 @@ fun ArcGISMapView2D(
         scope = scope,
         registry = registry,
         holderProvider = { wrapView ->
-            val map = basemapStyle?.let { ArcGISMap(it) } ?: ArcGISMap()
+            // The map is told its spatial reference up front instead of
+            // learning it from the basemap: a basemap style lives on
+            // arcgis.com, and a map that waited for it to find out where it
+            // is can draw nothing while the network is away. Told, it loads
+            // at once with no basemap, and with one it keeps drawing its own
+            // layers (a raster layer served on the device, say) when the
+            // basemap is out of reach.
+            val design = state.mapDesignType
+            createdDesign.value = design.getValue()
+            val map = ArcGISMap(SpatialReference.webMercator())
+            ArcGISDesign.toBasemapStyleOrNull(design)?.let { map.setBasemap(Basemap(it)) }
             wrapView.arcGISMapView.map = map
+            var retried = false
 
             val coroutine = CoroutineScope(Dispatchers.Default)
             suspendCancellableCoroutine { cont ->
@@ -96,6 +112,16 @@ fun ArcGISMapView2D(
                                 ) { _, _, _ -> }
                             }
                             is LoadStatus.FailedToLoad -> {
+                                Log.w("ArcGISMapView2D", "map failed to load: ${it.error.message}")
+                                // The basemap was taken away while it was being
+                                // fetched (the app went basemap-less, say for an
+                                // offline raster): without one the map needs no
+                                // network, so it gets one more go.
+                                if (map.basemap.value == null && !retried) {
+                                    retried = true
+                                    map.retryLoad()
+                                    return@collect
+                                }
                                 if (cont.isActive) {
                                     cont.resume(
                                         ArcGISMapView2DHolder(
@@ -170,6 +196,7 @@ fun ArcGISMapView2D(
                 mapController.setMapLongClickListener(onMapLongClick)
                 mapController.setMapDesignTypeChangeListener(state::onMapDesignTypeChange)
                 state.setController(mapController)
+                if (state.mapDesignType.getValue() != createdDesign.value) mapController.setMapDesignType(state.mapDesignType)
                 // 他プロバイダの *MapView と同じく、コントローラ生成直後に適用する。
                 cameraRestriction?.let { mapController.setCameraRestriction(it) }
 

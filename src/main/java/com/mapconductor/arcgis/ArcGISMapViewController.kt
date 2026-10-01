@@ -1,5 +1,6 @@
 package com.mapconductor.arcgis
 
+import com.arcgismaps.LoadStatus
 import com.arcgismaps.mapping.Basemap
 import com.arcgismaps.mapping.view.GraphicsOverlay
 import com.mapconductor.arcgis.circle.ArcGISCircleOverlayController
@@ -259,6 +260,10 @@ class ArcGISMapViewController(
             val baseMap = ArcGISDesign.toBasemap(value)
             defaultCoroutine.launch {
                 scene.setBasemap(baseMap)
+                // A scene that failed to load -- its basemap was out of
+                // reach -- gets another go with the new basemap, or with
+                // none, which needs no network at all.
+                if (scene.loadStatus.value is LoadStatus.FailedToLoad) scene.retryLoad()
                 // Basemap changes can reset the viewpoint; mark the current request as pending so that
                 // the next viewpointChanged can restore the last requested camera if needed.
 //                pendingCameraRestoreRequest = cameraRequestGeneration.get()
