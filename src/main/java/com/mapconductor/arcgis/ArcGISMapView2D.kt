@@ -22,6 +22,7 @@ import com.mapconductor.core.OnMapLoadedHandler
 import com.mapconductor.core.map.CameraRestriction
 import com.mapconductor.core.map.MapCameraPosition
 import com.mapconductor.core.map.MapCameraPositionInterface
+import com.mapconductor.core.map.MapViewStyle
 import com.mapconductor.core.marker.MarkerEventControllerInterface
 import com.mapconductor.core.marker.MarkerOverlayRendererInterface
 import com.mapconductor.core.marker.MarkerRenderingStrategyInterface
@@ -52,6 +53,15 @@ fun ArcGISMapView2D(
     onCameraMoveEnd: OnCameraMoveHandler? = null,
     onMapClick: OnMapEventHandler? = null,
     onMapLongClick: OnMapEventHandler? = null,
+    /**
+     * How the map looks, when the app states it rather than naming a design.
+     *
+     * A vector style *is* the basemap. `com.mapconductor:vectorstyle` builds
+     * one; what happens underneath depends on this backend and the app does
+     * not have to know.
+     */
+    style: MapViewStyle? = null,
+    onStyleDiagnostics: ((List<String>) -> Unit)? = null,
     content: (@Composable ArcGISMapViewScope.() -> Unit)? = null,
 ) {
     val scope = remember { ArcGISMapViewScope() }
@@ -196,7 +206,11 @@ fun ArcGISMapView2D(
                 mapController.setMapLongClickListener(onMapLongClick)
                 mapController.setMapDesignTypeChangeListener(state::onMapDesignTypeChange)
                 state.setController(mapController)
-                if (state.mapDesignType.getValue() != createdDesign.value) mapController.setMapDesignType(state.mapDesignType)
+                if (state.mapDesignType.getValue() !=
+                    createdDesign.value
+                ) {
+                    mapController.setMapDesignType(state.mapDesignType)
+                }
                 // 他プロバイダの *MapView と同じく、コントローラ生成直後に適用する。
                 cameraRestriction?.let { mapController.setCameraRestriction(it) }
 
@@ -253,6 +267,8 @@ fun ArcGISMapView2D(
                 }
             }
         },
+        style = style,
+        onStyleDiagnostics = onStyleDiagnostics,
         content = content,
     )
 }

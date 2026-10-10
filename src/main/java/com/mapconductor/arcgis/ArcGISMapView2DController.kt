@@ -1,9 +1,7 @@
 package com.mapconductor.arcgis
 
-import android.util.Log
 import com.arcgismaps.LoadStatus
 import com.arcgismaps.geometry.SpatialReference
-import com.arcgismaps.mapping.Basemap
 import com.arcgismaps.mapping.Viewpoint
 import com.arcgismaps.mapping.view.GraphicsOverlay
 import com.mapconductor.arcgis.circle.ArcGISCircleOverlayController
@@ -42,6 +40,7 @@ import com.mapconductor.core.projection.Earth
 import com.mapconductor.core.raster.RasterLayerState
 import kotlin.math.ln
 import kotlin.math.pow
+import android.util.Log
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -318,7 +317,8 @@ class ArcGISMapView2DController(
         if (map.loadStatus.value is LoadStatus.FailedToLoad) {
             defaultCoroutine.launch {
                 val result = map.retryLoad()
-                Log.d("ArcGISMapView2D", "map reloaded with basemap=${value.getValue()}: ${result.isSuccess} ${result.exceptionOrNull()?.message ?: ""}")
+                Log
+                    .d("ArcGISMapView2D", "map reloaded with basemap=${value.getValue()}: ${result.isSuccess} ${result.exceptionOrNull()?.message ?: ""}")
             }
         }
     }

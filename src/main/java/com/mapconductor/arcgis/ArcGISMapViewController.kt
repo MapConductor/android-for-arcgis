@@ -1,7 +1,6 @@
 package com.mapconductor.arcgis
 
 import com.arcgismaps.LoadStatus
-import com.arcgismaps.mapping.Basemap
 import com.arcgismaps.mapping.view.GraphicsOverlay
 import com.mapconductor.arcgis.circle.ArcGISCircleOverlayController
 import com.mapconductor.arcgis.groundimage.ArcGISGroundImageController

@@ -1,8 +1,5 @@
 package com.mapconductor.arcgis.raster
 
-import kotlinx.coroutines.launch
-import com.mapconductor.arcgis.ArcGISMapViewHolder
-import com.mapconductor.core.tileserver.TileServerRegistry
 import com.arcgismaps.arcgisservices.LevelOfDetail
 import com.arcgismaps.geometry.Envelope
 import com.arcgismaps.geometry.Point
@@ -13,6 +10,7 @@ import com.arcgismaps.mapping.layers.TileImageFormat
 import com.arcgismaps.mapping.layers.TileInfo
 import com.arcgismaps.mapping.layers.WebTiledLayer
 import com.mapconductor.arcgis.ArcGISGeoViewHolder
+import com.mapconductor.arcgis.ArcGISMapViewHolder
 import com.mapconductor.core.projection.WEB_MERCATOR_MAX_EXTENT_METERS
 import com.mapconductor.core.raster.RasterHeaderRuleSet
 import com.mapconductor.core.raster.RasterLayerEntityInterface
@@ -20,12 +18,14 @@ import com.mapconductor.core.raster.RasterLayerOverlayRendererInterface
 import com.mapconductor.core.raster.RasterLayerSource
 import com.mapconductor.core.raster.RasterLayerState
 import com.mapconductor.core.raster.TileScheme
+import com.mapconductor.core.tileserver.TileServerRegistry
 import com.mapconductor.core.zoom.AbstractZoomAltitudeConverter
 import kotlin.math.log2
 import kotlin.math.pow
 import android.util.Log
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 
 class ArcGISRasterLayerOverlayRenderer(
     private val holder: ArcGISGeoViewHolder<*, *>,
@@ -113,6 +113,7 @@ class ArcGISRasterLayerOverlayRenderer(
         if (!template.startsWith(base)) return null
         return template.removePrefix(base).substringBefore('/')
     }
+
     override suspend fun onAdd(data: List<RasterLayerOverlayRendererInterface.AddParamsInterface>): List<Layer?> {
         val results = ArrayList<Layer?>(data.size)
         for (params in data) {

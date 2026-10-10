@@ -18,7 +18,8 @@ class ArcGISRasterLayerController(
     suspend fun rebuildLocalLayersIfNeeded() {
         if (!renderer.localLayersNeedRebuild()) return
         val entities =
-            rasterLayerManager.allEntities()
+            rasterLayerManager
+                .allEntities()
                 .filter { renderer.isLocalLayer(it.state) }
                 .sortedBy { it.state.zIndex }
         for (entity in entities) {

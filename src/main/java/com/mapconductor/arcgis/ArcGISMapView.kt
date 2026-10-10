@@ -37,6 +37,7 @@ import com.mapconductor.core.OnMapLoadedHandler
 import com.mapconductor.core.map.CameraRestriction
 import com.mapconductor.core.map.MapCameraPosition
 import com.mapconductor.core.map.MapCameraPositionInterface
+import com.mapconductor.core.map.MapViewStyle
 import com.mapconductor.core.marker.MarkerEventControllerInterface
 import com.mapconductor.core.marker.MarkerManager
 import com.mapconductor.core.marker.MarkerOverlayRendererInterface
@@ -44,9 +45,9 @@ import com.mapconductor.core.marker.MarkerRenderingStrategyInterface
 import com.mapconductor.core.marker.MarkerRenderingSupport
 import com.mapconductor.core.marker.MarkerRenderingSupportKey
 import com.mapconductor.core.marker.MarkerTilingOptions
+import com.mapconductor.core.marker.StrategyMarkerController
 import com.mapconductor.core.raster.RasterTilePreference
 import com.mapconductor.core.raster.RasterTilePreferenceKey
-import com.mapconductor.core.marker.StrategyMarkerController
 import com.mapconductor.core.tileserver.TileServerRegistry
 import java.util.concurrent.atomic.AtomicLong
 import android.content.Context
@@ -71,6 +72,15 @@ fun ArcGISMapView(
     onCameraMoveEnd: OnCameraMoveHandler? = null,
     onMapClick: OnMapEventHandler? = null,
     onMapLongClick: OnMapEventHandler? = null,
+    /**
+     * How the map looks, when the app states it rather than naming a design.
+     *
+     * A vector style *is* the basemap. `com.mapconductor:vectorstyle` builds
+     * one; what happens underneath depends on this backend and the app does
+     * not have to know.
+     */
+    style: MapViewStyle? = null,
+    onStyleDiagnostics: ((List<String>) -> Unit)? = null,
     content: (@Composable ArcGISMapViewScope.() -> Unit)? = null,
 ) {
     val scope = remember { ArcGISMapViewScope() } // Use specific scope
@@ -258,7 +268,11 @@ fun ArcGISMapView(
                 mapController.setMapDesignTypeChangeListener(state::onMapDesignTypeChange)
                 cameraRestriction?.let { mapController.setCameraRestriction(it) }
                 state.setController(mapController)
-                if (state.mapDesignType.getValue() != createdDesign.value) mapController.setMapDesignType(state.mapDesignType)
+                if (state.mapDesignType.getValue() !=
+                    createdDesign.value
+                ) {
+                    mapController.setMapDesignType(state.mapDesignType)
+                }
 
                 // Set camera listeners immediately so they are ready to receive
                 // camera updates from external sources (e.g. camera sync scenarios).
@@ -330,6 +344,8 @@ fun ArcGISMapView(
                 }
             }
         },
+        style = style,
+        onStyleDiagnostics = onStyleDiagnostics,
         content = content,
     )
 }
