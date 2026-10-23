@@ -4,7 +4,7 @@ composeLibs = "1.12.1"
 # 存在しない material3:1.12.1 を要求してクラスパスごと解決に失敗する。
 material3 = "1.4.0"
 coroutines = "1.11.0"
-playServicesMaps = "20.0.0"
+playServicesMaps = "20.1.0"
 agp = "9.4.1"
 kotlin = "2.4.20"
 
