@@ -29,8 +29,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
-import com.mapconductor.arcgis.map.ArcGISMapView
-import com.mapconductor.arcgis.map.rememberArcGISMapViewState
+import com.mapconductor.arcgis.ArcGISMapView
+import com.mapconductor.arcgis.rememberArcGISMapViewState
 import com.mapconductor.compose.circle.Circle
 import com.mapconductor.core.circle.CircleState
 import com.mapconductor.core.features.GeoPoint
