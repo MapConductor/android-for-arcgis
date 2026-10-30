@@ -21,6 +21,8 @@ import com.mapconductor.core.raster.RasterLayerState
 import com.mapconductor.core.raster.TileScheme
 import com.mapconductor.core.tileserver.TileServerRegistry
 import java.util.UUID
+import kotlin.math.pow
+import kotlin.math.roundToInt
 import android.os.SystemClock
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -31,6 +33,11 @@ class ArcGISMarkerController(
     markerManager: MarkerManager<ArcGISActualMarker>,
     renderer: ArcGISMarkerRenderer,
     private val markerTiling: MarkerTilingOptions,
+    /**
+     * Size tiled icons by how far a tile's level is from the camera's (3D
+     * `SceneView`). See [levelIconScale].
+     */
+    private val scaleIconsByLevel: Boolean = false,
     val coroutine: CoroutineScope = CoroutineScope(Dispatchers.Main),
 ) : AbstractMarkerController<ArcGISActualMarker>(
         markerManager = markerManager,
@@ -47,6 +54,10 @@ class ArcGISMarkerController(
 
     @Volatile
     private var lastKnownZoom: Double = 0.0
+
+    /** The level the 2D map would draw at the current camera; see [levelIconScale]. */
+    @Volatile
+    private var cameraLevel: Int? = null
 
     private val tileServer = TileServerRegistry.get(forceNoStoreCache = true)
     private var markerTileRenderer: MarkerTileRenderer<ArcGISActualMarker>? = null
@@ -205,6 +216,36 @@ class ArcGISMarkerController(
         // 判定と昇格は debounce したうえで切り替え器の中で走る（パン中は動かない）。
         viewportSwitch.onCameraChanged(mapCameraPosition)
         lastKnownZoom = mapCameraPosition.zoom
+        if (scaleIconsByLevel) {
+            val level = mapCameraPosition.zoom.roundToInt()
+            if (level != cameraLevel) {
+                cameraLevel = level
+                // Every tile's icon size depends on the camera's level.
+                semaphore.withPermit { updateRasterLayerSource() }
+            }
+        }
+    }
+
+    /**
+     * Icon scale for a tile at [tileLevel], from the app's callback.
+     *
+     * The 2D map draws one level per camera, so a tile's level is the camera's
+     * and the callback's scale goes in as it is. The 3D `SceneView` picks a
+     * level per tile from the ground it covers on the globe and mixes two
+     * levels on one screen (a Pixel at the post office sample asked for z=10
+     * and z=11 side by side). A tile one level deeper is shown at half the
+     * size, and its pins came out half as large as the 2D map's (26px against
+     * 41px) next to correct ones. Drawn at 2^(tile level - camera level), every
+     * pin comes out the size the 2D map gives it at that camera, and the
+     * callback is asked for the camera's level as the 2D map does.
+     */
+    private fun levelIconScale(
+        state: MarkerState,
+        tileLevel: Int,
+    ): Double {
+        val level = cameraLevel?.takeIf { scaleIconsByLevel } ?: tileLevel
+        val base = markerTiling.iconScaleCallback?.invoke(state, level) ?: 1.0
+        return base * 2.0.pow(tileLevel - level)
     }
 
     /**
@@ -291,7 +332,8 @@ class ArcGISMarkerController(
                 tileSize = 256,
                 cacheSizeBytes = markerTiling.cacheSize,
                 debugTileOverlay = markerTiling.debugTileOverlay,
-                iconScaleCallback = markerTiling.iconScaleCallback,
+                iconScaleCallback =
+                    if (scaleIconsByLevel) ::levelIconScale else markerTiling.iconScaleCallback,
                 declutterPx = markerTiling.declutterPx,
                 // ArcGIS displays one 96dpi/256px LOD tile over 256dp on screen,
                 // matching the renderer's density-scaled output 1:1 — no extra

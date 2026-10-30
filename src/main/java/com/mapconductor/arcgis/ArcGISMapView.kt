@@ -446,6 +446,7 @@ internal fun getMarkerController(
             markerManager = markerManager,
             renderer = renderer,
             markerTiling = markerTiling,
+            scaleIconsByLevel = holder.usesSceneView,
         )
     return controller
 }
