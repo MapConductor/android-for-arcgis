@@ -8,6 +8,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.node.Ref
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.compose.LocalLifecycleOwner
+import androidx.lifecycle.findViewTreeLifecycleOwner
+import androidx.lifecycle.setViewTreeLifecycleOwner
 import com.arcgismaps.LoadStatus
 import com.arcgismaps.geometry.SpatialReference
 import com.arcgismaps.mapping.ArcGISMap
@@ -16,6 +18,7 @@ import com.arcgismaps.mapping.view.GraphicsOverlay
 import com.arcgismaps.mapping.view.GraphicsRenderingMode
 import com.arcgismaps.mapping.view.MapView
 import com.mapconductor.compose.map.MapViewBase
+import com.mapconductor.compose.map.MapViewLifecycleOwner
 import com.mapconductor.core.OnCameraMoveHandler
 import com.mapconductor.core.OnMapEventHandler
 import com.mapconductor.core.OnMapLoadedHandler
@@ -86,8 +89,14 @@ fun ArcGISMapView2D(
                     addView(mapView, FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.MATCH_PARENT)
                 }
             wrapView.arcGISMapView = mapView
-            mapView.onCreate(owner)
-            mapView.onResume(owner)
+            // The GeoView runs its touch flows in the given owner's lifecycleScope
+            // and keeps them until that lifecycle ends. Given the Activity's, every
+            // GeoView the user switched away from would stay until the Activity
+            // goes, so it gets a lifecycle of its own, ended in onDestroyMapView.
+            val viewOwner = MapViewLifecycleOwner(owner.lifecycle)
+            wrapView.setViewTreeLifecycleOwner(viewOwner)
+            mapView.onCreate(viewOwner)
+            mapView.onResume(viewOwner)
             wrapView
         },
         scope = scope,
@@ -269,9 +278,12 @@ fun ArcGISMapView2D(
         // Created resumed in viewProvider. Released by MapViewBase after the
         // controller, also when the map goes before its holder exists.
         onDestroyMapView = { wrapView ->
-            wrapView.onPause(owner)
-            wrapView.onStop(owner)
-            wrapView.onDestroy(owner)
+            val viewOwner = wrapView.findViewTreeLifecycleOwner() as? MapViewLifecycleOwner
+            val geoViewOwner = viewOwner ?: owner
+            wrapView.onPause(geoViewOwner)
+            wrapView.onStop(geoViewOwner)
+            wrapView.onDestroy(geoViewOwner)
+            viewOwner?.destroy()
         },
         style = style,
         onStyleDiagnostics = onStyleDiagnostics,

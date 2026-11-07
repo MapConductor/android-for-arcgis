@@ -60,6 +60,17 @@ class ArcGISMapViewController(
     internal var cameraMoveEndJob: Job? = null
     internal val cameraMoveEndDebounceMs = 180L
 
+    /**
+     * Collectors of the GeoView's event flows. The GeoView outlives this
+     * controller as long as the Activity does (ArcGIS keeps its touch flows
+     * on the lifecycle it was created with), and a suspended collector keeps
+     * this controller -- with every overlay -- reachable from it. Cancelled in
+     * [destroy]; mainCoroutine itself is not, since overlay teardown may still
+     * post to it.
+     */
+    // Declared before init {}, which calls setupListeners().
+    private val listenerJobs = mutableListOf<Job>()
+
     init {
         holder.map.graphicsOverlays.clear()
         holder.map.graphicsOverlays.add(circleController.renderer.circleLayer)
@@ -134,27 +145,36 @@ class ArcGISMapViewController(
         cameraRestrictionCorrection(current)
 
     fun setupListeners() {
-        mainCoroutine.launch {
-            holder.map.onSingleTapConfirmed.collect { onMapTap(it) }
-        }
-        defaultCoroutine.launch {
-            holder.map.viewpointChanged.collect { onViewpointChange() }
-        }
-        defaultCoroutine.launch {
-            holder.map.onInteractiveZooming.collect { invokeCameraMoveCallback() }
-        }
-        defaultCoroutine.launch {
-            holder.map.onRotate.collect { invokeCameraMoveCallback() }
-        }
-        mainCoroutine.launch {
-            holder.map.onLongPress.collect { onMapLongPress(it) }
-        }
-        mainCoroutine.launch {
-            holder.map.onUp.collect { onMapUp(it) }
-        }
-        mainCoroutine.launch {
-            holder.map.onPan.collect { onMapPan(it) }
-        }
+        listenerJobs +=
+            listOf(
+                mainCoroutine.launch {
+                    holder.map.onSingleTapConfirmed.collect { onMapTap(it) }
+                },
+                defaultCoroutine.launch {
+                    holder.map.viewpointChanged.collect { onViewpointChange() }
+                },
+                defaultCoroutine.launch {
+                    holder.map.onInteractiveZooming.collect { invokeCameraMoveCallback() }
+                },
+                defaultCoroutine.launch {
+                    holder.map.onRotate.collect { invokeCameraMoveCallback() }
+                },
+                mainCoroutine.launch {
+                    holder.map.onLongPress.collect { onMapLongPress(it) }
+                },
+                mainCoroutine.launch {
+                    holder.map.onUp.collect { onMapUp(it) }
+                },
+                mainCoroutine.launch {
+                    holder.map.onPan.collect { onMapPan(it) }
+                },
+            )
+    }
+
+    override fun destroy() {
+        listenerJobs.forEach { it.cancel() }
+        listenerJobs.clear()
+        super.destroy()
     }
 
     override fun hasPolyline(state: PolylineState): Boolean =
