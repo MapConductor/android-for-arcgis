@@ -255,6 +255,7 @@ class ArcGISMapViewController(
     internal var mapDesignTypeChangeListener: ArcGISDesignTypeChangeHandler? = null
 
     override fun setMapDesignType(value: ArcGISDesignTypeInterface) {
+        mapDesignType = value
         holder.map.scene?.let { scene ->
             val baseMap = ArcGISDesign.toBasemap(value)
             defaultCoroutine.launch {
