@@ -321,7 +321,7 @@ fun ArcGISMapView(
             sdkInitialize?.invoke(context) ?: defaultArcGISInitialize(context)
         },
         onMapLoaded = onMapLoaded,
-        customDisposableEffect = { _, holderRef ->
+        customDisposableEffect = { _, _ ->
             DisposableEffect(state.id) {
                 onDispose {
                     // Invalidate any pending `post { ... }` work that captured older controllers.
@@ -340,13 +340,15 @@ fun ArcGISMapView(
                     }
                     controllerRef.value = null
                     state.clearController()
-                    holderRef.value?.mapView?.apply {
-                        onPause(owner)
-                        onStop(owner)
-                        onDestroy(owner)
-                    }
                 }
             }
+        },
+        // Created resumed in viewProvider. Released by MapViewBase after the
+        // controller, also when the map goes before its holder exists.
+        onDestroyMapView = { wrapView ->
+            wrapView.onPause(owner)
+            wrapView.onStop(owner)
+            wrapView.onDestroy(owner)
         },
         style = style,
         onStyleDiagnostics = onStyleDiagnostics,

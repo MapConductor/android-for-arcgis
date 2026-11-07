@@ -250,7 +250,7 @@ fun ArcGISMapView2D(
             sdkInitialize?.invoke(context) ?: defaultArcGISInitialize(context)
         },
         onMapLoaded = onMapLoaded,
-        customDisposableEffect = { _, holderRef ->
+        customDisposableEffect = { _, _ ->
             DisposableEffect(state.id) {
                 onDispose {
                     controllerGeneration.incrementAndGet()
@@ -263,13 +263,15 @@ fun ArcGISMapView2D(
                     }
                     controllerRef.value = null
                     state.clearController()
-                    holderRef.value?.mapView?.apply {
-                        onPause(owner)
-                        onStop(owner)
-                        onDestroy(owner)
-                    }
                 }
             }
+        },
+        // Created resumed in viewProvider. Released by MapViewBase after the
+        // controller, also when the map goes before its holder exists.
+        onDestroyMapView = { wrapView ->
+            wrapView.onPause(owner)
+            wrapView.onStop(owner)
+            wrapView.onDestroy(owner)
         },
         style = style,
         onStyleDiagnostics = onStyleDiagnostics,
