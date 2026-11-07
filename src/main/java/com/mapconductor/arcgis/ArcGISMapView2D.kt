@@ -204,6 +204,10 @@ fun ArcGISMapView2D(
                 controllerRef.value = mapController
                 mapController.setMapClickListener(onMapClick)
                 mapController.setMapLongClickListener(onMapLongClick)
+                // 地図は state のデザインで作ってある。コントローラの既定値（Streets）のままだと、
+                // 次の行のリスナー登録でそれが state へ返り、アプリが渡した（あるいは
+                // 回転後に復元した）デザインが Streets に化ける。
+                mapController.mapDesignType = state.mapDesignType
                 mapController.setMapDesignTypeChangeListener(state::onMapDesignTypeChange)
                 state.setController(mapController)
                 if (state.mapDesignType.getValue() !=

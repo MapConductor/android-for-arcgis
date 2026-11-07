@@ -309,6 +309,7 @@ class ArcGISMapView2DController(
     }
 
     override fun setMapDesignType(value: ArcGISDesignTypeInterface) {
+        mapDesignType = value
         val map = holder.map.map ?: return
         map.setBasemap(ArcGISDesign.toBasemap(value))
         // A map that failed to load -- its basemap was out of reach -- gets

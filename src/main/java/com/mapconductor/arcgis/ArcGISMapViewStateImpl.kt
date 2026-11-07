@@ -10,6 +10,7 @@ import com.mapconductor.core.map.MapCameraPositionInterface
 import com.mapconductor.core.map.MapPaddings
 import com.mapconductor.core.map.MapPaddingsInterface
 import com.mapconductor.core.map.MapViewState
+import com.mapconductor.core.map.MapViewStateBundle
 import com.mapconductor.core.map.MapViewStateInterface
 import java.util.UUID
 import android.app.Activity
@@ -78,7 +79,10 @@ class ArcGISMapViewSaver : BaseMapViewSaver<ArcGISMapViewState>() {
         state: ArcGISMapViewState,
         bundle: Bundle,
     ) {
-        bundle.putString("id", state.mapDesignType.id)
+        val design = state.mapDesignType
+        bundle.putString("id", design.id)
+        bundle.putStringArrayList("elevationSources", ArrayList(design.elevationSources))
+        MapViewStateBundle.putAttributionRules(bundle, design.attributionRules)
     }
 
     override fun createState(
@@ -88,9 +92,13 @@ class ArcGISMapViewSaver : BaseMapViewSaver<ArcGISMapViewState>() {
     ): ArcGISMapViewState =
         ArcGISMapViewState(
             id = stateId,
+            // ArcGISDesign はデータクラスなので、同じ値で作れば Streets などの定義済みと等しくなる。
+            // Create(id) を使うと elevationSources と attributionRules が落ちる。
             mapDesignType =
-                ArcGISDesign.Create(
+                ArcGISDesign(
                     id = mapDesignBundle?.getString("id") ?: ArcGISDesign.Streets.id,
+                    elevationSources = mapDesignBundle?.getStringArrayList("elevationSources") ?: emptyList(),
+                    attributionRules = MapViewStateBundle.getAttributionRules(mapDesignBundle),
                 ),
             cameraPosition = cameraPosition,
         )
