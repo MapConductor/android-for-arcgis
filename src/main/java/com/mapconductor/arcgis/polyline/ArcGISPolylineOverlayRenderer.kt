@@ -9,6 +9,7 @@ import com.arcgismaps.mapping.view.Graphic
 import com.arcgismaps.mapping.view.GraphicsOverlay
 import com.mapconductor.arcgis.ArcGISActualPolyline
 import com.mapconductor.arcgis.ArcGISGeoViewHolder
+import com.mapconductor.arcgis.ArcGISGraphicsZIndex
 import com.mapconductor.arcgis.toArcGISColor
 import com.mapconductor.arcgis.toPoint
 import com.mapconductor.core.features.GeoPoint
@@ -25,11 +26,15 @@ import kotlinx.coroutines.withContext
 class ArcGISPolylineOverlayRenderer(
     val polylineLayer: GraphicsOverlay,
     override val holder: ArcGISGeoViewHolder<*, *>,
-    override val coroutine: CoroutineScope = CoroutineScope(Dispatchers.Default),
+    // GraphicsOverlay.graphics はスレッドセーフでない。ポリゴン・サークルと同じく
+    // メインスレッドで触る（以前は Default で、ポリラインを 2 本同時に外すと
+    // removePolyline 同士が ConcurrentModificationException で落ちた）。
+    // 頂点の補間だけは重いので Default で計算する。
+    override val coroutine: CoroutineScope = CoroutineScope(Dispatchers.Main),
 ) : AbstractPolylineOverlayRenderer<ArcGISActualPolyline>() {
     override suspend fun createPolyline(state: PolylineState): ArcGISActualPolyline? =
         withContext(coroutine.coroutineContext) {
-            val geometry = createGeometry(state)
+            val geometry = withContext(Dispatchers.Default) { createGeometry(state) }
 
             val lineSymbol =
                 SimpleLineSymbol().apply {
@@ -41,6 +46,7 @@ class ArcGISPolylineOverlayRenderer(
             val graphic =
                 Graphic(geometry, lineSymbol).also {
                     it.attributes.set("id", state.id)
+                    ArcGISGraphicsZIndex.apply(it, state.zIndex)
                 }
 
             polylineLayer.graphics.add(graphic)
@@ -57,7 +63,7 @@ class ArcGISPolylineOverlayRenderer(
             val prevFinger = prev.fingerPrint
 
             if (finger.points != prevFinger.points || finger.geodesic != prevFinger.geodesic) {
-                polyline.geometry = createGeometry(current.state)
+                polyline.geometry = withContext(Dispatchers.Default) { createGeometry(current.state) }
             }
 
             (polyline.symbol as SimpleLineSymbol).let { symbol ->
@@ -67,6 +73,9 @@ class ArcGISPolylineOverlayRenderer(
                 if (finger.strokeWidth != prevFinger.strokeWidth) {
                     symbol.width = current.state.strokeWidth.value
                 }
+            }
+            if (finger.zIndex != prevFinger.zIndex) {
+                ArcGISGraphicsZIndex.apply(polyline, current.state.zIndex)
             }
 
             polyline

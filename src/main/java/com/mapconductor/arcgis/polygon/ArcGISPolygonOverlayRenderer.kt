@@ -12,6 +12,7 @@ import com.arcgismaps.mapping.view.Graphic
 import com.arcgismaps.mapping.view.GraphicsOverlay
 import com.mapconductor.arcgis.ArcGISActualPolygon
 import com.mapconductor.arcgis.ArcGISGeoViewHolder
+import com.mapconductor.arcgis.ArcGISGraphicsZIndex
 import com.mapconductor.arcgis.toArcGISColor
 import com.mapconductor.core.features.GeoPointInterface
 import com.mapconductor.core.geometry.closeRing
@@ -52,7 +53,7 @@ class ArcGISPolygonOverlayRenderer(
             val graphic =
                 Graphic(geometry, fillSymbol).also {
                     it.attributes.set("id", state.id)
-                    it.attributes.set("zIndex", state.zIndex)
+                    ArcGISGraphicsZIndex.apply(it, state.zIndex)
                 }
 
             polygonLayer.graphics.add(graphic)
@@ -90,7 +91,7 @@ class ArcGISPolygonOverlayRenderer(
                 }
             }
             if (finger.zIndex != prevFinger.zIndex) {
-                current.polygon.attributes.set("zIndex", current.state.zIndex)
+                ArcGISGraphicsZIndex.apply(current.polygon, current.state.zIndex)
             }
             polygon
         }
@@ -105,20 +106,7 @@ class ArcGISPolygonOverlayRenderer(
     }
 
     override suspend fun onPostProcess() {
-        // Sort graphics by zIndex to ensure correct rendering order
-        withContext(coroutine.coroutineContext) {
-            val graphics = polygonLayer.graphics.toList()
-            if (graphics.size <= 1) return@withContext
-
-            val sortedGraphics =
-                graphics.sortedBy { graphic ->
-                    (graphic.attributes.get("zIndex") as? Int) ?: 0
-                }
-            if (graphics == sortedGraphics) return@withContext
-
-            polygonLayer.graphics.clear()
-            polygonLayer.graphics.addAll(sortedGraphics)
-        }
+        // 重なり順は各 Graphic の zIndex が持つ（ArcGISGraphicsZIndex）。並べ替えは要らない。
     }
 
     private suspend fun resolveHoles(state: PolygonState): PolygonState =

@@ -14,6 +14,7 @@ import com.arcgismaps.mapping.view.Graphic
 import com.arcgismaps.mapping.view.GraphicsOverlay
 import com.mapconductor.arcgis.ArcGISActualCircle
 import com.mapconductor.arcgis.ArcGISGeoViewHolder
+import com.mapconductor.arcgis.ArcGISGraphicsZIndex
 import com.mapconductor.arcgis.toArcGISColor
 import com.mapconductor.arcgis.toPoint
 import com.mapconductor.core.circle.AbstractCircleOverlayRenderer
@@ -62,6 +63,7 @@ class ArcGISCircleOverlayRenderer(
                     outline = stroke,
                 )
             val circle = Graphic(circleGeometry, fillSymbol)
+            ArcGISGraphicsZIndex.apply(circle, state.zIndex)
 
             circleLayer.graphics.add(circle)
             circle
@@ -123,6 +125,9 @@ class ArcGISCircleOverlayRenderer(
                         outline.width = current.state.strokeWidth.value
                     }
                 }
+            }
+            if (finger.zIndex != prevFinger.zIndex) {
+                ArcGISGraphicsZIndex.apply(graphic, current.state.zIndex)
             }
             return@withContext graphic
         }

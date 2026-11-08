@@ -112,6 +112,10 @@ public final class com.mapconductor.arcgis.ArcGISGeoViewHolder$DefaultImpls {
   public static <ActualMapView extends android.widget.FrameLayout, ActualMap extends com.arcgismaps.mapping.view.GeoView> java.lang.Object fromScreenOffset-3MmeM6k(com.mapconductor.arcgis.ArcGISGeoViewHolder<ActualMapView, ActualMap>, long, kotlin.coroutines.Continuation<? super com.mapconductor.core.features.GeoPoint>);
   public static <ActualMapView extends android.widget.FrameLayout, ActualMap extends com.arcgismaps.mapping.view.GeoView> com.mapconductor.core.features.GeoPoint fromScreenOffsetSync-k-4lQ0M(com.mapconductor.arcgis.ArcGISGeoViewHolder<ActualMapView, ActualMap>, long);
 }
+public final class com.mapconductor.arcgis.ArcGISGraphicsZIndex {
+  public static final com.mapconductor.arcgis.ArcGISGraphicsZIndex INSTANCE;
+  public final void apply(com.arcgismaps.mapping.view.Graphic, java.lang.Integer);
+}
 public final class com.mapconductor.arcgis.ArcGISMapView2DController extends com.mapconductor.core.controller.BaseMapViewController implements com.mapconductor.arcgis.ArcGISMapViewControllerInterface {
   public static final com.mapconductor.arcgis.ArcGISMapView2DController$Companion Companion;
   public com.mapconductor.arcgis.ArcGISMapView2DController(com.mapconductor.arcgis.ArcGISMapView2DHolder, com.mapconductor.arcgis.marker.ArcGISMarkerController, com.mapconductor.arcgis.polyline.ArcGISPolylineOverlayController, com.mapconductor.arcgis.polygon.ArcGISPolygonOverlayController, com.mapconductor.arcgis.circle.ArcGISCircleOverlayController, com.mapconductor.arcgis.groundimage.ArcGISGroundImageController, com.mapconductor.arcgis.raster.ArcGISRasterLayerController, kotlinx.coroutines.CoroutineScope, kotlinx.coroutines.CoroutineScope);

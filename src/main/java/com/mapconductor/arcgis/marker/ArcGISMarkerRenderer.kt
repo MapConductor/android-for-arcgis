@@ -9,6 +9,7 @@ import com.arcgismaps.mapping.view.Graphic
 import com.arcgismaps.mapping.view.GraphicsOverlay
 import com.mapconductor.arcgis.ArcGISActualMarker
 import com.mapconductor.arcgis.ArcGISGeoViewHolder
+import com.mapconductor.arcgis.ArcGISGraphicsZIndex
 import com.mapconductor.arcgis.WrapMapView
 import com.mapconductor.arcgis.toPoint
 import com.mapconductor.core.ResourceProvider
@@ -128,6 +129,7 @@ class ArcGISMarkerRenderer(
                                 it.attributes["id"] = params.state.id
                                 it.attributes[BASE_HEIGHT_KEY] = height
                                 it.attributes[BASE_OFFSET_Y_KEY] = anchorY.toFloat()
+                                ArcGISGraphicsZIndex.apply(it, params.state.zIndex)
                             }
                         return@map marker
                     }.also {
@@ -206,6 +208,7 @@ class ArcGISMarkerRenderer(
                     marker.geometry = GeoPoint.from(params.current.state.position).toViewPoint()
                     // Always set visibility explicitly like Google Maps (remove conditional check)
                     marker.isVisible = params.current.visible
+                    ArcGISGraphicsZIndex.apply(marker, params.current.state.zIndex)
 
                     // ArcGISはマーカーを再作成しなくてよいので、同じマーカーのインスタンスを返す
                     marker
