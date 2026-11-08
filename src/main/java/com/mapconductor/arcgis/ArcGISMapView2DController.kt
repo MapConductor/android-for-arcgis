@@ -250,6 +250,8 @@ class ArcGISMapView2DController(
         polygonController.clear()
         circleController.clear()
         rasterLayerController.clear()
+        // 拡張モジュール（クラスタリングなど）が登録した Strategy のマーカーも消す。
+        clearStrategyMarkerControllers()
     }
 
     @Deprecated("Use CircleState.onClick instead.")
