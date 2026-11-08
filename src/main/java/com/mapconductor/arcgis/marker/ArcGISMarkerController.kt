@@ -1,6 +1,7 @@
 package com.mapconductor.arcgis.marker
 
 import com.mapconductor.arcgis.ArcGISActualMarker
+import com.mapconductor.arcgis.finishEvenIfCancelled
 import com.mapconductor.core.controller.OnCameraChangeReceiverInterface
 import com.mapconductor.core.map.MapCameraPosition
 import com.mapconductor.core.marker.AbstractMarkerController
@@ -89,7 +90,10 @@ class ArcGISMarkerController(
         rasterLayerCallback = callback
     }
 
-    override suspend fun add(data: List<MarkerState>) {
+    /** 取り消されても最後まで（[finishEvenIfCancelled]）。 */
+    override suspend fun add(data: List<MarkerState>) = finishEvenIfCancelled { addNow(data) }
+
+    private suspend fun addNow(data: List<MarkerState>) {
         // ingest はタイル担当 entity を marker = null で登録し直すので、先に昇格を戻す。
         // semaphore は再入不可なので withPermit の外で呼ぶこと。
         viewportSwitch.retract()
