@@ -3,7 +3,7 @@ package com.mapconductor.arcgis
 import com.arcgismaps.mapping.layers.Layer
 import com.mapconductor.core.controller.OverlayKind
 import com.mapconductor.core.controller.OverlayStacking
-import java.util.WeakHashMap
+import java.lang.ref.WeakReference
 
 /**
  * 重なり順（[OverlayStacking]）。ArcGIS では:
@@ -18,7 +18,7 @@ import java.util.WeakHashMap
  * 下になる（SDK の制約。マーカーの帯には置けない）。operational layer の中では一番上に置く。
  */
 internal object ArcGISOverlayStacking {
-    private val keys = WeakHashMap<Layer, OverlayStacking.Key>()
+    private val keys = IdentityWeakTable<Layer, OverlayStacking.Key>()
 
     /** マーカーのタイル: operational layer の中で一番上。 */
     val MARKER_TILE = OverlayStacking.Key(OverlayKind.Marker, Int.MIN_VALUE)
@@ -36,7 +36,7 @@ internal object ArcGISOverlayStacking {
     ) {
         val before =
             synchronized(keys) {
-                keys[layer] = key
+                keys.put(layer, key)
                 OverlayStacking.insertBefore(layers.toList(), key) { keys[it] }
             }
         val index = before?.let { layers.indexOf(it) } ?: -1
@@ -48,6 +48,30 @@ internal object ArcGISOverlayStacking {
         old: Layer,
         new: Layer,
     ) {
-        synchronized(keys) { keys[old]?.let { keys[new] = it } }
+        synchronized(keys) { keys[old]?.let { keys.put(new, it) } }
     }
+}
+
+/**
+ * 層 → 値の表。**同一性（===）で引き**、層は弱参照で持つ。
+ *
+ * 以前は `WeakHashMap<Layer, …>` だったが、ArcGIS の `Layer` は `equals` / `hashCode` を
+ * 上書きしていて、載せた後に同じ層を引いても見つからないことがあった（3D で、GroundImage を
+ * 先に載せてからラスターを足すと、GroundImage の鍵が引けずにラスターが一番上に積まれた）。
+ * 層の数は高々数十なので線形探索でよい。呼び出し側で同期する。
+ */
+internal class IdentityWeakTable<K : Any, V : Any> {
+    private val entries = ArrayList<Pair<WeakReference<K>, V>>()
+
+    operator fun get(key: K): V? = entries.firstOrNull { it.first.get() === key }?.second
+
+    fun put(
+        key: K,
+        value: V,
+    ) {
+        entries.removeAll { it.first.get().let { k -> k == null || k === key } }
+        entries.add(WeakReference(key) to value)
+    }
+
+    val size: Int get() = entries.count { it.first.get() != null }
 }

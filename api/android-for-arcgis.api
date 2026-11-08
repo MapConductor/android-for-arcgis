@@ -347,6 +347,12 @@ public final class com.mapconductor.arcgis.GeoPointKt {
 public final class com.mapconductor.arcgis.GeoRectBoundsKt {
   public static final com.arcgismaps.geometry.Envelope toEnvelope(com.mapconductor.core.features.GeoRectBounds);
 }
+public final class com.mapconductor.arcgis.IdentityWeakTable<K, V> {
+  public com.mapconductor.arcgis.IdentityWeakTable();
+  public final V get(K);
+  public final void put(K, V);
+  public final int getSize();
+}
 public final class com.mapconductor.arcgis.MapCameraPositionKt {
   public static final double EARTH_MEAN_RADIUS_METERS;
   public static final double DEFAULT_MAX_GMAPS_TILT;
