@@ -348,7 +348,7 @@ fun ArcGISMapView(
                         destroy()
                     }
                     controllerRef.value = null
-                    state.clearController()
+                    // MapViewBase detaches it from the state once the map is gone.
                 }
             }
         },

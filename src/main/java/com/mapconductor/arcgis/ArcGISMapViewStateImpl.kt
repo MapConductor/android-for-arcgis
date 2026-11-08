@@ -33,7 +33,10 @@ class ArcGISMapViewState(
     private val _padding = MutableStateFlow(MapPaddings.Zeros)
     val padding: StateFlow<MapPaddingsInterface> = _padding.asStateFlow()
 
-    private var controller: ArcGISMapViewControllerInterface? = null
+    // Read through the base so that letting go of the controller there (MapViewBase
+    // does it when the map is torn down) leaves nothing behind here.
+    private val controller: ArcGISMapViewControllerInterface?
+        get() = attachedMapController as? ArcGISMapViewControllerInterface
     private var _mapDesignType: ArcGISDesignTypeInterface = mapDesignType
 
     override var mapDesignType: ArcGISDesignTypeInterface
@@ -44,17 +47,11 @@ class ArcGISMapViewState(
         get() = _mapDesignType
 
     internal fun setController(controller: ArcGISMapViewControllerInterface) {
-        this.controller = controller
         attachController(controller, moveToInitialCamera = false)
         // setMapDesignType is intentionally omitted here: the Scene was already created
         // with the correct basemap style in holderProvider. Replacing the Basemap while
         // the Scene is loading causes viewpointChanged to fire with zoom~0, overwriting
         // the intended initial camera position.
-    }
-
-    internal fun clearController() {
-        this.controller = null
-        detachController()
     }
 
     internal fun onMapDesignTypeChange(value: ArcGISDesignTypeInterface) {
