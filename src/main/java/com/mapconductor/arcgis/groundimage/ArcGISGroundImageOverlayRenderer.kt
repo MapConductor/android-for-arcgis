@@ -8,6 +8,8 @@ import com.arcgismaps.mapping.layers.TileImageFormat
 import com.arcgismaps.mapping.layers.TileInfo
 import com.arcgismaps.mapping.layers.WebTiledLayer
 import com.mapconductor.arcgis.ArcGISGeoViewHolder
+import com.mapconductor.arcgis.ArcGISOverlayStacking
+import com.mapconductor.core.controller.OverlayKind
 import com.mapconductor.core.groundimage.AbstractGroundImageOverlayRenderer
 import com.mapconductor.core.groundimage.GroundImageEntityInterface
 import com.mapconductor.core.groundimage.GroundImageState
@@ -53,7 +55,8 @@ class ArcGISGroundImageOverlayRenderer(
                 return@withContext null
             }
             updateLayer(handle.layer, state)
-            operationalLayers.add(handle.layer)
+            // GroundImage の帯（ラスターの上）。GraphicsOverlay（ポリゴン等）は常にこの上。
+            ArcGISOverlayStacking.add(operationalLayers, handle.layer, ArcGISOverlayStacking.key(OverlayKind.GroundImage))
             handle
         }
 
@@ -112,7 +115,11 @@ class ArcGISGroundImageOverlayRenderer(
 
             // Swap layers to ensure cache busting via generation query.
             operationalLayers.remove(groundImage.layer)
-            operationalLayers.add(nextHandle.layer)
+            ArcGISOverlayStacking.add(
+                operationalLayers,
+                nextHandle.layer,
+                ArcGISOverlayStacking.key(OverlayKind.GroundImage),
+            )
             updateLayer(nextHandle.layer, current.state)
             nextHandle
         }

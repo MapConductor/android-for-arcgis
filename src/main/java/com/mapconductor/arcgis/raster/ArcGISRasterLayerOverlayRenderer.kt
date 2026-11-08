@@ -11,6 +11,8 @@ import com.arcgismaps.mapping.layers.TileInfo
 import com.arcgismaps.mapping.layers.WebTiledLayer
 import com.mapconductor.arcgis.ArcGISGeoViewHolder
 import com.mapconductor.arcgis.ArcGISMapViewHolder
+import com.mapconductor.arcgis.ArcGISOverlayStacking
+import com.mapconductor.core.controller.OverlayKind
 import com.mapconductor.core.projection.WEB_MERCATOR_MAX_EXTENT_METERS
 import com.mapconductor.core.raster.RasterHeaderRuleSet
 import com.mapconductor.core.raster.RasterLayerEntityInterface
@@ -174,7 +176,16 @@ class ArcGISRasterLayerOverlayRenderer(
 
         // Add to scene only after successful initialization
         updateLayer(layer, state)
-        operationalLayers.add(layer)
+        // ラスターの帯（GroundImage の下）。マーカーのタイルは operational layer の一番上。
+        ArcGISOverlayStacking.add(
+            operationalLayers,
+            layer,
+            if (state.id.startsWith(MARKER_TILE_PREFIX)) {
+                ArcGISOverlayStacking.MARKER_TILE
+            } else {
+                ArcGISOverlayStacking.key(OverlayKind.RasterLayer, state.zIndex)
+            },
+        )
         localRouteOf(state)?.let { routeId ->
             if (isSceneView) {
                 localRoutes[layer] = routeId
@@ -223,6 +234,7 @@ class ArcGISRasterLayerOverlayRenderer(
         }
         updateLayer(layer, state)
         val index = operationalLayers.indexOf(entity.layer)
+        ArcGISOverlayStacking.inherit(entity.layer, layer)
         if (index >= 0) operationalLayers.add(index + 1, layer) else operationalLayers.add(layer)
         localRouteOf(state)?.let { routeId ->
             if (isSceneView) {
@@ -351,6 +363,8 @@ class ArcGISRasterLayerOverlayRenderer(
         )
 
     companion object {
+        /** マーカーのタイルのラスターの id の頭（ArcGISMapViewController と同じ）。 */
+        private const val MARKER_TILE_PREFIX = "marker-tile-"
         private const val WEB_MERCATOR_WKID = 3857
         private const val WEB_MERCATOR_MAX = WEB_MERCATOR_MAX_EXTENT_METERS
         private const val WEB_MERCATOR_MIN = -WEB_MERCATOR_MAX
