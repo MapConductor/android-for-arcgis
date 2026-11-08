@@ -89,8 +89,10 @@ class ArcGISMapView2DController(
 
     init {
         holder.map.graphicsOverlays.clear()
-        holder.map.graphicsOverlays.add(circleController.renderer.circleLayer)
+        // 重なり順（下から）: ポリゴン < サークル < ポリライン < マーカー。
+        // ラスターと GroundImage は operational layer で、GraphicsOverlay はすべてその上に描かれる。
         holder.map.graphicsOverlays.add(polygonController.renderer.polygonLayer)
+        holder.map.graphicsOverlays.add(circleController.renderer.circleLayer)
         holder.map.graphicsOverlays.add(polylineController.renderer.polylineLayer)
         holder.map.graphicsOverlays.add((markerController.renderer as ArcGISMarkerRenderer).markerLayer)
         setupListeners()

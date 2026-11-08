@@ -328,6 +328,13 @@ public final class com.mapconductor.arcgis.ArcGISMapViewStateImplKt {
 }
 public interface com.mapconductor.arcgis.ArcGISMapViewStateInterface extends com.mapconductor.core.map.MapViewStateInterface<com.mapconductor.arcgis.ArcGISDesignTypeInterface> {
 }
+public final class com.mapconductor.arcgis.ArcGISOverlayStacking {
+  public static final com.mapconductor.arcgis.ArcGISOverlayStacking INSTANCE;
+  public final com.mapconductor.core.controller.OverlayStacking$Key getMARKER_TILE();
+  public final com.mapconductor.core.controller.OverlayStacking$Key key(com.mapconductor.core.controller.OverlayKind, int);
+  public final void add(java.util.List<com.arcgismaps.mapping.layers.Layer>, com.arcgismaps.mapping.layers.Layer, com.mapconductor.core.controller.OverlayStacking$Key);
+  public final void inherit(com.arcgismaps.mapping.layers.Layer, com.arcgismaps.mapping.layers.Layer);
+}
 public final class com.mapconductor.arcgis.ArcGISTypeAliasKt {
 }
 public final class com.mapconductor.arcgis.GeoPointKt {
