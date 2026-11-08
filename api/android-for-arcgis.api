@@ -113,8 +113,18 @@ public final class com.mapconductor.arcgis.ArcGISGeoViewHolder$DefaultImpls {
   public static <ActualMapView extends android.widget.FrameLayout, ActualMap extends com.arcgismaps.mapping.view.GeoView> com.mapconductor.core.features.GeoPoint fromScreenOffsetSync-k-4lQ0M(com.mapconductor.arcgis.ArcGISGeoViewHolder<ActualMapView, ActualMap>, long);
 }
 public final class com.mapconductor.arcgis.ArcGISGraphicsZIndex {
-  public static final com.mapconductor.arcgis.ArcGISGraphicsZIndex INSTANCE;
-  public final void apply(com.arcgismaps.mapping.view.Graphic, java.lang.Integer);
+  public com.mapconductor.arcgis.ArcGISGraphicsZIndex();
+  public final synchronized void place(com.arcgismaps.mapping.view.Graphic, java.lang.Integer);
+  public final synchronized void forget(com.arcgismaps.mapping.view.Graphic);
+  public final synchronized int getSize();
+}
+final class com.mapconductor.arcgis.ArcGISGraphicsZIndex$Entry {
+  public final com.arcgismaps.mapping.view.Graphic getGraphic();
+  public final int getZIndex();
+  public final void setZIndex(int);
+  public final long getSeq();
+  public final int getRank();
+  public final void setRank(int);
 }
 public final class com.mapconductor.arcgis.ArcGISMapView2DController extends com.mapconductor.core.controller.BaseMapViewController implements com.mapconductor.arcgis.ArcGISMapViewControllerInterface {
   public static final com.mapconductor.arcgis.ArcGISMapView2DController$Companion Companion;

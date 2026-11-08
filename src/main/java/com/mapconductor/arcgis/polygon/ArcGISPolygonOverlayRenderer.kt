@@ -32,6 +32,8 @@ class ArcGISPolygonOverlayRenderer(
     override val holder: ArcGISGeoViewHolder<*, *>,
     override val coroutine: CoroutineScope = CoroutineScope(Dispatchers.Main),
 ) : AbstractPolygonOverlayRenderer<ArcGISActualPolygon>() {
+    private val stackOrder = ArcGISGraphicsZIndex()
+
     override suspend fun createPolygon(state: PolygonState): ArcGISActualPolygon? =
         withContext(coroutine.coroutineContext) {
             val resolved = resolveHoles(state)
@@ -53,9 +55,9 @@ class ArcGISPolygonOverlayRenderer(
             val graphic =
                 Graphic(geometry, fillSymbol).also {
                     it.attributes.set("id", state.id)
-                    ArcGISGraphicsZIndex.apply(it, state.zIndex)
                 }
 
+            stackOrder.place(graphic, state.zIndex)
             polygonLayer.graphics.add(graphic)
             graphic
         }
@@ -91,7 +93,7 @@ class ArcGISPolygonOverlayRenderer(
                 }
             }
             if (finger.zIndex != prevFinger.zIndex) {
-                ArcGISGraphicsZIndex.apply(current.polygon, current.state.zIndex)
+                stackOrder.place(current.polygon, current.state.zIndex)
             }
             polygon
         }
@@ -102,6 +104,7 @@ class ArcGISPolygonOverlayRenderer(
         // of rebuilding the whole graphics list.
         coroutine.launch {
             polygonLayer.graphics.remove(entity.polygon)
+            stackOrder.forget(entity.polygon)
         }
     }
 

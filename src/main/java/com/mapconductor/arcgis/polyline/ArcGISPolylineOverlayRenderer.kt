@@ -32,6 +32,8 @@ class ArcGISPolylineOverlayRenderer(
     // 頂点の補間だけは重いので Default で計算する。
     override val coroutine: CoroutineScope = CoroutineScope(Dispatchers.Main),
 ) : AbstractPolylineOverlayRenderer<ArcGISActualPolyline>() {
+    private val stackOrder = ArcGISGraphicsZIndex()
+
     override suspend fun createPolyline(state: PolylineState): ArcGISActualPolyline? =
         withContext(coroutine.coroutineContext) {
             val geometry = withContext(Dispatchers.Default) { createGeometry(state) }
@@ -46,8 +48,8 @@ class ArcGISPolylineOverlayRenderer(
             val graphic =
                 Graphic(geometry, lineSymbol).also {
                     it.attributes.set("id", state.id)
-                    ArcGISGraphicsZIndex.apply(it, state.zIndex)
                 }
+            stackOrder.place(graphic, state.zIndex)
 
             polylineLayer.graphics.add(graphic)
             graphic
@@ -75,7 +77,7 @@ class ArcGISPolylineOverlayRenderer(
                 }
             }
             if (finger.zIndex != prevFinger.zIndex) {
-                ArcGISGraphicsZIndex.apply(polyline, current.state.zIndex)
+                stackOrder.place(polyline, current.state.zIndex)
             }
 
             polyline
@@ -84,6 +86,7 @@ class ArcGISPolylineOverlayRenderer(
     override suspend fun removePolyline(entity: PolylineEntityInterface<ArcGISActualPolyline>) {
         coroutine.launch {
             polylineLayer.graphics.remove(entity.polyline)
+            stackOrder.forget(entity.polyline)
         }
     }
 
