@@ -14,6 +14,7 @@ import com.mapconductor.arcgis.ArcGISActualPolygon
 import com.mapconductor.arcgis.ArcGISGeoViewHolder
 import com.mapconductor.arcgis.toArcGISColor
 import com.mapconductor.core.features.GeoPointInterface
+import com.mapconductor.core.geometry.closeRing
 import com.mapconductor.core.polygon.AbstractPolygonOverlayRenderer
 import com.mapconductor.core.polygon.PolygonEntityInterface
 import com.mapconductor.core.polygon.PolygonState
@@ -155,11 +156,14 @@ class ArcGISPolygonOverlayRenderer(
             }
         }
 
+        // リングは閉じてから密度化する。開いたまま渡すと閉じる辺（末尾 → 先頭）が補間されず、
+        // geodesic では直線の弦に、非 geodesic では ArcGIS の測地線の辺になる（他の辺と形が揃わない）。
+        // react-for-arcgis と同じ（closeRing してから密度化し、最後に openRing で開く）。
         val outer: List<GeoPointInterface> =
-            openRing(toRing(state.points, state.geodesic)).let(::ensureClockwise)
+            openRing(toRing(closeRing(state.points), state.geodesic)).let(::ensureClockwise)
         val holes: List<List<GeoPointInterface>> =
             state.holes
-                .map { ring -> openRing(toRing(ring, state.geodesic)).let(::ensureCounterClockwise) }
+                .map { ring -> openRing(toRing(closeRing(ring), state.geodesic)).let(::ensureCounterClockwise) }
                 .filter { it.size >= 3 }
 
         val spatialReference = SpatialReference.wgs84()
