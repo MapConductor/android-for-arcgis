@@ -361,6 +361,13 @@ public final class com.mapconductor.arcgis.MapCameraPositionKt {
   public static final com.arcgismaps.mapping.view.Camera withZoomLevel(com.arcgismaps.mapping.view.Camera, double);
   public static final com.mapconductor.core.map.MapCameraPosition toMapCameraPosition(com.arcgismaps.mapping.view.Camera);
 }
+public final class com.mapconductor.arcgis.WebMercatorTileLevels {
+  public static final com.mapconductor.arcgis.WebMercatorTileLevels INSTANCE;
+  public static final int DEFAULT_DPI;
+  public final double unifiedZoomForLevel(int, int);
+  public final double resolution(int, int);
+  public final double scale(double);
+}
 public final class com.mapconductor.arcgis.WrapMapView extends android.widget.FrameLayout {
   public static final com.mapconductor.arcgis.WrapMapView$Companion Companion;
   public com.arcgismaps.mapping.view.MapView arcGISMapView;
