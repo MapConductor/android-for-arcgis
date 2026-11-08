@@ -347,6 +347,12 @@ public final class com.mapconductor.arcgis.GeoPointKt {
 public final class com.mapconductor.arcgis.GeoRectBoundsKt {
   public static final com.arcgismaps.geometry.Envelope toEnvelope(com.mapconductor.core.features.GeoRectBounds);
 }
+public final class com.mapconductor.arcgis.IdentityWeakTable<K, V> {
+  public com.mapconductor.arcgis.IdentityWeakTable();
+  public final V get(K);
+  public final void put(K, V);
+  public final int getSize();
+}
 public final class com.mapconductor.arcgis.MapCameraPositionKt {
   public static final double EARTH_MEAN_RADIUS_METERS;
   public static final double DEFAULT_MAX_GMAPS_TILT;
@@ -360,6 +366,13 @@ public final class com.mapconductor.arcgis.MapCameraPositionKt {
   public static final double getZoomLevel(com.arcgismaps.mapping.view.Camera);
   public static final com.arcgismaps.mapping.view.Camera withZoomLevel(com.arcgismaps.mapping.view.Camera, double);
   public static final com.mapconductor.core.map.MapCameraPosition toMapCameraPosition(com.arcgismaps.mapping.view.Camera);
+}
+public final class com.mapconductor.arcgis.WebMercatorTileLevels {
+  public static final com.mapconductor.arcgis.WebMercatorTileLevels INSTANCE;
+  public static final int DEFAULT_DPI;
+  public final double unifiedZoomForLevel(int, int);
+  public final double resolution(int, int);
+  public final double scale(double);
 }
 public final class com.mapconductor.arcgis.WrapMapView extends android.widget.FrameLayout {
   public static final com.mapconductor.arcgis.WrapMapView$Companion Companion;

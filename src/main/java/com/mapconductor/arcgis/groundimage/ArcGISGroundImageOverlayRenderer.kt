@@ -9,16 +9,14 @@ import com.arcgismaps.mapping.layers.TileInfo
 import com.arcgismaps.mapping.layers.WebTiledLayer
 import com.mapconductor.arcgis.ArcGISGeoViewHolder
 import com.mapconductor.arcgis.ArcGISOverlayStacking
+import com.mapconductor.arcgis.WebMercatorTileLevels
 import com.mapconductor.core.controller.OverlayKind
 import com.mapconductor.core.groundimage.AbstractGroundImageOverlayRenderer
 import com.mapconductor.core.groundimage.GroundImageEntityInterface
 import com.mapconductor.core.groundimage.GroundImageState
 import com.mapconductor.core.groundimage.GroundImageTileProvider
-import com.mapconductor.core.projection.Earth
 import com.mapconductor.core.projection.WEB_MERCATOR_MAX_EXTENT_METERS
 import com.mapconductor.core.tileserver.LocalTileServer
-import kotlin.math.PI
-import kotlin.math.pow
 import android.util.Log
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -168,7 +166,7 @@ class ArcGISGroundImageOverlayRenderer(
     private fun buildWebMercatorTileInfo(tileSize: Int): TileInfo {
         val spatialReference = SpatialReference(WEB_MERCATOR_WKID)
         val origin = Point(WEB_MERCATOR_MIN, WEB_MERCATOR_MAX, spatialReference)
-        val levels = buildWebMercatorLevels(resolveLodReferenceTileSize(tileSize))
+        val levels = buildWebMercatorLevels(tileSize)
         return TileInfo(
             DEFAULT_DPI,
             TileImageFormat.Png,
@@ -180,22 +178,14 @@ class ArcGISGroundImageOverlayRenderer(
         )
     }
 
-    private fun buildWebMercatorLevels(tileSize: Int): List<LevelOfDetail> {
-        val initialResolution =
-            (2.0 * PI * WEB_MERCATOR_RADIUS_METERS) / tileSize.toDouble()
-        val levels = mutableListOf<LevelOfDetail>()
-        for (level in MIN_ZOOM..MAX_ZOOM) {
-            val resolution = initialResolution / 2.0.pow(level.toDouble())
-            val scale = resolution * DEFAULT_DPI * INCHES_PER_METER
-            levels.add(LevelOfDetail(level, resolution, scale))
-        }
-        return levels
-    }
-
-    private fun resolveLodReferenceTileSize(tileSize: Int): Int =
-        when (tileSize) {
-            512 -> 256
-            else -> tileSize
+    // 梯子はラスターと同じもの（[WebMercatorTileLevels]）を使う。以前は 512 のときだけ
+    // 256 基準へ読み替えていて、ArcGIS 300 では level L に L-1 の格子の (x, y) を付けて
+    // 要求された。GroundImageTileProvider はそれを素直に z=L として描くので、どのタイルも
+    // 画像の外になり透明だった。
+    private fun buildWebMercatorLevels(tileSize: Int): List<LevelOfDetail> =
+        (MIN_ZOOM..MAX_ZOOM).map { level ->
+            val resolution = WebMercatorTileLevels.resolution(level, tileSize)
+            LevelOfDetail(level, resolution, WebMercatorTileLevels.scale(resolution))
         }
 
     private fun buildWebMercatorExtent(): Envelope =
@@ -232,11 +222,9 @@ class ArcGISGroundImageOverlayRenderer(
 
     companion object {
         private const val WEB_MERCATOR_WKID = 3857
-        private const val WEB_MERCATOR_RADIUS_METERS = Earth.RADIUS_METERS
         private const val WEB_MERCATOR_MAX = WEB_MERCATOR_MAX_EXTENT_METERS
         private const val WEB_MERCATOR_MIN = -WEB_MERCATOR_MAX
-        private const val DEFAULT_DPI = 96
-        private const val INCHES_PER_METER = 39.37
+        private const val DEFAULT_DPI = WebMercatorTileLevels.DEFAULT_DPI
         private const val MIN_ZOOM = 0
         private const val MAX_ZOOM = 22
     }
