@@ -15,6 +15,7 @@ import com.mapconductor.arcgis.ArcGISOverlayStacking
 import com.mapconductor.arcgis.WebMercatorTileLevels
 import com.mapconductor.core.controller.OverlayKind
 import com.mapconductor.core.polygon.POLYGON_TILE_LAYER_ID
+import com.mapconductor.core.polyline.POLYLINE_TILE_LAYER_ID
 import com.mapconductor.core.projection.WEB_MERCATOR_MAX_EXTENT_METERS
 import com.mapconductor.core.raster.RasterHeaderRuleSet
 import com.mapconductor.core.raster.RasterLayerEntityInterface
@@ -185,6 +186,8 @@ class ArcGISRasterLayerOverlayRenderer(
                 ArcGISOverlayStacking.MARKER_TILE
             } else if (state.id == POLYGON_TILE_LAYER_ID) {
                 ArcGISOverlayStacking.POLYGON_TILE
+            } else if (state.id == POLYLINE_TILE_LAYER_ID) {
+                ArcGISOverlayStacking.POLYLINE_TILE
             } else {
                 ArcGISOverlayStacking.key(OverlayKind.RasterLayer, state.zIndex)
             },
