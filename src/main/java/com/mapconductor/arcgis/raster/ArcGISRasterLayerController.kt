@@ -1,15 +1,20 @@
 package com.mapconductor.arcgis.raster
 
 import com.arcgismaps.mapping.layers.Layer
+import com.mapconductor.arcgis.finishEvenIfCancelled
 import com.mapconductor.core.raster.RasterLayerController
 import com.mapconductor.core.raster.RasterLayerEntity
 import com.mapconductor.core.raster.RasterLayerManager
 import com.mapconductor.core.raster.RasterLayerManagerInterface
+import com.mapconductor.core.raster.RasterLayerState
 
 class ArcGISRasterLayerController(
     rasterLayerManager: RasterLayerManagerInterface<Layer> = RasterLayerManager(),
     override val renderer: ArcGISRasterLayerOverlayRenderer,
 ) : RasterLayerController<Layer>(rasterLayerManager, renderer) {
+    /** 取り消されても最後まで（[finishEvenIfCancelled]）。 */
+    override suspend fun add(data: List<RasterLayerState>) = finishEvenIfCancelled { super.add(data) }
+
     /**
      * Builds the in-process layers again, so ArcGIS drops the tiles it holds
      * for them. Wanted after the camera settles on a level that was answered

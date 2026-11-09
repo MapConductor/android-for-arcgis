@@ -11,6 +11,9 @@ import com.arcgismaps.mapping.layers.TileInfo
 import com.arcgismaps.mapping.layers.WebTiledLayer
 import com.mapconductor.arcgis.ArcGISGeoViewHolder
 import com.mapconductor.arcgis.ArcGISMapViewHolder
+import com.mapconductor.arcgis.ArcGISOverlayStacking
+import com.mapconductor.arcgis.WebMercatorTileLevels
+import com.mapconductor.core.controller.OverlayKind
 import com.mapconductor.core.projection.WEB_MERCATOR_MAX_EXTENT_METERS
 import com.mapconductor.core.raster.RasterHeaderRuleSet
 import com.mapconductor.core.raster.RasterLayerEntityInterface
@@ -20,8 +23,6 @@ import com.mapconductor.core.raster.RasterLayerState
 import com.mapconductor.core.raster.TileScheme
 import com.mapconductor.core.tileserver.TileServerRegistry
 import com.mapconductor.core.zoom.AbstractZoomAltitudeConverter
-import kotlin.math.log2
-import kotlin.math.pow
 import android.util.Log
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -174,7 +175,16 @@ class ArcGISRasterLayerOverlayRenderer(
 
         // Add to scene only after successful initialization
         updateLayer(layer, state)
-        operationalLayers.add(layer)
+        // ラスターの帯（GroundImage の下）。マーカーのタイルは operational layer の一番上。
+        ArcGISOverlayStacking.add(
+            operationalLayers,
+            layer,
+            if (state.id.startsWith(MARKER_TILE_PREFIX)) {
+                ArcGISOverlayStacking.MARKER_TILE
+            } else {
+                ArcGISOverlayStacking.key(OverlayKind.RasterLayer, state.zIndex)
+            },
+        )
         localRouteOf(state)?.let { routeId ->
             if (isSceneView) {
                 localRoutes[layer] = routeId
@@ -223,6 +233,7 @@ class ArcGISRasterLayerOverlayRenderer(
         }
         updateLayer(layer, state)
         val index = operationalLayers.indexOf(entity.layer)
+        ArcGISOverlayStacking.inherit(entity.layer, layer)
         if (index >= 0) operationalLayers.add(index + 1, layer) else operationalLayers.add(layer)
         localRouteOf(state)?.let { routeId ->
             if (isSceneView) {
@@ -303,7 +314,7 @@ class ArcGISRasterLayerOverlayRenderer(
      * 512px のタイルは 1 枚で 256px タイル 2 枚ぶんを覆うので、level `z` は統一ズーム
      * `z + 1` に対応する（コアの `WebMercatorZoomAltitudeConverter` が言う
      * `zoomOffset`。MapLibre / Mapbox / MapTiler が 1.0、Google / MapKit が 0.0）。
-     * その対応を [unifiedZoomForLevel] に書き下しておけば、解像度も縮尺も
+     * その対応を [WebMercatorTileLevels.unifiedZoomForLevel] に書き下しておけば、解像度も縮尺も
      * 「統一ズームいくつのときにこの level を引くか」から一意に決まる。
      *
      * 自前で `2πR / tileSize` と DPI を掛け合わせても同じ数にはなるが、どの物差しに
@@ -317,10 +328,7 @@ class ArcGISRasterLayerOverlayRenderer(
     ): List<LevelOfDetail> {
         val levels = mutableListOf<LevelOfDetail>()
         for (level in minZoom..maxZoom) {
-            val unifiedZoom = unifiedZoomForLevel(level, tileSize)
-            val resolution =
-                AbstractZoomAltitudeConverter.WEB_MERCATOR_INITIAL_MPP_256 /
-                    2.0.pow(unifiedZoom)
+            val resolution = WebMercatorTileLevels.resolution(level, tileSize)
             // 縮尺の分母。2D の MapView はこの梯子を見て level を選ぶので、
             // 解像度と同じ比率で刻んでいないと 1 段ずれる。
             //
@@ -329,17 +337,11 @@ class ArcGISRasterLayerOverlayRenderer(
             // かった（統一ズーム 6.5 で z=7 のまま）。SceneView は自前の
             // 「タイルは 256px」という梯子で選ぶ。解像度のほうは見ているので、
             // タイルの位置は申告どおりに決まる。
-            val scale = resolution * DEFAULT_DPI * INCHES_PER_METER
+            val scale = WebMercatorTileLevels.scale(resolution)
             levels.add(LevelOfDetail(level, resolution, scale))
         }
         return levels
     }
-
-    /** この level のタイルを引くべき統一ズーム。256px なら level そのもの。 */
-    private fun unifiedZoomForLevel(
-        level: Int,
-        tileSize: Int,
-    ): Double = level + log2(tileSize.toDouble() / UNIFIED_TILE_SIZE)
 
     private fun buildWebMercatorExtent(): Envelope =
         Envelope(
@@ -351,14 +353,12 @@ class ArcGISRasterLayerOverlayRenderer(
         )
 
     companion object {
+        /** マーカーのタイルのラスターの id の頭（ArcGISMapViewController と同じ）。 */
+        private const val MARKER_TILE_PREFIX = "marker-tile-"
         private const val WEB_MERCATOR_WKID = 3857
         private const val WEB_MERCATOR_MAX = WEB_MERCATOR_MAX_EXTENT_METERS
         private const val WEB_MERCATOR_MIN = -WEB_MERCATOR_MAX
-        private const val DEFAULT_DPI = 96
-        private const val INCHES_PER_METER = 39.37
-
-        /** 統一ズームが基準にしているタイルの一辺（Google 準拠の 256px）。 */
-        private const val UNIFIED_TILE_SIZE = 256.0
+        private const val DEFAULT_DPI = WebMercatorTileLevels.DEFAULT_DPI
         private const val DEFAULT_MIN_ZOOM = 0
         private const val DEFAULT_MAX_ZOOM = 22
     }

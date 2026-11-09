@@ -8,6 +8,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.node.Ref
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.compose.LocalLifecycleOwner
+import androidx.lifecycle.findViewTreeLifecycleOwner
+import androidx.lifecycle.setViewTreeLifecycleOwner
 import com.arcgismaps.ApiKey
 import com.arcgismaps.ArcGISEnvironment
 import com.arcgismaps.LoadStatus
@@ -31,6 +33,7 @@ import com.mapconductor.arcgis.polyline.ArcGISPolylineOverlayRenderer
 import com.mapconductor.arcgis.raster.ArcGISRasterLayerController
 import com.mapconductor.arcgis.raster.ArcGISRasterLayerOverlayRenderer
 import com.mapconductor.compose.map.MapViewBase
+import com.mapconductor.compose.map.MapViewLifecycleOwner
 import com.mapconductor.core.OnCameraMoveHandler
 import com.mapconductor.core.OnMapEventHandler
 import com.mapconductor.core.OnMapLoadedHandler
@@ -107,8 +110,14 @@ fun ArcGISMapView(
             wrapView.sceneView = sceneView
             // Ensure lifecycle owner is set before the view is attached/drawn
             // to avoid GeoView.lifeCycleOwner UninitializedPropertyAccessException
-            sceneView.onCreate(owner)
-            sceneView.onResume(owner)
+            // The GeoView runs its touch flows in the given owner's lifecycleScope
+            // and keeps them until that lifecycle ends. Given the Activity's, every
+            // GeoView the user switched away from would stay until the Activity
+            // goes, so it gets a lifecycle of its own, ended in onDestroyMapView.
+            val viewOwner = MapViewLifecycleOwner(owner.lifecycle)
+            wrapView.setViewTreeLifecycleOwner(viewOwner)
+            sceneView.onCreate(viewOwner)
+            sceneView.onResume(viewOwner)
             wrapView
         },
         scope = scope,
@@ -321,7 +330,7 @@ fun ArcGISMapView(
             sdkInitialize?.invoke(context) ?: defaultArcGISInitialize(context)
         },
         onMapLoaded = onMapLoaded,
-        customDisposableEffect = { _, holderRef ->
+        customDisposableEffect = { _, _ ->
             DisposableEffect(state.id) {
                 onDispose {
                     // Invalidate any pending `post { ... }` work that captured older controllers.
@@ -339,14 +348,19 @@ fun ArcGISMapView(
                         destroy()
                     }
                     controllerRef.value = null
-                    state.clearController()
-                    holderRef.value?.mapView?.apply {
-                        onPause(owner)
-                        onStop(owner)
-                        onDestroy(owner)
-                    }
+                    // MapViewBase detaches it from the state once the map is gone.
                 }
             }
+        },
+        // Created resumed in viewProvider. Released by MapViewBase after the
+        // controller, also when the map goes before its holder exists.
+        onDestroyMapView = { wrapView ->
+            val viewOwner = wrapView.findViewTreeLifecycleOwner() as? MapViewLifecycleOwner
+            val geoViewOwner = viewOwner ?: owner
+            wrapView.onPause(geoViewOwner)
+            wrapView.onStop(geoViewOwner)
+            wrapView.onDestroy(geoViewOwner)
+            viewOwner?.destroy()
         },
         style = style,
         onStyleDiagnostics = onStyleDiagnostics,
