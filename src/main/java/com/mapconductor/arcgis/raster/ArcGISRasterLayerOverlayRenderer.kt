@@ -14,6 +14,7 @@ import com.mapconductor.arcgis.ArcGISMapViewHolder
 import com.mapconductor.arcgis.ArcGISOverlayStacking
 import com.mapconductor.arcgis.WebMercatorTileLevels
 import com.mapconductor.core.controller.OverlayKind
+import com.mapconductor.core.polygon.POLYGON_TILE_LAYER_ID
 import com.mapconductor.core.projection.WEB_MERCATOR_MAX_EXTENT_METERS
 import com.mapconductor.core.raster.RasterHeaderRuleSet
 import com.mapconductor.core.raster.RasterLayerEntityInterface
@@ -176,11 +177,14 @@ class ArcGISRasterLayerOverlayRenderer(
         // Add to scene only after successful initialization
         updateLayer(layer, state)
         // ラスターの帯（GroundImage の下）。マーカーのタイルは operational layer の一番上。
+        // ポリゴンのタイルはポリゴンの帯（GroundImage の上、マーカーのタイルの下）。
         ArcGISOverlayStacking.add(
             operationalLayers,
             layer,
             if (state.id.startsWith(MARKER_TILE_PREFIX)) {
                 ArcGISOverlayStacking.MARKER_TILE
+            } else if (state.id == POLYGON_TILE_LAYER_ID) {
+                ArcGISOverlayStacking.POLYGON_TILE
             } else {
                 ArcGISOverlayStacking.key(OverlayKind.RasterLayer, state.zIndex)
             },
