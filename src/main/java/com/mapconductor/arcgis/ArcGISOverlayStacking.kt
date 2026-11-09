@@ -16,12 +16,17 @@ import java.lang.ref.WeakReference
  *
  * マーカーのタイル（ラスター）も operational layer なので、ポリゴン等の GraphicsOverlay より
  * 下になる（SDK の制約。マーカーの帯には置けない）。operational layer の中では一番上に置く。
+ * ポリゴンのタイルは operational layer の中のポリゴンの帯（GroundImage の上）。GraphicsOverlay の
+ * ポリゴン・サークル・ポリラインはその上に来るので、帯の順どおりになる。
  */
 internal object ArcGISOverlayStacking {
     private val keys = IdentityWeakTable<Layer, OverlayStacking.Key>()
 
     /** マーカーのタイル: operational layer の中で一番上。 */
     val MARKER_TILE = OverlayStacking.Key(OverlayKind.Marker, Int.MIN_VALUE)
+
+    /** ポリゴンのタイル: GroundImage の上、マーカーのタイルの下。 */
+    val POLYGON_TILE = OverlayStacking.Key(OverlayKind.Polygon, Int.MIN_VALUE)
 
     fun key(
         kind: OverlayKind,
