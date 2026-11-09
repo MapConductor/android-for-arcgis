@@ -9,6 +9,7 @@ import com.arcgismaps.mapping.view.Graphic
 import com.arcgismaps.mapping.view.GraphicsOverlay
 import com.mapconductor.arcgis.ArcGISActualMarker
 import com.mapconductor.arcgis.ArcGISGeoViewHolder
+import com.mapconductor.arcgis.ArcGISGraphicsZIndex
 import com.mapconductor.arcgis.WrapMapView
 import com.mapconductor.arcgis.toPoint
 import com.mapconductor.core.ResourceProvider
@@ -33,6 +34,8 @@ class ArcGISMarkerRenderer(
         coroutine = coroutine,
     ) {
     override val supportsAnimationOverlay: Boolean = true
+
+    private val stackOrder = ArcGISGraphicsZIndex()
 
     /**
      * マーカーのアイコンを縦へ引き伸ばす倍率。
@@ -129,6 +132,7 @@ class ArcGISMarkerRenderer(
                                 it.attributes[BASE_HEIGHT_KEY] = height
                                 it.attributes[BASE_OFFSET_Y_KEY] = anchorY.toFloat()
                             }
+                        stackOrder.place(marker, params.state.zIndex)
                         return@map marker
                     }.also {
                         markerLayer.graphics.addAll(it)
@@ -141,6 +145,7 @@ class ArcGISMarkerRenderer(
         coroutine.launch {
             val elements = data.map { params -> params.marker }
             markerLayer.graphics.removeAll(elements.toSet())
+            elements.forEach { it?.let(stackOrder::forget) }
         }
     }
 
@@ -206,6 +211,7 @@ class ArcGISMarkerRenderer(
                     marker.geometry = GeoPoint.from(params.current.state.position).toViewPoint()
                     // Always set visibility explicitly like Google Maps (remove conditional check)
                     marker.isVisible = params.current.visible
+                    stackOrder.place(marker, params.current.state.zIndex)
 
                     // ArcGISはマーカーを再作成しなくてよいので、同じマーカーのインスタンスを返す
                     marker

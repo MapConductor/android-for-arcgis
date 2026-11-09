@@ -28,6 +28,14 @@ class ArcGISGroundImageOverlayRenderer(
     private val tileServer: LocalTileServer,
     override val coroutine: CoroutineScope = CoroutineScope(Dispatchers.Default),
 ) : AbstractGroundImageOverlayRenderer<ArcGISGroundImageHandle>() {
+    /**
+     * operational layer の並び（`operationalLayers`）はスレッドセーフでない。ラスターの
+     * レンダラ・マーカーのタイルはメインスレッドで触るので、ここも足す・外すはメインスレッドで行う
+     * （以前は [coroutine]（Default）のまま触っていて、GroundImage とラスターを同時に外すと
+     * `ConcurrentModificationException` で落ちた）。タイルの用意と層の load は Default のまま。
+     */
+    private suspend fun <T> onLayerList(block: () -> T): T = withContext(Dispatchers.Main.immediate) { block() }
+
     override suspend fun createGroundImage(state: GroundImageState): ArcGISGroundImageHandle? =
         withContext(coroutine.coroutineContext) {
             val operationalLayers = holder.operationalLayers ?: return@withContext null
@@ -54,7 +62,9 @@ class ArcGISGroundImageOverlayRenderer(
             }
             updateLayer(handle.layer, state)
             // GroundImage の帯（ラスターの上）。GraphicsOverlay（ポリゴン等）は常にこの上。
-            ArcGISOverlayStacking.add(operationalLayers, handle.layer, ArcGISOverlayStacking.key(OverlayKind.GroundImage))
+            onLayerList {
+                ArcGISOverlayStacking.add(operationalLayers, handle.layer, ArcGISOverlayStacking.key(OverlayKind.GroundImage))
+            }
             handle
         }
 
@@ -112,12 +122,14 @@ class ArcGISGroundImageOverlayRenderer(
             }
 
             // Swap layers to ensure cache busting via generation query.
-            operationalLayers.remove(groundImage.layer)
-            ArcGISOverlayStacking.add(
-                operationalLayers,
-                nextHandle.layer,
-                ArcGISOverlayStacking.key(OverlayKind.GroundImage),
-            )
+            onLayerList {
+                operationalLayers.remove(groundImage.layer)
+                ArcGISOverlayStacking.add(
+                    operationalLayers,
+                    nextHandle.layer,
+                    ArcGISOverlayStacking.key(OverlayKind.GroundImage),
+                )
+            }
             updateLayer(nextHandle.layer, current.state)
             nextHandle
         }
@@ -125,7 +137,7 @@ class ArcGISGroundImageOverlayRenderer(
     override suspend fun removeGroundImage(entity: GroundImageEntityInterface<ArcGISGroundImageHandle>) {
         coroutine.launch {
             val handle = entity.groundImage
-            holder.operationalLayers?.remove(handle.layer)
+            onLayerList { holder.operationalLayers?.remove(handle.layer) }
             tileServer.unregister(handle.routeId)
         }
     }

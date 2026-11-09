@@ -14,6 +14,7 @@ import com.arcgismaps.mapping.view.Graphic
 import com.arcgismaps.mapping.view.GraphicsOverlay
 import com.mapconductor.arcgis.ArcGISActualCircle
 import com.mapconductor.arcgis.ArcGISGeoViewHolder
+import com.mapconductor.arcgis.ArcGISGraphicsZIndex
 import com.mapconductor.arcgis.toArcGISColor
 import com.mapconductor.arcgis.toPoint
 import com.mapconductor.core.circle.AbstractCircleOverlayRenderer
@@ -30,6 +31,8 @@ class ArcGISCircleOverlayRenderer(
     override val holder: ArcGISGeoViewHolder<*, *>,
     override val coroutine: CoroutineScope = CoroutineScope(Dispatchers.Main),
 ) : AbstractCircleOverlayRenderer<ArcGISActualCircle>() {
+    private val stackOrder = ArcGISGraphicsZIndex()
+
     override suspend fun createCircle(state: CircleState): ArcGISActualCircle? =
         withContext(coroutine.coroutineContext) {
             val centerPoint = centerPoint(state.center, state.geodesic)
@@ -62,6 +65,7 @@ class ArcGISCircleOverlayRenderer(
                     outline = stroke,
                 )
             val circle = Graphic(circleGeometry, fillSymbol)
+            stackOrder.place(circle, state.zIndex)
 
             circleLayer.graphics.add(circle)
             circle
@@ -71,6 +75,7 @@ class ArcGISCircleOverlayRenderer(
         coroutine.launch {
             val circles = listOf(entity.circle)
             circleLayer.graphics.removeAll(circles)
+            stackOrder.forget(entity.circle)
         }
     }
 
@@ -123,6 +128,9 @@ class ArcGISCircleOverlayRenderer(
                         outline.width = current.state.strokeWidth.value
                     }
                 }
+            }
+            if (finger.zIndex != prevFinger.zIndex) {
+                stackOrder.place(graphic, current.state.zIndex)
             }
             return@withContext graphic
         }
