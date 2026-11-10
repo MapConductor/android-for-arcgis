@@ -28,6 +28,12 @@ internal object ArcGISOverlayStacking {
     /** ポリゴンのタイル: GroundImage の上、マーカーのタイルの下。 */
     val POLYGON_TILE = OverlayStacking.Key(OverlayKind.Polygon, Int.MIN_VALUE)
 
+    /**
+     * ポリラインのタイル: ポリゴンのタイルの上、マーカーのタイルの下。operational layer なので
+     * GraphicsOverlay（ネイティブのポリゴン・サークル・ポリライン）より下（ポリゴンのタイルと同じ制約）。
+     */
+    val POLYLINE_TILE = OverlayStacking.Key(OverlayKind.Polyline, Int.MIN_VALUE)
+
     fun key(
         kind: OverlayKind,
         zIndex: Int = 0,
