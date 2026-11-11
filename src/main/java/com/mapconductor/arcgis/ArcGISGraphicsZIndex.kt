@@ -71,6 +71,19 @@ internal class ArcGISGraphicsZIndex {
         assignRanksFrom(at)
     }
 
+    /**
+     * 置いている Graphic の値をまとめて付け直す（地図が回ったときのマーカー）。
+     *
+     * 1 つずつ [placeAt] するとずらしが重なるので、並べ替えて順位を振り直す。
+     * [orderOf] が null を返した Graphic は値を変えない。
+     */
+    @Synchronized
+    fun replaceAll(orderOf: (Graphic) -> Double?) {
+        entries.forEach { entry -> orderOf(entry.graphic)?.let { entry.zIndex = it } }
+        entries.sortWith(::compare)
+        assignRanksFrom(0)
+    }
+
     /** [graphic] を外す。順位は詰めない（残りの並びはそのまま正しい）。 */
     @Synchronized
     fun forget(graphic: Graphic) {

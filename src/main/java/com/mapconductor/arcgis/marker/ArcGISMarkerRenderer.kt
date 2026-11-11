@@ -15,9 +15,9 @@ import com.mapconductor.arcgis.toPoint
 import com.mapconductor.core.ResourceProvider
 import com.mapconductor.core.features.GeoPoint
 import com.mapconductor.core.marker.AbstractMarkerOverlayRenderer
-import com.mapconductor.core.marker.MarkerDrawOrder
 import com.mapconductor.core.marker.MarkerEntityInterface
 import com.mapconductor.core.marker.MarkerOverlayRendererInterface
+import java.util.IdentityHashMap
 import kotlin.math.abs
 import kotlin.math.cos
 import kotlin.math.max
@@ -133,13 +133,20 @@ class ArcGISMarkerRenderer(
                                 it.attributes[BASE_HEIGHT_KEY] = height
                                 it.attributes[BASE_OFFSET_Y_KEY] = anchorY.toFloat()
                             }
-                        stackOrder.placeAt(marker, MarkerDrawOrder.of(params.state.zIndex, params.state.position))
+                        stackOrder.placeAt(marker, drawOrderOf(params.state))
                         return@map marker
                     }.also {
                         markerLayer.graphics.addAll(it)
                     }
             results
         }
+    }
+
+    // 地図が回ったら、今ある全マーカーの重なり順を付け直す。
+    override suspend fun applyDrawOrder(entities: List<MarkerEntityInterface<ArcGISActualMarker>>) {
+        val orders = IdentityHashMap<Graphic, Double>()
+        entities.forEach { entity -> entity.marker?.let { orders[it] = drawOrderOf(entity.state) } }
+        withContext(coroutine.coroutineContext) { stackOrder.replaceAll { orders[it] } }
     }
 
     override suspend fun onRemove(data: List<MarkerEntityInterface<ArcGISActualMarker>>) {
@@ -214,7 +221,7 @@ class ArcGISMarkerRenderer(
                     marker.isVisible = params.current.visible
                     stackOrder.placeAt(
                         marker,
-                        MarkerDrawOrder.of(params.current.state.zIndex, params.current.state.position),
+                        drawOrderOf(params.current.state),
                     )
 
                     // ArcGISはマーカーを再作成しなくてよいので、同じマーカーのインスタンスを返す
