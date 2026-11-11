@@ -15,6 +15,7 @@ import com.mapconductor.arcgis.toPoint
 import com.mapconductor.core.ResourceProvider
 import com.mapconductor.core.features.GeoPoint
 import com.mapconductor.core.marker.AbstractMarkerOverlayRenderer
+import com.mapconductor.core.marker.MarkerDrawOrder
 import com.mapconductor.core.marker.MarkerEntityInterface
 import com.mapconductor.core.marker.MarkerOverlayRendererInterface
 import kotlin.math.abs
@@ -132,7 +133,7 @@ class ArcGISMarkerRenderer(
                                 it.attributes[BASE_HEIGHT_KEY] = height
                                 it.attributes[BASE_OFFSET_Y_KEY] = anchorY.toFloat()
                             }
-                        stackOrder.place(marker, params.state.zIndex)
+                        stackOrder.placeAt(marker, MarkerDrawOrder.of(params.state.zIndex, params.state.position))
                         return@map marker
                     }.also {
                         markerLayer.graphics.addAll(it)
@@ -211,7 +212,10 @@ class ArcGISMarkerRenderer(
                     marker.geometry = GeoPoint.from(params.current.state.position).toViewPoint()
                     // Always set visibility explicitly like Google Maps (remove conditional check)
                     marker.isVisible = params.current.visible
-                    stackOrder.place(marker, params.current.state.zIndex)
+                    stackOrder.placeAt(
+                        marker,
+                        MarkerDrawOrder.of(params.current.state.zIndex, params.current.state.position),
+                    )
 
                     // ArcGISはマーカーを再作成しなくてよいので、同じマーカーのインスタンスを返す
                     marker

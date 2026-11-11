@@ -115,13 +115,14 @@ public final class com.mapconductor.arcgis.ArcGISGeoViewHolder$DefaultImpls {
 public final class com.mapconductor.arcgis.ArcGISGraphicsZIndex {
   public com.mapconductor.arcgis.ArcGISGraphicsZIndex();
   public final synchronized void place(com.arcgismaps.mapping.view.Graphic, java.lang.Integer);
+  public final synchronized void placeAt(com.arcgismaps.mapping.view.Graphic, double);
   public final synchronized void forget(com.arcgismaps.mapping.view.Graphic);
   public final synchronized int getSize();
 }
 final class com.mapconductor.arcgis.ArcGISGraphicsZIndex$Entry {
   public final com.arcgismaps.mapping.view.Graphic getGraphic();
-  public final int getZIndex();
-  public final void setZIndex(int);
+  public final double getZIndex();
+  public final void setZIndex(double);
   public final long getSeq();
   public final int getRank();
   public final void setRank(int);

@@ -25,7 +25,7 @@ import java.util.IdentityHashMap
 internal class ArcGISGraphicsZIndex {
     private class Entry(
         val graphic: Graphic,
-        var zIndex: Int,
+        var zIndex: Double,
         val seq: Long,
         var rank: Int,
     )
@@ -43,8 +43,19 @@ internal class ArcGISGraphicsZIndex {
     fun place(
         graphic: Graphic,
         zIndex: Int?,
+    ) = placeAt(graphic, (zIndex ?: 0).toDouble())
+
+    /**
+     * [graphic] を描く順の値 [order]（大きいほど上）の位置に置く。マーカーが使う
+     * （`MarkerDrawOrder` の値: zIndex が第 1 キー、同じなら南・西が上）。値が同じものの
+     * 間だけ、最初に渡された順になる。
+     */
+    @Synchronized
+    fun placeAt(
+        graphic: Graphic,
+        order: Double,
     ) {
-        val z = zIndex ?: 0
+        val z = order
         val existing = byGraphic[graphic]
         val entry =
             if (existing != null) {
