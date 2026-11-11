@@ -111,6 +111,9 @@ public final class com.mapconductor.arcgis.ArcGISGeoViewHolder$DefaultImpls {
   public static <ActualMapView extends android.widget.FrameLayout, ActualMap extends com.arcgismaps.mapping.view.GeoView> void setNavigationEnabled(com.mapconductor.arcgis.ArcGISGeoViewHolder<ActualMapView, ActualMap>, boolean);
   public static <ActualMapView extends android.widget.FrameLayout, ActualMap extends com.arcgismaps.mapping.view.GeoView> java.lang.Object fromScreenOffset-3MmeM6k(com.mapconductor.arcgis.ArcGISGeoViewHolder<ActualMapView, ActualMap>, long, kotlin.coroutines.Continuation<? super com.mapconductor.core.features.GeoPoint>);
   public static <ActualMapView extends android.widget.FrameLayout, ActualMap extends com.arcgismaps.mapping.view.GeoView> com.mapconductor.core.features.GeoPoint fromScreenOffsetSync-k-4lQ0M(com.mapconductor.arcgis.ArcGISGeoViewHolder<ActualMapView, ActualMap>, long);
+  public static <ActualMapView extends android.widget.FrameLayout, ActualMap extends com.arcgismaps.mapping.view.GeoView> com.mapconductor.core.projection.ProjectedPoint toProjectedPoint(com.mapconductor.arcgis.ArcGISGeoViewHolder<ActualMapView, ActualMap>, com.mapconductor.core.features.GeoPointInterface);
+  public static <ActualMapView extends android.widget.FrameLayout, ActualMap extends com.arcgismaps.mapping.view.GeoView> com.mapconductor.core.features.GeoPoint fromProjectedPoint(com.mapconductor.arcgis.ArcGISGeoViewHolder<ActualMapView, ActualMap>, com.mapconductor.core.projection.ProjectedPoint);
+  public static <ActualMapView extends android.widget.FrameLayout, ActualMap extends com.arcgismaps.mapping.view.GeoView> com.mapconductor.core.projection.MapCoordinateSystem getCoordinateSystem(com.mapconductor.arcgis.ArcGISGeoViewHolder<ActualMapView, ActualMap>);
 }
 public final class com.mapconductor.arcgis.ArcGISGraphicsZIndex {
   public com.mapconductor.arcgis.ArcGISGraphicsZIndex();
@@ -194,6 +197,9 @@ public final class com.mapconductor.arcgis.ArcGISMapView2DHolder implements com.
   public com.arcgismaps.mapping.view.GeoView getGeoView();
   public com.arcgismaps.geometry.SpatialReference getSpatialReference();
   public java.util.List<com.arcgismaps.mapping.layers.Layer> getOperationalLayers();
+  public com.mapconductor.core.projection.MapCoordinateSystem getCoordinateSystem();
+  public com.mapconductor.core.projection.ProjectedPoint toProjectedPoint(com.mapconductor.core.features.GeoPointInterface);
+  public com.mapconductor.core.features.GeoPoint fromProjectedPoint(com.mapconductor.core.projection.ProjectedPoint);
   public androidx.compose.ui.geometry.Offset toScreenOffset-x-9fifI(com.mapconductor.core.features.GeoPointInterface);
   public java.lang.Object fromScreenOffset-3MmeM6k(long, kotlin.coroutines.Continuation<? super com.mapconductor.core.features.GeoPoint>);
   public com.mapconductor.core.features.GeoPoint fromScreenOffsetSync-k-4lQ0M(long);
@@ -285,6 +291,9 @@ public final class com.mapconductor.arcgis.ArcGISMapViewHolder implements com.ma
   public com.mapconductor.core.features.GeoPoint fromScreenOffsetSync-k-4lQ0M(long);
   public boolean getUsesSceneView();
   public void setNavigationEnabled(boolean);
+  public com.mapconductor.core.projection.ProjectedPoint toProjectedPoint(com.mapconductor.core.features.GeoPointInterface);
+  public com.mapconductor.core.features.GeoPoint fromProjectedPoint(com.mapconductor.core.projection.ProjectedPoint);
+  public com.mapconductor.core.projection.MapCoordinateSystem getCoordinateSystem();
   public java.lang.Object getMapView();
   public java.lang.Object getMap();
 }
@@ -348,6 +357,7 @@ public final class com.mapconductor.arcgis.ArcGISOverlayStacking {
   public static final com.mapconductor.arcgis.ArcGISOverlayStacking INSTANCE;
   public final com.mapconductor.core.controller.OverlayStacking$Key getMARKER_TILE();
   public final com.mapconductor.core.controller.OverlayStacking$Key getPOLYGON_TILE();
+  public final com.mapconductor.core.controller.OverlayStacking$Key getCIRCLE_TILE();
   public final com.mapconductor.core.controller.OverlayStacking$Key getPOLYLINE_TILE();
   public final com.mapconductor.core.controller.OverlayStacking$Key key(com.mapconductor.core.controller.OverlayKind, int);
   public final void add(java.util.List<com.arcgismaps.mapping.layers.Layer>, com.arcgismaps.mapping.layers.Layer, com.mapconductor.core.controller.OverlayStacking$Key);
