@@ -32,6 +32,8 @@ internal object ArcGISOverlayStacking {
      * ポリラインのタイル: ポリゴンのタイルの上、マーカーのタイルの下。operational layer なので
      * GraphicsOverlay（ネイティブのポリゴン・サークル・ポリライン）より下（ポリゴンのタイルと同じ制約）。
      */
+    val CIRCLE_TILE = OverlayStacking.Key(OverlayKind.Circle, Int.MIN_VALUE)
+
     val POLYLINE_TILE = OverlayStacking.Key(OverlayKind.Polyline, Int.MIN_VALUE)
 
     fun key(
