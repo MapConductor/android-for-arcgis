@@ -118,13 +118,15 @@ public final class com.mapconductor.arcgis.ArcGISGeoViewHolder$DefaultImpls {
 public final class com.mapconductor.arcgis.ArcGISGraphicsZIndex {
   public com.mapconductor.arcgis.ArcGISGraphicsZIndex();
   public final synchronized void place(com.arcgismaps.mapping.view.Graphic, java.lang.Integer);
+  public final synchronized void placeAt(com.arcgismaps.mapping.view.Graphic, double);
+  public final synchronized void replaceAll(kotlin.jvm.functions.Function1<? super com.arcgismaps.mapping.view.Graphic, java.lang.Double>);
   public final synchronized void forget(com.arcgismaps.mapping.view.Graphic);
   public final synchronized int getSize();
 }
 final class com.mapconductor.arcgis.ArcGISGraphicsZIndex$Entry {
   public final com.arcgismaps.mapping.view.Graphic getGraphic();
-  public final int getZIndex();
-  public final void setZIndex(int);
+  public final double getZIndex();
+  public final void setZIndex(double);
   public final long getSeq();
   public final int getRank();
   public final void setRank(int);
@@ -530,6 +532,7 @@ public final class com.mapconductor.arcgis.marker.ArcGISMarkerRenderer extends c
   public void setMarkerVisible(com.mapconductor.core.marker.MarkerEntityInterface<com.arcgismaps.mapping.view.Graphic>, boolean);
   public void setMarkerPosition(com.mapconductor.core.marker.MarkerEntityInterface<com.arcgismaps.mapping.view.Graphic>, com.mapconductor.core.features.GeoPoint);
   public java.lang.Object onAdd(java.util.List<? extends com.mapconductor.core.marker.MarkerOverlayRendererInterface$AddParamsInterface>, kotlin.coroutines.Continuation<? super java.util.List<com.arcgismaps.mapping.view.Graphic>>);
+  protected java.lang.Object applyDrawOrder(java.util.List<? extends com.mapconductor.core.marker.MarkerEntityInterface<com.arcgismaps.mapping.view.Graphic>>, kotlin.coroutines.Continuation<? super kotlin.Unit>);
   public java.lang.Object onRemove(java.util.List<? extends com.mapconductor.core.marker.MarkerEntityInterface<com.arcgismaps.mapping.view.Graphic>>, kotlin.coroutines.Continuation<? super kotlin.Unit>);
   public java.lang.Object onPostProcess(kotlin.coroutines.Continuation<? super kotlin.Unit>);
   public java.lang.Object onChange(java.util.List<? extends com.mapconductor.core.marker.MarkerOverlayRendererInterface$ChangeParamsInterface<com.arcgismaps.mapping.view.Graphic>>, kotlin.coroutines.Continuation<? super java.util.List<com.arcgismaps.mapping.view.Graphic>>);
