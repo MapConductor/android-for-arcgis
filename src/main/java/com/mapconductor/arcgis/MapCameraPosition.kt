@@ -147,19 +147,20 @@ fun Camera.withZoomLevel(zoomLevel: Double): Camera {
     )
 }
 
-fun Camera.toMapCameraPosition(): MapCameraPosition =
-    MapCameraPosition(
+fun Camera.toMapCameraPosition(): MapCameraPosition {
+    val target = lookAtTarget()
+    return MapCameraPosition(
         position =
             GeoPoint.fromLongLat(
-                longitude = this.location.x,
-                latitude = this.location.y,
+                longitude = target.longitude,
+                latitude = target.latitude,
                 altitude = this.location.z ?: 0.0,
             ),
         zoom =
             converter
                 .altitudeToZoomLevel(
                     altitude = this.location.z ?: 0.0,
-                    latitude = this.location.y,
+                    latitude = target.latitude,
                     tilt = this.pitch,
                 ),
         bearing = CameraBearing.bearingFromNativeHeading(this.heading),
@@ -167,3 +168,4 @@ fun Camera.toMapCameraPosition(): MapCameraPosition =
         paddings = MapPaddings.Zeros,
         visibleRegion = null,
     )
+}

@@ -58,8 +58,11 @@ internal fun ArcGISMapView2DController.scheduleCameraMoveEndCallback() {
 }
 
 internal suspend fun ArcGISMapView2DController.getMapCameraPosition(): MapCameraPosition? {
-    val mapWidth = holder.map.width.toFloat() - 1.0f
-    val mapHeight = holder.map.height.toFloat() - 1.0f
+    // holder の画面座標は外側のビュー（WrapMapView）のもの。傾けているときの内側の MapView は
+    // 2 倍の大きさで回っているので、その幅・高さで隅を取ると画面の外を逆投影してしまい、
+    // 中心は数 km ずれ、隅は解けずにカメラごと読めなくなっていた。
+    val mapWidth = holder.mapView.width.toFloat() - 1.0f
+    val mapHeight = holder.mapView.height.toFloat() - 1.0f
     val nearLeft = holder.fromScreenOffset(Offset(1.0f, mapHeight)) ?: return null
     val nearRight = holder.fromScreenOffsetSync(Offset(mapWidth, mapHeight)) ?: return null
     val farLeft = holder.fromScreenOffsetSync(Offset(1.0f, 1.0f)) ?: return null
@@ -118,6 +121,9 @@ internal fun ArcGISMapView2DController.handleMoveCamera(position: MapCameraPosit
         mainCoroutine.launch {
             if (!holder.mapView.isAttachedToWindow) return@launch
             holder.map.setViewpoint(viewpoint)
+            // tilt だけが変わったときは Viewpoint が同じなので ArcGIS は変化を通知しない。
+            // そのままだと state のカメラが古い tilt のまま残るので、ここで配る。
+            if (tiltChanged) onViewpointChange()
         }
         Unit
     }

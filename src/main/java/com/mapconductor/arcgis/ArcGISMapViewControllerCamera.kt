@@ -118,8 +118,13 @@ internal suspend fun ArcGISMapViewController.getMapCameraPosition(): MapCameraPo
         )
 
     val arcCamera = holder.map.getCurrentViewpointCamera() ?: return null
-    val lat = arcCamera.location.y
-    val lon = arcCamera.location.x
+    // position は見ている点（画面中央）。目の位置（arcCamera.location）ではない。
+    // 地形を考慮するため画面中央の逆投影を優先し、取れなければ幾何で求める。
+    val target =
+        holder.fromScreenOffsetSync(Offset(holder.map.width / 2f, holder.map.height / 2f))
+            ?: arcCamera.lookAtTarget()
+    val lat = target.latitude
+    val lon = target.longitude
     val alt = arcCamera.location.z ?: 0.0
     val tilt = arcCamera.pitch
     val bearing = CameraBearing.bearingFromNativeHeading(arcCamera.heading)
