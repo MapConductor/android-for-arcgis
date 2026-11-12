@@ -175,12 +175,15 @@ public final class com.mapconductor.arcgis.ArcGISMapView2DController extends com
 public final class com.mapconductor.arcgis.ArcGISMapView2DController$Companion {
 }
 public final class com.mapconductor.arcgis.ArcGISMapView2DControllerCameraKt {
+  public static final double ARCGIS_2D_VERTICAL_FOV;
   public static final java.lang.Object onViewpointChange(com.mapconductor.arcgis.ArcGISMapView2DController, kotlin.coroutines.Continuation<? super kotlin.Unit>);
   public static final java.lang.Object invokeCameraMoveStartCallback(com.mapconductor.arcgis.ArcGISMapView2DController, kotlin.coroutines.Continuation<? super kotlin.Unit>);
   public static final java.lang.Object invokeCameraMoveCallback(com.mapconductor.arcgis.ArcGISMapView2DController, kotlin.coroutines.Continuation<? super kotlin.Unit>);
   public static final java.lang.Object invokeCameraMoveEndCallback(com.mapconductor.arcgis.ArcGISMapView2DController, kotlin.coroutines.Continuation<? super kotlin.Unit>);
   public static final void scheduleCameraMoveEndCallback(com.mapconductor.arcgis.ArcGISMapView2DController);
   public static final java.lang.Object getMapCameraPosition(com.mapconductor.arcgis.ArcGISMapView2DController, kotlin.coroutines.Continuation<? super com.mapconductor.core.map.MapCameraPosition>);
+  public static final double viewportHeightDp(com.mapconductor.arcgis.ArcGISMapView2DController);
+  public static final com.mapconductor.core.map.MapCameraPosition toNativeCamera(com.mapconductor.arcgis.ArcGISMapView2DController, com.mapconductor.core.map.MapCameraPosition);
   public static final void handleMoveCamera(com.mapconductor.arcgis.ArcGISMapView2DController, com.mapconductor.core.map.MapCameraPosition);
   public static final void handleAnimateCamera(com.mapconductor.arcgis.ArcGISMapView2DController, com.mapconductor.core.map.MapCameraPosition, long);
   public static final void handleFitBounds(com.mapconductor.arcgis.ArcGISMapView2DController, com.mapconductor.core.features.GeoRectBounds, int);
@@ -251,6 +254,9 @@ public final class com.mapconductor.arcgis.ArcGISMapViewController extends com.m
 }
 public final class com.mapconductor.arcgis.ArcGISMapViewControllerCameraKt {
   public static final com.mapconductor.core.map.MapCameraPosition getFastMapCameraPosition(com.mapconductor.arcgis.ArcGISMapViewController);
+  public static final java.lang.Double verticalFov(com.mapconductor.arcgis.ArcGISMapViewController);
+  public static final double viewportHeightDp(com.mapconductor.arcgis.ArcGISMapViewController);
+  public static final com.mapconductor.core.map.MapCameraPosition toNativeCamera(com.mapconductor.arcgis.ArcGISMapViewController, com.mapconductor.core.map.MapCameraPosition);
   public static final void invokeCameraMoveStartCallback(com.mapconductor.arcgis.ArcGISMapViewController);
   public static final void invokeCameraMoveCallback(com.mapconductor.arcgis.ArcGISMapViewController);
   public static final java.lang.Object invokeCameraMoveEndCallback(com.mapconductor.arcgis.ArcGISMapViewController, kotlin.coroutines.Continuation<? super kotlin.Unit>);

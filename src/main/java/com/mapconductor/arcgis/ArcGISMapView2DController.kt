@@ -28,6 +28,8 @@ import com.mapconductor.core.groundimage.OnGroundImageEventHandler
 import com.mapconductor.core.map.CameraBearing
 import com.mapconductor.core.map.CameraRestriction
 import com.mapconductor.core.map.MapCameraPosition
+import com.mapconductor.core.map.MapPaddings
+import com.mapconductor.core.map.MapPaddingsInterface
 import com.mapconductor.core.map.MapGesture
 import com.mapconductor.core.map.MapUISettings
 import com.mapconductor.core.map.MapUISettingsDiagnostics
@@ -86,6 +88,16 @@ class ArcGISMapView2DController(
     // カメラ状態の読み戻し時に元の tilt・位置・ズームを復元するヒントとして保持する
     // （android-for-tomtom / ios-for-arcgis と同方針）。
     internal var lastLogicalCameraPosition: MapCameraPosition? = null
+
+    /**
+     * 今カメラに付いているパディング（dp）。
+     *
+     * `MapView.setViewInsets` は使わない。傾きのエミュレーションでは内側の MapView が
+     * 2 倍の大きさで回っているので、インセットが画面上のパディングと一致しないため。
+     * 代わりに中心をずらして再現し（[CameraPaddingEmulation]）、読むときに元へ戻すために
+     * ここで覚えておく。
+     */
+    internal var cameraPaddings: MapPaddingsInterface = MapPaddings.Zeros
     internal val cameraMoveEndDebounceMs = 180L
     internal var mapDesignType: ArcGISDesignTypeInterface = ArcGISDesign.Streets
     internal var mapDesignTypeChangeListener: ArcGISDesignTypeChangeHandler? = null

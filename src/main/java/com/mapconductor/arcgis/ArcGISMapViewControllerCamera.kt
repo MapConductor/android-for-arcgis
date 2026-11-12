@@ -7,9 +7,12 @@ import com.mapconductor.arcgis.zoom.ZoomAltitudeConverter
 import com.mapconductor.core.features.GeoPoint
 import com.mapconductor.core.features.GeoRectBounds
 import com.mapconductor.core.map.CameraBearing
+import com.mapconductor.core.map.CameraPaddingEmulation
 import com.mapconductor.core.map.MapCameraPosition
 import com.mapconductor.core.map.MapPaddings
 import com.mapconductor.core.map.VisibleRegion
+import kotlin.math.atan
+import kotlin.math.tan
 import kotlin.time.Duration.Companion.milliseconds
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -20,10 +23,44 @@ import kotlinx.coroutines.launch
 // API が無く、停止時に矩形内へクランプして再適用する。
 internal fun ArcGISMapViewController.getFastMapCameraPosition(): MapCameraPosition? =
     try {
-        holder.map.getCurrentViewpointCamera()?.toMapCameraPosition()
+        holder.map.getCurrentViewpointCamera()?.toMapCameraPosition()?.let { camera ->
+            CameraPaddingEmulation.fromNativeCamera(camera, cameraPaddings, verticalFov(), viewportHeightDp())
+        }
     } catch (_: Exception) {
         null
     }
+
+/**
+ * SceneView のカメラの縦方向の視野角（度）。
+ *
+ * [SceneView.getFieldOfView][com.arcgismaps.mapping.view.SceneView.fieldOfView] は**横方向**の
+ * 視野角（TB520FU の縦長の全画面で 29.3°、横長で 68.0°）。縦に直すと向きによらず 45° になり、
+ * 実測（地図の大きさ・向きを変えて 45.2〜45.4°）と一致する。
+ */
+internal fun ArcGISMapViewController.verticalFov(): Double? {
+    val width = holder.map.width
+    val height = holder.map.height
+    if (width <= 0 || height <= 0) return null
+    val horizontal = runCatching { holder.map.fieldOfView }.getOrNull() ?: return null
+    val halfVertical = atan(tan(Math.toRadians(horizontal) / 2.0) * height / width)
+    return Math.toDegrees(2.0 * halfVertical)
+}
+
+/** 地図の高さ（dp）。パディングのエミュレーションで遠近を解くのに使う。 */
+internal fun ArcGISMapViewController.viewportHeightDp(): Double {
+    val density = holder.mapView.resources.displayMetrics.density
+    return holder.map.height / density.toDouble()
+}
+
+/** パディングを見る点のずらしに置き換えたカメラ。paddings が null なら今のパディングを使い続ける。 */
+internal fun ArcGISMapViewController.toNativeCamera(position: MapCameraPosition): MapCameraPosition {
+    position.paddings?.let { cameraPaddings = it }
+    return CameraPaddingEmulation.toNativeCamera(
+        position.copy(paddings = cameraPaddings),
+        verticalFov(),
+        viewportHeightDp(),
+    )
+}
 
 internal fun ArcGISMapViewController.invokeCameraMoveStartCallback() {
     cameraMoveStartHandler()?.let { cb ->
@@ -151,11 +188,11 @@ internal suspend fun ArcGISMapViewController.getMapCameraPosition(): MapCameraPo
             paddings = MapPaddings.Zeros,
             visibleRegion = visibleRegion,
         )
-    return camera
+    return CameraPaddingEmulation.fromNativeCamera(camera, cameraPaddings, verticalFov(), viewportHeightDp())
 }
 
 internal fun ArcGISMapViewController.handleMoveCamera(position: MapCameraPosition) {
-    val dstCameraPosition = toCameraWithView(position)
+    val dstCameraPosition = toCameraWithView(toNativeCamera(position))
 
     mainCoroutine.launch {
         if (!holder.mapView.isAttachedToWindow) return@launch
@@ -167,7 +204,7 @@ internal fun ArcGISMapViewController.handleAnimateCamera(
     position: MapCameraPosition,
     duration: Long,
 ) {
-    val dstCameraPosition = toCameraWithView(position)
+    val dstCameraPosition = toCameraWithView(toNativeCamera(position))
 
     defaultCoroutine.launch {
         invokeCameraMoveStartCallback()

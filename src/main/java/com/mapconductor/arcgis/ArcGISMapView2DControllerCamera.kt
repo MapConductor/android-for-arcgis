@@ -3,6 +3,7 @@ package com.mapconductor.arcgis
 import androidx.compose.ui.geometry.Offset
 import com.mapconductor.core.features.GeoRectBounds
 import com.mapconductor.core.map.CameraBearing
+import com.mapconductor.core.map.CameraPaddingEmulation
 import com.mapconductor.core.map.MapCameraPosition
 import com.mapconductor.core.map.MapPaddings
 import com.mapconductor.core.map.VisibleRegion
@@ -96,13 +97,41 @@ internal suspend fun ArcGISMapView2DController.getMapCameraPosition(): MapCamera
             logicalTilt = logicalTilt,
         )
 
-    return MapCameraPosition(
-        position = restoredCenter,
-        zoom = restoredZoom,
-        bearing = bearing,
-        tilt = logicalTilt,
-        paddings = MapPaddings.Zeros,
-        visibleRegion = visibleRegion,
+    return CameraPaddingEmulation.fromNativeCamera(
+        MapCameraPosition(
+            position = restoredCenter,
+            zoom = restoredZoom,
+            bearing = bearing,
+            tilt = logicalTilt,
+            paddings = MapPaddings.Zeros,
+            visibleRegion = visibleRegion,
+        ),
+        cameraPaddings,
+        ARCGIS_2D_VERTICAL_FOV,
+        viewportHeightDp(),
+    )
+}
+
+/**
+ * 2D の MapView のカメラの縦方向の視野角（度）。2D はカメラを傾けられず、傾きはビューを
+ * X 軸まわりに回して見せている（[WrapMapView]、遠近はほぼ付けない）。TB520FU で、傾けた
+ * ときの縦の間隔は cos(tilt) 倍と 0.3% 以内で一致した。遠近なしの傾きとして 0 と表す。
+ */
+internal const val ARCGIS_2D_VERTICAL_FOV = 0.0
+
+/** 地図の高さ（dp）。外側のビュー（画面に見えている大きさ）で測る。 */
+internal fun ArcGISMapView2DController.viewportHeightDp(): Double {
+    val density = holder.mapView.resources.displayMetrics.density
+    return holder.mapView.height / density.toDouble()
+}
+
+/** パディングを中心のずらしに置き換えたカメラ。paddings が null なら今のパディングを使い続ける。 */
+internal fun ArcGISMapView2DController.toNativeCamera(position: MapCameraPosition): MapCameraPosition {
+    position.paddings?.let { cameraPaddings = it }
+    return CameraPaddingEmulation.toNativeCamera(
+        position.copy(paddings = cameraPaddings),
+        ARCGIS_2D_VERTICAL_FOV,
+        viewportHeightDp(),
     )
 }
 
@@ -116,7 +145,7 @@ internal fun ArcGISMapView2DController.handleMoveCamera(position: MapCameraPosit
     // ビューを傾けると地図の中身は縦に潰れる。マーカーだけは立って見えるよう、
     // アイコンを先に縦へ引き伸ばす（他のオーバーレイは寝たままでよい）。
     if (tiltChanged) markerController.refreshVerticalStretch()
-    val viewpoint = toViewpoint(position)
+    val viewpoint = toViewpoint(toNativeCamera(position))
     val applyViewpoint = {
         mainCoroutine.launch {
             if (!holder.mapView.isAttachedToWindow) return@launch
@@ -138,7 +167,7 @@ internal fun ArcGISMapView2DController.handleAnimateCamera(
     val tiltChanged = holder.mapView.visualTilt != position.tilt
     holder.mapView.visualTilt = position.tilt
     if (tiltChanged) markerController.refreshVerticalStretch()
-    val viewpoint = toViewpoint(position)
+    val viewpoint = toViewpoint(toNativeCamera(position))
     val animate = {
         defaultCoroutine.launch {
             invokeCameraMoveStartCallback()
