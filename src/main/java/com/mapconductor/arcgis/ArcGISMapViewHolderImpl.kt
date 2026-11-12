@@ -2,6 +2,10 @@ package com.mapconductor.arcgis
 
 import androidx.compose.ui.geometry.Offset
 import androidx.lifecycle.LifecycleOwner
+import com.arcgismaps.geometry.GeometryEngine
+import com.arcgismaps.geometry.LinearUnit
+import com.arcgismaps.geometry.LinearUnitId
+import com.arcgismaps.geometry.Point
 import com.arcgismaps.geometry.SpatialReference
 import com.arcgismaps.mapping.layers.Layer
 import com.arcgismaps.mapping.view.DoubleXY
@@ -11,6 +15,9 @@ import com.arcgismaps.mapping.view.SceneView
 import com.mapconductor.core.features.GeoPoint
 import com.mapconductor.core.features.GeoPointInterface
 import com.mapconductor.core.map.MapViewHolderInterface
+import com.mapconductor.core.projection.MapCoordinateSystem
+import com.mapconductor.core.projection.ProjectedPoint
+import com.mapconductor.core.projection.ProjectedUnit
 import kotlin.math.abs
 import kotlin.math.max
 import android.content.Context
@@ -269,6 +276,24 @@ class ArcGISMapView2DHolder(
         get() = runCatching { map.map?.operationalLayers }.getOrNull()
 
     /**
+     * 2D の地図は空間参照を持つので、投影座標はその空間参照で返す（いまの 2D は
+     * Web Mercator 固定だが、地図の空間参照が変われば追従する）。地図がまだ無いときは
+     * 既定の EPSG:3857。3D（[ArcGISMapViewHolder]）は地球儀なので既定のまま。
+     */
+    override val coordinateSystem: MapCoordinateSystem
+        get() = spatialReference?.toMapCoordinateSystem() ?: MapCoordinateSystem.WebMercator
+
+    override fun toProjectedPoint(position: GeoPointInterface): ProjectedPoint? {
+        val reference = spatialReference ?: return super.toProjectedPoint(position)
+        return projectToSpatialReference(position, reference)
+    }
+
+    override fun fromProjectedPoint(point: ProjectedPoint): GeoPoint? {
+        val reference = spatialReference ?: return super.fromProjectedPoint(point)
+        return unprojectFromSpatialReference(point, reference)
+    }
+
+    /**
      * `GeoPoint.toPoint(spatialReference)` は経度緯度の値にその空間参照を「貼る」だけで座標変換は
      * しない。2D の `ArcGISMap` は既定で Web メルカトルなので、ビューの空間参照をそのまま渡すと
      * 経度・緯度がメートルとして解釈され、投影先は本来の位置から遥かに離れた点になる
@@ -351,3 +376,55 @@ internal fun Context.getArcGisApiKey(): String? =
         .getApplicationInfo(packageName, PackageManager.GET_META_DATA)
         .metaData
         ?.getString("ARCGIS_API_KEY")
+
+/**
+ * ArcGIS の空間参照 → [MapCoordinateSystem]。
+ *
+ * - WKID が 32767 以下なら EPSG の番号と同じなので `EPSG:<wkid>`。
+ * - Esri 独自の番号は `ESRI:<wkid>`。ただし Web Mercator の旧番号
+ *   （102100 / 102113）は EPSG:3857 にそろえる。300.x の SDK には `latestWkid` が無い。
+ * - WKID を持たない（WKT だけで定義された）空間参照は null。
+ */
+private fun SpatialReference.toMapCoordinateSystem(): MapCoordinateSystem {
+    val code =
+        when (val wkid = wkid) {
+            0 -> null
+            102100, 102113 -> "EPSG:3857"
+            in 1..32767 -> "EPSG:$wkid"
+            else -> "ESRI:$wkid"
+        }
+    val unit =
+        when {
+            isGeographic -> ProjectedUnit.Degrees
+            (unit as? LinearUnit)?.linearUnitId == LinearUnitId.Meters -> ProjectedUnit.Meters
+            else -> ProjectedUnit.Other
+        }
+    return MapCoordinateSystem(code, unit)
+}
+
+/** 地理座標 → [spatialReference] の座標。ArcGIS が投影できないときは null。 */
+private fun projectToSpatialReference(
+    position: GeoPointInterface,
+    spatialReference: SpatialReference,
+): ProjectedPoint? {
+    val wgs84 = GeoPoint.from(position).toPoint(SpatialReference.wgs84())
+    val projected = runCatching { GeometryEngine.projectOrNull(wgs84, spatialReference) as? Point }.getOrNull()
+    return projected?.let { ProjectedPoint(it.x, it.y) }?.takeIf { it.x.isFinite() && it.y.isFinite() }
+}
+
+/**
+ * [spatialReference] の座標 → 地理座標。
+ *
+ * [toGeoPoint] は投影に失敗すると元の値をそのまま経度緯度として返すので使わない。
+ */
+private fun unprojectFromSpatialReference(
+    point: ProjectedPoint,
+    spatialReference: SpatialReference,
+): GeoPoint? {
+    val source = Point(x = point.x, y = point.y, spatialReference = spatialReference)
+    val wgs84 =
+        runCatching { GeometryEngine.projectOrNull(source, SpatialReference.wgs84()) as? Point }.getOrNull()
+            ?: return null
+    if (!wgs84.x.isFinite() || !wgs84.y.isFinite()) return null
+    return GeoPoint(latitude = wgs84.y, longitude = wgs84.x, altitude = 0.0)
+}

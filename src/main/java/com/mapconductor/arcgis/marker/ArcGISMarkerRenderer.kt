@@ -17,6 +17,7 @@ import com.mapconductor.core.features.GeoPoint
 import com.mapconductor.core.marker.AbstractMarkerOverlayRenderer
 import com.mapconductor.core.marker.MarkerEntityInterface
 import com.mapconductor.core.marker.MarkerOverlayRendererInterface
+import java.util.IdentityHashMap
 import kotlin.math.abs
 import kotlin.math.cos
 import kotlin.math.max
@@ -132,13 +133,20 @@ class ArcGISMarkerRenderer(
                                 it.attributes[BASE_HEIGHT_KEY] = height
                                 it.attributes[BASE_OFFSET_Y_KEY] = anchorY.toFloat()
                             }
-                        stackOrder.place(marker, params.state.zIndex)
+                        stackOrder.placeAt(marker, drawOrderOf(params.state))
                         return@map marker
                     }.also {
                         markerLayer.graphics.addAll(it)
                     }
             results
         }
+    }
+
+    // 地図が回ったら、今ある全マーカーの重なり順を付け直す。
+    override suspend fun applyDrawOrder(entities: List<MarkerEntityInterface<ArcGISActualMarker>>) {
+        val orders = IdentityHashMap<Graphic, Double>()
+        entities.forEach { entity -> entity.marker?.let { orders[it] = drawOrderOf(entity.state) } }
+        withContext(coroutine.coroutineContext) { stackOrder.replaceAll { orders[it] } }
     }
 
     override suspend fun onRemove(data: List<MarkerEntityInterface<ArcGISActualMarker>>) {
@@ -211,7 +219,10 @@ class ArcGISMarkerRenderer(
                     marker.geometry = GeoPoint.from(params.current.state.position).toViewPoint()
                     // Always set visibility explicitly like Google Maps (remove conditional check)
                     marker.isVisible = params.current.visible
-                    stackOrder.place(marker, params.current.state.zIndex)
+                    stackOrder.placeAt(
+                        marker,
+                        drawOrderOf(params.current.state),
+                    )
 
                     // ArcGISはマーカーを再作成しなくてよいので、同じマーカーのインスタンスを返す
                     marker
