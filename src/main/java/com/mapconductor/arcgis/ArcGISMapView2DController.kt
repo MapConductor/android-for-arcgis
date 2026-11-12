@@ -5,7 +5,9 @@ import com.mapconductor.core.circle.CircleTiler
 import com.mapconductor.core.circle.circleTileRasterLayerState
 import com.arcgismaps.LoadStatus
 import com.arcgismaps.geometry.SpatialReference
+import com.arcgismaps.geometry.Point
 import com.arcgismaps.mapping.Viewpoint
+import com.arcgismaps.mapping.ViewpointType
 import com.arcgismaps.mapping.view.GraphicsOverlay
 import com.mapconductor.arcgis.circle.ArcGISCircleOverlayController
 import com.mapconductor.arcgis.groundimage.ArcGISGroundImageController
@@ -46,7 +48,10 @@ import com.mapconductor.core.polyline.PolylineState
 import com.mapconductor.core.polyline.PolylineTiler
 import com.mapconductor.core.polyline.polylineTileRasterLayerState
 import com.mapconductor.core.projection.Earth
+import com.mapconductor.core.spherical.Spherical
 import com.mapconductor.core.raster.RasterLayerState
+import kotlin.math.abs
+import kotlin.math.cos
 import kotlin.math.ln
 import kotlin.math.pow
 import android.util.Log
@@ -316,7 +321,8 @@ class ArcGISMapView2DController(
      * 指定位置がそのまま画面中心に来る。
      */
     internal fun toViewpoint(position: MapCameraPosition): Viewpoint {
-        val (center, zoom) = ArcGIS2DTiltEmulation.shiftedCamera(position)
+        val (shifted, zoom) = ArcGIS2DTiltEmulation.shiftedCamera(position)
+        val center = centeredOnView(shifted, zoom, position.bearing)
         val point = GeoPoint.from(center).toPoint(SpatialReference.wgs84())
         return Viewpoint(
             center = point,
@@ -329,6 +335,42 @@ class ArcGISMapView2DController(
             rotation = CameraBearing.toNativeHeading(position.bearing),
         )
     }
+
+    /**
+     * ArcGIS は Viewpoint の中心をビューの中央ではなく、帰属表示バーを除いた領域の中央に描く
+     * （TB520FU では 25.5px 上）。そのままでは position が画面中央に来ず、読み戻すと
+     * 45m ほどずれていた。ずれを今の地図から測り、その分だけ中心を画面の上方向
+     * （カメラの向き）へずらして、position が画面中央に来るようにする。
+     */
+    private fun centeredOnView(
+        center: GeoPointInterface,
+        zoom: Double,
+        bearing: Double,
+    ): GeoPointInterface {
+        val offsetPx = viewpointCenterOffsetPx() ?: return center
+        if (abs(offsetPx) < 0.5) return center
+        val density = holder.mapView.resources.displayMetrics.density
+        val metersPerDp =
+            WEB_MERCATOR_CIRCUMFERENCE_METERS / (TILE_SIZE * 2.0.pow(zoom)) *
+                cos(Math.toRadians(center.latitude))
+        return Spherical.computeOffset(
+            center,
+            -offsetPx / density * metersPerDp,
+            CameraBearing.toNativeHeading(bearing),
+        )
+    }
+
+    /** Viewpoint の中心が内側の MapView の中央から縦に何 px ずれて描かれているか。上が負。 */
+    private fun viewpointCenterOffsetPx(): Double? =
+        runCatching {
+            val height = holder.map.height
+            if (height <= 0) return null
+            val center =
+                holder.map.getCurrentViewpoint(ViewpointType.CenterAndScale)?.targetGeometry as? Point
+                    ?: return null
+            val screen = holder.map.locationToScreen(center) ?: return null
+            screen.y - height / 2.0
+        }.getOrNull()
 
     @Deprecated("Use MarkerState.onDragStart instead.")
     override fun setOnMarkerDragStart(listener: OnMarkerEventHandler?) {
