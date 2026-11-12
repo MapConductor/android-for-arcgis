@@ -20,6 +20,8 @@ import com.mapconductor.core.features.GeoRectBounds
 import com.mapconductor.core.groundimage.GroundImageState
 import com.mapconductor.core.groundimage.OnGroundImageEventHandler
 import com.mapconductor.core.map.MapCameraPosition
+import com.mapconductor.core.map.MapPaddings
+import com.mapconductor.core.map.MapPaddingsInterface
 import com.mapconductor.core.map.MapGesture
 import com.mapconductor.core.map.MapUISettings
 import com.mapconductor.core.map.MapUISettingsDiagnostics
@@ -67,6 +69,14 @@ class ArcGISMapViewController(
     // ArcGIS updates the viewpoint asynchronously; firing "move end" immediately after setViewpointCamera()
     // can read a stale camera and cause feedback loops in camera sync scenarios.
     internal var cameraMoveEndJob: Job? = null
+
+    /**
+     * 今カメラに付いているパディング（dp）。
+     *
+     * 3D の SceneView にはパディング（インセット）の口が無いので、カメラが見る点を
+     * ずらして再現し（[CameraPaddingEmulation]）、読むときに元へ戻すためにここで覚えておく。
+     */
+    internal var cameraPaddings: MapPaddingsInterface = MapPaddings.Zeros
     internal val cameraMoveEndDebounceMs = 180L
 
     /**
