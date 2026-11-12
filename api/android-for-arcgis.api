@@ -111,17 +111,22 @@ public final class com.mapconductor.arcgis.ArcGISGeoViewHolder$DefaultImpls {
   public static <ActualMapView extends android.widget.FrameLayout, ActualMap extends com.arcgismaps.mapping.view.GeoView> void setNavigationEnabled(com.mapconductor.arcgis.ArcGISGeoViewHolder<ActualMapView, ActualMap>, boolean);
   public static <ActualMapView extends android.widget.FrameLayout, ActualMap extends com.arcgismaps.mapping.view.GeoView> java.lang.Object fromScreenOffset-3MmeM6k(com.mapconductor.arcgis.ArcGISGeoViewHolder<ActualMapView, ActualMap>, long, kotlin.coroutines.Continuation<? super com.mapconductor.core.features.GeoPoint>);
   public static <ActualMapView extends android.widget.FrameLayout, ActualMap extends com.arcgismaps.mapping.view.GeoView> com.mapconductor.core.features.GeoPoint fromScreenOffsetSync-k-4lQ0M(com.mapconductor.arcgis.ArcGISGeoViewHolder<ActualMapView, ActualMap>, long);
+  public static <ActualMapView extends android.widget.FrameLayout, ActualMap extends com.arcgismaps.mapping.view.GeoView> com.mapconductor.core.projection.ProjectedPoint toProjectedPoint(com.mapconductor.arcgis.ArcGISGeoViewHolder<ActualMapView, ActualMap>, com.mapconductor.core.features.GeoPointInterface);
+  public static <ActualMapView extends android.widget.FrameLayout, ActualMap extends com.arcgismaps.mapping.view.GeoView> com.mapconductor.core.features.GeoPoint fromProjectedPoint(com.mapconductor.arcgis.ArcGISGeoViewHolder<ActualMapView, ActualMap>, com.mapconductor.core.projection.ProjectedPoint);
+  public static <ActualMapView extends android.widget.FrameLayout, ActualMap extends com.arcgismaps.mapping.view.GeoView> com.mapconductor.core.projection.MapCoordinateSystem getCoordinateSystem(com.mapconductor.arcgis.ArcGISGeoViewHolder<ActualMapView, ActualMap>);
 }
 public final class com.mapconductor.arcgis.ArcGISGraphicsZIndex {
   public com.mapconductor.arcgis.ArcGISGraphicsZIndex();
   public final synchronized void place(com.arcgismaps.mapping.view.Graphic, java.lang.Integer);
+  public final synchronized void placeAt(com.arcgismaps.mapping.view.Graphic, double);
+  public final synchronized void replaceAll(kotlin.jvm.functions.Function1<? super com.arcgismaps.mapping.view.Graphic, java.lang.Double>);
   public final synchronized void forget(com.arcgismaps.mapping.view.Graphic);
   public final synchronized int getSize();
 }
 final class com.mapconductor.arcgis.ArcGISGraphicsZIndex$Entry {
   public final com.arcgismaps.mapping.view.Graphic getGraphic();
-  public final int getZIndex();
-  public final void setZIndex(int);
+  public final double getZIndex();
+  public final void setZIndex(double);
   public final long getSeq();
   public final int getRank();
   public final void setRank(int);
@@ -194,6 +199,9 @@ public final class com.mapconductor.arcgis.ArcGISMapView2DHolder implements com.
   public com.arcgismaps.mapping.view.GeoView getGeoView();
   public com.arcgismaps.geometry.SpatialReference getSpatialReference();
   public java.util.List<com.arcgismaps.mapping.layers.Layer> getOperationalLayers();
+  public com.mapconductor.core.projection.MapCoordinateSystem getCoordinateSystem();
+  public com.mapconductor.core.projection.ProjectedPoint toProjectedPoint(com.mapconductor.core.features.GeoPointInterface);
+  public com.mapconductor.core.features.GeoPoint fromProjectedPoint(com.mapconductor.core.projection.ProjectedPoint);
   public androidx.compose.ui.geometry.Offset toScreenOffset-x-9fifI(com.mapconductor.core.features.GeoPointInterface);
   public java.lang.Object fromScreenOffset-3MmeM6k(long, kotlin.coroutines.Continuation<? super com.mapconductor.core.features.GeoPoint>);
   public com.mapconductor.core.features.GeoPoint fromScreenOffsetSync-k-4lQ0M(long);
@@ -285,6 +293,9 @@ public final class com.mapconductor.arcgis.ArcGISMapViewHolder implements com.ma
   public com.mapconductor.core.features.GeoPoint fromScreenOffsetSync-k-4lQ0M(long);
   public boolean getUsesSceneView();
   public void setNavigationEnabled(boolean);
+  public com.mapconductor.core.projection.ProjectedPoint toProjectedPoint(com.mapconductor.core.features.GeoPointInterface);
+  public com.mapconductor.core.features.GeoPoint fromProjectedPoint(com.mapconductor.core.projection.ProjectedPoint);
+  public com.mapconductor.core.projection.MapCoordinateSystem getCoordinateSystem();
   public java.lang.Object getMapView();
   public java.lang.Object getMap();
 }
@@ -348,6 +359,7 @@ public final class com.mapconductor.arcgis.ArcGISOverlayStacking {
   public static final com.mapconductor.arcgis.ArcGISOverlayStacking INSTANCE;
   public final com.mapconductor.core.controller.OverlayStacking$Key getMARKER_TILE();
   public final com.mapconductor.core.controller.OverlayStacking$Key getPOLYGON_TILE();
+  public final com.mapconductor.core.controller.OverlayStacking$Key getCIRCLE_TILE();
   public final com.mapconductor.core.controller.OverlayStacking$Key getPOLYLINE_TILE();
   public final com.mapconductor.core.controller.OverlayStacking$Key key(com.mapconductor.core.controller.OverlayKind, int);
   public final void add(java.util.List<com.arcgismaps.mapping.layers.Layer>, com.arcgismaps.mapping.layers.Layer, com.mapconductor.core.controller.OverlayStacking$Key);
@@ -520,6 +532,7 @@ public final class com.mapconductor.arcgis.marker.ArcGISMarkerRenderer extends c
   public void setMarkerVisible(com.mapconductor.core.marker.MarkerEntityInterface<com.arcgismaps.mapping.view.Graphic>, boolean);
   public void setMarkerPosition(com.mapconductor.core.marker.MarkerEntityInterface<com.arcgismaps.mapping.view.Graphic>, com.mapconductor.core.features.GeoPoint);
   public java.lang.Object onAdd(java.util.List<? extends com.mapconductor.core.marker.MarkerOverlayRendererInterface$AddParamsInterface>, kotlin.coroutines.Continuation<? super java.util.List<com.arcgismaps.mapping.view.Graphic>>);
+  protected java.lang.Object applyDrawOrder(java.util.List<? extends com.mapconductor.core.marker.MarkerEntityInterface<com.arcgismaps.mapping.view.Graphic>>, kotlin.coroutines.Continuation<? super kotlin.Unit>);
   public java.lang.Object onRemove(java.util.List<? extends com.mapconductor.core.marker.MarkerEntityInterface<com.arcgismaps.mapping.view.Graphic>>, kotlin.coroutines.Continuation<? super kotlin.Unit>);
   public java.lang.Object onPostProcess(kotlin.coroutines.Continuation<? super kotlin.Unit>);
   public java.lang.Object onChange(java.util.List<? extends com.mapconductor.core.marker.MarkerOverlayRendererInterface$ChangeParamsInterface<com.arcgismaps.mapping.view.Graphic>>, kotlin.coroutines.Continuation<? super java.util.List<com.arcgismaps.mapping.view.Graphic>>);
