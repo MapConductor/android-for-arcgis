@@ -52,3 +52,19 @@ fun Point.toGeoPoint(): GeoPoint {
         altitude = wgs84Point.z ?: 0.0,
     )
 }
+
+/**
+ * Null when the projection could not answer.
+ *
+ * ArcGIS says "no" with a point full of NaN rather than with a null: ask it to
+ * unproject a screen corner before the view has a viewpoint -- the first frame
+ * of a 2D MapView, a SceneView still loading -- and it hands back a `Point`
+ * whose x and y are NaN. Passed on as a coordinate it spreads: the visible
+ * region built from those corners carries NaN, and the sample that prints it
+ * took the process down in `BigDecimal(Double.NaN)`.
+ *
+ * Callers already handle "the view cannot say yet" by returning null, so this
+ * turns the one answer into the other.
+ */
+internal fun GeoPoint.orNullIfNotFinite(): GeoPoint? =
+    if (latitude.isFinite() && longitude.isFinite() && altitude.isFinite()) this else null

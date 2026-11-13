@@ -1,6 +1,7 @@
 package com.mapconductor.arcgis.marker
 
 import com.mapconductor.arcgis.ArcGISActualMarker
+import com.mapconductor.arcgis.finishEvenIfCancelled
 import com.mapconductor.core.controller.OnCameraChangeReceiverInterface
 import com.mapconductor.core.map.MapCameraPosition
 import com.mapconductor.core.marker.AbstractMarkerController
@@ -21,9 +22,14 @@ import com.mapconductor.core.raster.RasterLayerState
 import com.mapconductor.core.raster.TileScheme
 import com.mapconductor.core.tileserver.TileServerRegistry
 import java.util.UUID
+import kotlin.math.pow
+import kotlin.math.roundToInt
+import kotlin.time.Duration.Companion.milliseconds
 import android.os.SystemClock
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.withPermit
 
@@ -31,6 +37,11 @@ class ArcGISMarkerController(
     markerManager: MarkerManager<ArcGISActualMarker>,
     renderer: ArcGISMarkerRenderer,
     private val markerTiling: MarkerTilingOptions,
+    /**
+     * Size tiled icons by how far a tile's level is from the camera's (3D
+     * `SceneView`). See [levelIconScale].
+     */
+    private val scaleIconsByLevel: Boolean = false,
     val coroutine: CoroutineScope = CoroutineScope(Dispatchers.Main),
 ) : AbstractMarkerController<ArcGISActualMarker>(
         markerManager = markerManager,
@@ -47,6 +58,10 @@ class ArcGISMarkerController(
 
     @Volatile
     private var lastKnownZoom: Double = 0.0
+
+    /** The level the 2D map would draw at the current camera; see [levelIconScale]. */
+    @Volatile
+    private var cameraLevel: Int? = null
 
     private val tileServer = TileServerRegistry.get(forceNoStoreCache = true)
     private var markerTileRenderer: MarkerTileRenderer<ArcGISActualMarker>? = null
@@ -75,7 +90,10 @@ class ArcGISMarkerController(
         rasterLayerCallback = callback
     }
 
-    override suspend fun add(data: List<MarkerState>) {
+    /** 取り消されても最後まで（[finishEvenIfCancelled]）。 */
+    override suspend fun add(data: List<MarkerState>) = finishEvenIfCancelled { addNow(data) }
+
+    private suspend fun addNow(data: List<MarkerState>) {
         // ingest はタイル担当 entity を marker = null で登録し直すので、先に昇格を戻す。
         // semaphore は再入不可なので withPermit の外で呼ぶこと。
         viewportSwitch.retract()
@@ -119,11 +137,12 @@ class ArcGISMarkerController(
         if (currentFinger == prevFinger) return
 
         semaphore.withPermit {
+            // 件数だけが要る。allEntities() は全件の写しを作るので、ラベルの付け替えのように
+            // 数十本が続けて変わると、そのたびに 14 万件を写すことになる。
             val tilingEnabled =
-                markerTiling.enabled && markerManager.allEntities().size >= markerManager.minMarkerCount
+                markerTiling.enabled && markerManager.getMemoryStats().entityCount >= markerManager.minMarkerCount
             val wantsTiled = tilingEnabled && !state.draggable && state.getAnimation() == null
             val wasTiled = tiledMarkerIds.contains(state.id)
-            val markerIcon = state.icon?.toBitmapIcon() ?: defaultMarkerIcon
 
             if (wantsTiled) {
                 if (!wasTiled) {
@@ -141,14 +160,19 @@ class ArcGISMarkerController(
                         tiling = true,
                     ),
                 )
-                renderer.onPostProcess()
-                syncTiledOverlay()
+                // タイル担当のままなら、ネイティブのマーカーには何も起きていない。onPostProcess は
+                // 全件を写してネイティブ分を描き直すので（14 万件で 1 回 50ms）、ネイティブから
+                // タイルへ移ったときだけ呼ぶ。
+                if (!wasTiled) renderer.onPostProcess()
+                scheduleTileRefresh()
                 return@withPermit
             }
 
             if (wasTiled) {
                 tiledMarkerIds.remove(state.id)
             }
+            // ネイティブマーカーとして描くときだけ焼き込む。タイル担当なら要らない。
+            val markerIcon = state.icon?.toBitmapIcon() ?: defaultMarkerIcon
 
             val params =
                 object : MarkerOverlayRendererInterface.ChangeParamsInterface<ArcGISActualMarker> {
@@ -179,12 +203,31 @@ class ArcGISMarkerController(
             renderer.onPostProcess()
 
             if (tiledMarkerIds.isNotEmpty()) {
-                syncTiledOverlay()
+                scheduleTileRefresh()
             } else {
                 removeTileOverlay()
             }
         }
         viewportSwitch.requestReapply()
+    }
+
+    private var tileRefreshJob: Job? = null
+
+    /**
+     * 1 本ずつの変更からの描き直しを 1 回にまとめる。
+     *
+     * ラベルの付け替えのように数十本が続けて変わると、1 本ごとにラスターソースを差し替え、
+     * そのたびに地図が見えているタイルを全部取り直していた（MapLibre・Pixel 5a で 45 回、
+     * 描き直したタイル 494 枚、最後のタイルまで 6 秒）。続けて来た変更は
+     * [TILE_REFRESH_COALESCE] の間に受けて、まとめて 1 回だけ差し替える。
+     */
+    private fun scheduleTileRefresh() {
+        if (tileRefreshJob?.isActive == true) return
+        tileRefreshJob =
+            coroutine.launch {
+                delay(TILE_REFRESH_COALESCE)
+                semaphore.withPermit { syncTiledOverlay() }
+            }
     }
 
     override suspend fun clear() {
@@ -205,6 +248,36 @@ class ArcGISMarkerController(
         // 判定と昇格は debounce したうえで切り替え器の中で走る（パン中は動かない）。
         viewportSwitch.onCameraChanged(mapCameraPosition)
         lastKnownZoom = mapCameraPosition.zoom
+        if (scaleIconsByLevel) {
+            val level = mapCameraPosition.zoom.roundToInt()
+            if (level != cameraLevel) {
+                cameraLevel = level
+                // Every tile's icon size depends on the camera's level.
+                semaphore.withPermit { updateRasterLayerSource() }
+            }
+        }
+    }
+
+    /**
+     * Icon scale for a tile at [tileLevel], from the app's callback.
+     *
+     * The 2D map draws one level per camera, so a tile's level is the camera's
+     * and the callback's scale goes in as it is. The 3D `SceneView` picks a
+     * level per tile from the ground it covers on the globe and mixes two
+     * levels on one screen (a Pixel at the post office sample asked for z=10
+     * and z=11 side by side). A tile one level deeper is shown at half the
+     * size, and its pins came out half as large as the 2D map's (26px against
+     * 41px) next to correct ones. Drawn at 2^(tile level - camera level), every
+     * pin comes out the size the 2D map gives it at that camera, and the
+     * callback is asked for the camera's level as the 2D map does.
+     */
+    private fun levelIconScale(
+        state: MarkerState,
+        tileLevel: Int,
+    ): Double {
+        val level = cameraLevel?.takeIf { scaleIconsByLevel } ?: tileLevel
+        val base = markerTiling.iconScaleCallback?.invoke(state, level) ?: 1.0
+        return base * 2.0.pow(tileLevel - level)
     }
 
     /**
@@ -223,6 +296,8 @@ class ArcGISMarkerController(
 
     override fun destroy() {
         viewportSwitch.destroy()
+        // 待っている描き直しが後から走ると、外したタイル経路をまた登録してしまう。
+        tileRefreshJob?.cancel()
         // Clean up tile server registration
         // Unregister this map's route only. Never stop the server here: it is
         // a process-wide singleton shared by all map controllers and overlay
@@ -291,7 +366,9 @@ class ArcGISMarkerController(
                 tileSize = 256,
                 cacheSizeBytes = markerTiling.cacheSize,
                 debugTileOverlay = markerTiling.debugTileOverlay,
-                iconScaleCallback = markerTiling.iconScaleCallback,
+                iconScaleCallback =
+                    if (scaleIconsByLevel) ::levelIconScale else markerTiling.iconScaleCallback,
+                declutterPx = markerTiling.declutterPx,
                 // ArcGIS displays one 96dpi/256px LOD tile over 256dp on screen,
                 // matching the renderer's density-scaled output 1:1 — no extra
                 // icon scaling needed. (0.5 predates the MarkerTileRenderer fix
@@ -328,5 +405,10 @@ class ArcGISMarkerController(
 
         rasterLayerCallback?.onRasterLayerUpdate(null)
         markerTileRasterLayerState = null
+    }
+
+    private companion object {
+        /** 続けて来る変更を 1 回の描き直しにまとめる窓。1 フレーム分。 */
+        val TILE_REFRESH_COALESCE = 16.milliseconds
     }
 }

@@ -8,11 +8,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.node.Ref
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.compose.LocalLifecycleOwner
+import androidx.lifecycle.findViewTreeLifecycleOwner
+import androidx.lifecycle.setViewTreeLifecycleOwner
 import com.arcgismaps.ApiKey
 import com.arcgismaps.ArcGISEnvironment
 import com.arcgismaps.LoadStatus
 import com.arcgismaps.mapping.ArcGISScene
 import com.arcgismaps.mapping.ArcGISTiledElevationSource
+import com.arcgismaps.mapping.Basemap
 import com.arcgismaps.mapping.view.GraphicsOverlay
 import com.arcgismaps.mapping.view.GraphicsRenderingMode
 import com.arcgismaps.mapping.view.SceneView
@@ -30,12 +33,14 @@ import com.mapconductor.arcgis.polyline.ArcGISPolylineOverlayRenderer
 import com.mapconductor.arcgis.raster.ArcGISRasterLayerController
 import com.mapconductor.arcgis.raster.ArcGISRasterLayerOverlayRenderer
 import com.mapconductor.compose.map.MapViewBase
+import com.mapconductor.compose.map.MapViewLifecycleOwner
 import com.mapconductor.core.OnCameraMoveHandler
 import com.mapconductor.core.OnMapEventHandler
 import com.mapconductor.core.OnMapLoadedHandler
 import com.mapconductor.core.map.CameraRestriction
 import com.mapconductor.core.map.MapCameraPosition
 import com.mapconductor.core.map.MapCameraPositionInterface
+import com.mapconductor.core.map.MapViewStyle
 import com.mapconductor.core.marker.MarkerEventControllerInterface
 import com.mapconductor.core.marker.MarkerManager
 import com.mapconductor.core.marker.MarkerOverlayRendererInterface
@@ -44,6 +49,8 @@ import com.mapconductor.core.marker.MarkerRenderingSupport
 import com.mapconductor.core.marker.MarkerRenderingSupportKey
 import com.mapconductor.core.marker.MarkerTilingOptions
 import com.mapconductor.core.marker.StrategyMarkerController
+import com.mapconductor.core.raster.RasterTilePreference
+import com.mapconductor.core.raster.RasterTilePreferenceKey
 import com.mapconductor.core.tileserver.TileServerRegistry
 import java.util.concurrent.atomic.AtomicLong
 import android.content.Context
@@ -68,13 +75,24 @@ fun ArcGISMapView(
     onCameraMoveEnd: OnCameraMoveHandler? = null,
     onMapClick: OnMapEventHandler? = null,
     onMapLongClick: OnMapEventHandler? = null,
+    /**
+     * How the map looks, when the app states it rather than naming a design.
+     *
+     * A vector style *is* the basemap. `com.mapconductor:vectorstyle` builds
+     * one; what happens underneath depends on this backend and the app does
+     * not have to know.
+     */
+    style: MapViewStyle? = null,
+    onStyleDiagnostics: ((List<String>) -> Unit)? = null,
     content: (@Composable ArcGISMapViewScope.() -> Unit)? = null,
 ) {
     val scope = remember { ArcGISMapViewScope() } // Use specific scope
     val context = LocalContext.current // Context will be available from MapViewBase too if needed
     val registry = remember { scope.buildRegistry() }
     val owner = LocalLifecycleOwner.current
-    val basemapStyle = remember { ArcGISDesign.toBasemapStyle(state.mapDesignType) }
+    // The design the scene was built with; a design set on the state before
+    // the controller existed is applied once it does.
+    val createdDesign = remember { Ref<String>() }
     val cameraState = remember { mutableStateOf<MapCameraPositionInterface?>(state.cameraPosition) }
     val controllerRef = remember { Ref<ArcGISMapViewController>() }
     val controllerGeneration = remember { AtomicLong(0L) }
@@ -92,20 +110,33 @@ fun ArcGISMapView(
             wrapView.sceneView = sceneView
             // Ensure lifecycle owner is set before the view is attached/drawn
             // to avoid GeoView.lifeCycleOwner UninitializedPropertyAccessException
-            sceneView.onCreate(owner)
-            sceneView.onResume(owner)
+            // The GeoView runs its touch flows in the given owner's lifecycleScope
+            // and keeps them until that lifecycle ends. Given the Activity's, every
+            // GeoView the user switched away from would stay until the Activity
+            // goes, so it gets a lifecycle of its own, ended in onDestroyMapView.
+            val viewOwner = MapViewLifecycleOwner(owner.lifecycle)
+            wrapView.setViewTreeLifecycleOwner(viewOwner)
+            sceneView.onCreate(viewOwner)
+            sceneView.onResume(viewOwner)
             wrapView
         },
         scope = scope,
         registry = registry,
         holderProvider = { wrapView ->
+            val design = state.mapDesignType
+            createdDesign.value = design.getValue()
             val options =
                 ArcGISMapViewInitOptions(
-                    basemapStyle = basemapStyle,
-                    elevationSources = state.mapDesignType.elevationSources,
+                    basemapStyle = ArcGISDesign.toBasemapStyleOrNull(design),
+                    elevationSources = design.elevationSources,
                 )
 
-            val scene = ArcGISScene(options.basemapStyle)
+            // No basemap is a scene with only what the app puts on it. The
+            // basemap is set on an empty scene rather than built into it, so
+            // a scene whose basemap is out of reach is still a scene (a
+            // global one is always WGS84) that can draw its own layers.
+            val scene = ArcGISScene()
+            options.basemapStyle?.let { scene.setBasemap(Basemap(it)) }
 
             options.elevationSources.forEach {
                 val source = ArcGISTiledElevationSource(it)
@@ -113,6 +144,7 @@ fun ArcGISMapView(
             }
 
             wrapView.sceneView.scene = scene
+            var retried = false
 
             val coroutine = CoroutineScope(Dispatchers.Default)
 
@@ -130,6 +162,16 @@ fun ArcGISMapView(
                                 cont.resume(holder) { _, _, _ -> }
                             }
                             is LoadStatus.FailedToLoad -> {
+                                Log.w("ArcGISMapView", "scene failed to load: ${it.error.message}")
+                                // The basemap was taken away while it was being
+                                // fetched (the app went basemap-less, say for an
+                                // offline raster): without one the scene needs no
+                                // network, so it gets one more go.
+                                if (scene.basemap.value == null && !retried) {
+                                    retried = true
+                                    scene.retryLoad()
+                                    return@collect
+                                }
                                 // Offline or network error: resume with a holder anyway so
                                 // the scene view is displayed (possibly with cached tiles)
                                 // without crashing. The ArcGIS view may be blank but usable.
@@ -206,12 +248,44 @@ fun ArcGISMapView(
                     },
                 )
 
+                // 3D SceneView は「タイルは 256px」という前提でレベルを選ぶ。
+                // 512px のタイルを渡すと 1 段深いレベルを 4 倍の枚数で引く
+                // （実測: 統一ズーム 12 で 2D は z=11、3D は z=12）。絵は正しい
+                // ので気づきにくいが、タイル 1 枚あたりの固定費がそのぶん効く。
+                // 2D は好みが無いので宣言しない — 供給側の既定に任せる。
+                // 3D SceneView は「タイルは 256px」という自前の梯子で level を
+                // 選び、こちらが申告する縮尺では動かせない（実機で確認）。同じ
+                // カメラで 2D より 1 段深い level を引くので、512dp のつもりで
+                // 描いたタイルは半分の枠に入って文字も線も半分になる。
+                //
+                // 256 を要求すると、選ばれる level と描画の前提が噛み合い、
+                // 文字の大きさは MapLibre と一致する（実測）。残るのは元データの
+                // 違い — 1 段深いソースタイルには大きな地名が入っていないことが
+                // あり、低ズームで「新潟市」のような表示が落ちる。
+                if (holder.usesSceneView) {
+                    state.serviceRegistry.put(
+                        RasterTilePreferenceKey,
+                        object : RasterTilePreference {
+                            override val preferredTileSize: Int = 256
+                        },
+                    )
+                }
+
                 controllerRef.value = mapController
                 mapController.setMapClickListener(onMapClick)
                 mapController.setMapLongClickListener(onMapLongClick)
+                // 地図は state のデザインで作ってある。コントローラの既定値（Streets）のままだと、
+                // 次の行のリスナー登録でそれが state へ返り、アプリが渡した（あるいは
+                // 回転後に復元した）デザインが Streets に化ける。
+                mapController.mapDesignType = state.mapDesignType
                 mapController.setMapDesignTypeChangeListener(state::onMapDesignTypeChange)
                 cameraRestriction?.let { mapController.setCameraRestriction(it) }
                 state.setController(mapController)
+                if (state.mapDesignType.getValue() !=
+                    createdDesign.value
+                ) {
+                    mapController.setMapDesignType(state.mapDesignType)
+                }
 
                 // Set camera listeners immediately so they are ready to receive
                 // camera updates from external sources (e.g. camera sync scenarios).
@@ -223,11 +297,18 @@ fun ArcGISMapView(
                 mapController.setCameraMoveListener {
                     cameraState.value = it
                     state.updateCameraPosition(it)
+                    // The tile server's ancestor gate needs to know which level
+                    // the camera looks at.
+                    mapController.rasterLayerController.renderer.cameraMoved(it.zoom)
                     onCameraMove?.invoke(it)
                 }
                 mapController.setCameraMoveEndListener {
                     cameraState.value = it
                     state.updateCameraPosition(it)
+                    mapController.rasterLayerController.renderer.cameraMoved(it.zoom)
+                    mapController.mainCoroutine.launch {
+                        mapController.rasterLayerController.rebuildLocalLayersIfNeeded()
+                    }
                     onCameraMoveEnd?.invoke(it)
                 }
 
@@ -249,7 +330,7 @@ fun ArcGISMapView(
             sdkInitialize?.invoke(context) ?: defaultArcGISInitialize(context)
         },
         onMapLoaded = onMapLoaded,
-        customDisposableEffect = { _, holderRef ->
+        customDisposableEffect = { _, _ ->
             DisposableEffect(state.id) {
                 onDispose {
                     // Invalidate any pending `post { ... }` work that captured older controllers.
@@ -267,15 +348,22 @@ fun ArcGISMapView(
                         destroy()
                     }
                     controllerRef.value = null
-                    state.clearController()
-                    holderRef.value?.mapView?.apply {
-                        onPause(owner)
-                        onStop(owner)
-                        onDestroy(owner)
-                    }
+                    // MapViewBase detaches it from the state once the map is gone.
                 }
             }
         },
+        // Created resumed in viewProvider. Released by MapViewBase after the
+        // controller, also when the map goes before its holder exists.
+        onDestroyMapView = { wrapView ->
+            val viewOwner = wrapView.findViewTreeLifecycleOwner() as? MapViewLifecycleOwner
+            val geoViewOwner = viewOwner ?: owner
+            wrapView.onPause(geoViewOwner)
+            wrapView.onStop(geoViewOwner)
+            wrapView.onDestroy(geoViewOwner)
+            viewOwner?.destroy()
+        },
+        style = style,
+        onStyleDiagnostics = onStyleDiagnostics,
         content = content,
     )
 }
@@ -376,6 +464,7 @@ internal fun getMarkerController(
             markerManager = markerManager,
             renderer = renderer,
             markerTiling = markerTiling,
+            scaleIconsByLevel = holder.usesSceneView,
         )
     return controller
 }

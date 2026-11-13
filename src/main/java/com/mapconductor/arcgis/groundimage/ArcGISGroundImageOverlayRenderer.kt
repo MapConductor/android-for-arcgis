@@ -8,15 +8,15 @@ import com.arcgismaps.mapping.layers.TileImageFormat
 import com.arcgismaps.mapping.layers.TileInfo
 import com.arcgismaps.mapping.layers.WebTiledLayer
 import com.mapconductor.arcgis.ArcGISGeoViewHolder
+import com.mapconductor.arcgis.ArcGISOverlayStacking
+import com.mapconductor.arcgis.WebMercatorTileLevels
+import com.mapconductor.core.controller.OverlayKind
 import com.mapconductor.core.groundimage.AbstractGroundImageOverlayRenderer
 import com.mapconductor.core.groundimage.GroundImageEntityInterface
 import com.mapconductor.core.groundimage.GroundImageState
 import com.mapconductor.core.groundimage.GroundImageTileProvider
-import com.mapconductor.core.projection.Earth
 import com.mapconductor.core.projection.WEB_MERCATOR_MAX_EXTENT_METERS
 import com.mapconductor.core.tileserver.LocalTileServer
-import kotlin.math.PI
-import kotlin.math.pow
 import android.util.Log
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -28,6 +28,14 @@ class ArcGISGroundImageOverlayRenderer(
     private val tileServer: LocalTileServer,
     override val coroutine: CoroutineScope = CoroutineScope(Dispatchers.Default),
 ) : AbstractGroundImageOverlayRenderer<ArcGISGroundImageHandle>() {
+    /**
+     * operational layer の並び（`operationalLayers`）はスレッドセーフでない。ラスターの
+     * レンダラ・マーカーのタイルはメインスレッドで触るので、ここも足す・外すはメインスレッドで行う
+     * （以前は [coroutine]（Default）のまま触っていて、GroundImage とラスターを同時に外すと
+     * `ConcurrentModificationException` で落ちた）。タイルの用意と層の load は Default のまま。
+     */
+    private suspend fun <T> onLayerList(block: () -> T): T = withContext(Dispatchers.Main.immediate) { block() }
+
     override suspend fun createGroundImage(state: GroundImageState): ArcGISGroundImageHandle? =
         withContext(coroutine.coroutineContext) {
             val operationalLayers = holder.operationalLayers ?: return@withContext null
@@ -53,7 +61,10 @@ class ArcGISGroundImageOverlayRenderer(
                 return@withContext null
             }
             updateLayer(handle.layer, state)
-            operationalLayers.add(handle.layer)
+            // GroundImage の帯（ラスターの上）。GraphicsOverlay（ポリゴン等）は常にこの上。
+            onLayerList {
+                ArcGISOverlayStacking.add(operationalLayers, handle.layer, ArcGISOverlayStacking.key(OverlayKind.GroundImage))
+            }
             handle
         }
 
@@ -111,8 +122,14 @@ class ArcGISGroundImageOverlayRenderer(
             }
 
             // Swap layers to ensure cache busting via generation query.
-            operationalLayers.remove(groundImage.layer)
-            operationalLayers.add(nextHandle.layer)
+            onLayerList {
+                operationalLayers.remove(groundImage.layer)
+                ArcGISOverlayStacking.add(
+                    operationalLayers,
+                    nextHandle.layer,
+                    ArcGISOverlayStacking.key(OverlayKind.GroundImage),
+                )
+            }
             updateLayer(nextHandle.layer, current.state)
             nextHandle
         }
@@ -120,7 +137,7 @@ class ArcGISGroundImageOverlayRenderer(
     override suspend fun removeGroundImage(entity: GroundImageEntityInterface<ArcGISGroundImageHandle>) {
         coroutine.launch {
             val handle = entity.groundImage
-            holder.operationalLayers?.remove(handle.layer)
+            onLayerList { holder.operationalLayers?.remove(handle.layer) }
             tileServer.unregister(handle.routeId)
         }
     }
@@ -161,7 +178,7 @@ class ArcGISGroundImageOverlayRenderer(
     private fun buildWebMercatorTileInfo(tileSize: Int): TileInfo {
         val spatialReference = SpatialReference(WEB_MERCATOR_WKID)
         val origin = Point(WEB_MERCATOR_MIN, WEB_MERCATOR_MAX, spatialReference)
-        val levels = buildWebMercatorLevels(resolveLodReferenceTileSize(tileSize))
+        val levels = buildWebMercatorLevels(tileSize)
         return TileInfo(
             DEFAULT_DPI,
             TileImageFormat.Png,
@@ -173,22 +190,14 @@ class ArcGISGroundImageOverlayRenderer(
         )
     }
 
-    private fun buildWebMercatorLevels(tileSize: Int): List<LevelOfDetail> {
-        val initialResolution =
-            (2.0 * PI * WEB_MERCATOR_RADIUS_METERS) / tileSize.toDouble()
-        val levels = mutableListOf<LevelOfDetail>()
-        for (level in MIN_ZOOM..MAX_ZOOM) {
-            val resolution = initialResolution / 2.0.pow(level.toDouble())
-            val scale = resolution * DEFAULT_DPI * INCHES_PER_METER
-            levels.add(LevelOfDetail(level, resolution, scale))
-        }
-        return levels
-    }
-
-    private fun resolveLodReferenceTileSize(tileSize: Int): Int =
-        when (tileSize) {
-            512 -> 256
-            else -> tileSize
+    // 梯子はラスターと同じもの（[WebMercatorTileLevels]）を使う。以前は 512 のときだけ
+    // 256 基準へ読み替えていて、ArcGIS 300 では level L に L-1 の格子の (x, y) を付けて
+    // 要求された。GroundImageTileProvider はそれを素直に z=L として描くので、どのタイルも
+    // 画像の外になり透明だった。
+    private fun buildWebMercatorLevels(tileSize: Int): List<LevelOfDetail> =
+        (MIN_ZOOM..MAX_ZOOM).map { level ->
+            val resolution = WebMercatorTileLevels.resolution(level, tileSize)
+            LevelOfDetail(level, resolution, WebMercatorTileLevels.scale(resolution))
         }
 
     private fun buildWebMercatorExtent(): Envelope =
@@ -225,11 +234,9 @@ class ArcGISGroundImageOverlayRenderer(
 
     companion object {
         private const val WEB_MERCATOR_WKID = 3857
-        private const val WEB_MERCATOR_RADIUS_METERS = Earth.RADIUS_METERS
         private const val WEB_MERCATOR_MAX = WEB_MERCATOR_MAX_EXTENT_METERS
         private const val WEB_MERCATOR_MIN = -WEB_MERCATOR_MAX
-        private const val DEFAULT_DPI = 96
-        private const val INCHES_PER_METER = 39.37
+        private const val DEFAULT_DPI = WebMercatorTileLevels.DEFAULT_DPI
         private const val MIN_ZOOM = 0
         private const val MAX_ZOOM = 22
     }

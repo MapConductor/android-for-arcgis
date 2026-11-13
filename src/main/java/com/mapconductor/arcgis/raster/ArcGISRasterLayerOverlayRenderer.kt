@@ -10,7 +10,13 @@ import com.arcgismaps.mapping.layers.TileImageFormat
 import com.arcgismaps.mapping.layers.TileInfo
 import com.arcgismaps.mapping.layers.WebTiledLayer
 import com.mapconductor.arcgis.ArcGISGeoViewHolder
-import com.mapconductor.core.projection.Earth
+import com.mapconductor.arcgis.ArcGISMapViewHolder
+import com.mapconductor.arcgis.ArcGISOverlayStacking
+import com.mapconductor.arcgis.WebMercatorTileLevels
+import com.mapconductor.core.controller.OverlayKind
+import com.mapconductor.core.polygon.POLYGON_TILE_LAYER_ID
+import com.mapconductor.core.circle.CIRCLE_TILE_LAYER_ID
+import com.mapconductor.core.polyline.POLYLINE_TILE_LAYER_ID
 import com.mapconductor.core.projection.WEB_MERCATOR_MAX_EXTENT_METERS
 import com.mapconductor.core.raster.RasterHeaderRuleSet
 import com.mapconductor.core.raster.RasterLayerEntityInterface
@@ -18,16 +24,100 @@ import com.mapconductor.core.raster.RasterLayerOverlayRendererInterface
 import com.mapconductor.core.raster.RasterLayerSource
 import com.mapconductor.core.raster.RasterLayerState
 import com.mapconductor.core.raster.TileScheme
-import kotlin.math.PI
-import kotlin.math.pow
+import com.mapconductor.core.tileserver.TileServerRegistry
+import com.mapconductor.core.zoom.AbstractZoomAltitudeConverter
 import android.util.Log
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 
 class ArcGISRasterLayerOverlayRenderer(
     private val holder: ArcGISGeoViewHolder<*, *>,
     override val coroutine: CoroutineScope = CoroutineScope(Dispatchers.Main),
 ) : RasterLayerOverlayRendererInterface<Layer> {
+    /**
+     * Which level the camera looks at, and which levels were answered with a
+     * transparent tile since the local layers were last built.
+     *
+     * The 3D view asks for every level above the one on screen and draws none
+     * of them once that level is in, so a request two or more levels above the
+     * camera is answered transparent, without a render. ArcGIS keeps what it
+     * is given, so a level answered that way stays blank if the camera later
+     * lands on it -- unless the layer is rebuilt, which [takeRebuildWanted]
+     * asks for. The 3D view sizes its levels in dp, so the level is the
+     * unified zoom itself (ios-for-arcgis adds log2 of the screen scale).
+     */
+    internal class AncestorGate {
+        private var level: Int? = null
+        private val stubbed = HashSet<Int>()
+        private var rebuildWanted = false
+
+        @Synchronized
+        fun set(unifiedZoom: Double) {
+            val wanted = Math.round(unifiedZoom).toInt()
+            if (wanted != level) {
+                level = wanted
+                if (stubbed.contains(wanted) || stubbed.contains(wanted - 1) || stubbed.contains(wanted + 1)) {
+                    rebuildWanted = true
+                }
+            }
+        }
+
+        @Synchronized
+        fun isAncestor(requested: Int): Boolean {
+            val level = level ?: return false
+            return requested < level - 1
+        }
+
+        @Synchronized
+        fun markStubbed(requested: Int) {
+            stubbed.add(requested)
+        }
+
+        @Synchronized
+        fun layerRebuilt() {
+            stubbed.clear()
+            rebuildWanted = false
+        }
+
+        @Synchronized
+        fun takeRebuildWanted(): Boolean {
+            val wanted = rebuildWanted
+            rebuildWanted = false
+            return wanted
+        }
+    }
+
+    private val ancestors = AncestorGate()
+
+    /** How long a replaced layer stays under its replacement. */
+    private val HANDOVER_MS = 1200L
+
+    /** The tile server route each local layer was built from, for its gate. */
+    private val localRoutes = java.util.IdentityHashMap<Layer, String>()
+
+    /** Only the 3D view loads the pyramid above the level on screen. */
+    private val isSceneView: Boolean get() = holder is ArcGISMapViewHolder
+
+    fun cameraMoved(unifiedZoom: Double) {
+        if (isSceneView) ancestors.set(unifiedZoom)
+    }
+
+    /** Once per need: whether the camera settled on a level answered transparent. */
+    fun localLayersNeedRebuild(): Boolean = ancestors.takeRebuildWanted()
+
+    fun localLayersRebuilt() = ancestors.layerRebuilt()
+
+    /** Whether this layer is served by the in-process tile server. */
+    fun isLocalLayer(state: RasterLayerState): Boolean = localRouteOf(state) != null
+
+    private fun localRouteOf(state: RasterLayerState): String? {
+        val template = (state.source as? RasterLayerSource.UrlTemplate)?.template ?: return null
+        val base = TileServerRegistry.get().baseUrl + "/tiles/"
+        if (!template.startsWith(base)) return null
+        return template.removePrefix(base).substringBefore('/')
+    }
+
     override suspend fun onAdd(data: List<RasterLayerOverlayRendererInterface.AddParamsInterface>): List<Layer?> {
         val results = ArrayList<Layer?>(data.size)
         for (params in data) {
@@ -88,7 +178,31 @@ class ArcGISRasterLayerOverlayRenderer(
 
         // Add to scene only after successful initialization
         updateLayer(layer, state)
-        operationalLayers.add(layer)
+        // ラスターの帯（GroundImage の下）。マーカーのタイルは operational layer の一番上。
+        // ポリゴンのタイルはポリゴンの帯（GroundImage の上、マーカーのタイルの下）。
+        ArcGISOverlayStacking.add(
+            operationalLayers,
+            layer,
+            if (state.id.startsWith(MARKER_TILE_PREFIX)) {
+                ArcGISOverlayStacking.MARKER_TILE
+            } else if (state.id == POLYGON_TILE_LAYER_ID) {
+                ArcGISOverlayStacking.POLYGON_TILE
+            } else if (state.id == CIRCLE_TILE_LAYER_ID) {
+                ArcGISOverlayStacking.CIRCLE_TILE
+            } else if (state.id == POLYLINE_TILE_LAYER_ID) {
+                ArcGISOverlayStacking.POLYLINE_TILE
+            } else {
+                ArcGISOverlayStacking.key(OverlayKind.RasterLayer, state.zIndex)
+            },
+        )
+        localRouteOf(state)?.let { routeId ->
+            if (isSceneView) {
+                localRoutes[layer] = routeId
+                TileServerRegistry.get().setLevelGate(routeId) { level ->
+                    ancestors.isAncestor(level).also { if (it) ancestors.markStubbed(level) }
+                }
+            }
+        }
         return layer
     }
 
@@ -102,6 +216,50 @@ class ArcGISRasterLayerOverlayRenderer(
 
     private fun removeLayer(entity: RasterLayerEntityInterface<Layer>) {
         holder.operationalLayers?.remove(entity.layer)
+        forgetGate(entity.layer)
+    }
+
+    private fun forgetGate(layer: Layer) {
+        val routeId = localRoutes.remove(layer) ?: return
+        // Another layer (its replacement) may still be on the same route.
+        if (routeId !in localRoutes.values) TileServerRegistry.get().setLevelGate(routeId, null)
+    }
+
+    /**
+     * Builds this entity's layer again, in place: the new one goes directly
+     * above the old, which stays for [HANDOVER_MS] and is then removed.
+     * Replacing by remove-then-add left the map bare until the new tiles
+     * landed -- a flicker on every rebuild.
+     */
+    suspend fun rebuildLayer(entity: RasterLayerEntityInterface<Layer>): Layer? {
+        val operationalLayers = holder.operationalLayers ?: return null
+        val state = entity.state
+        val source = state.source as? RasterLayerSource.UrlTemplate ?: return null
+        val layer = buildWebTiledLayer(source, state.id) ?: return null
+        val loadResult = layer.load()
+        if (loadResult.isFailure) {
+            Log.e("ArcGIS", "Failed to load raster layer id=${state.id}: ${loadResult.exceptionOrNull()?.message}")
+            return null
+        }
+        updateLayer(layer, state)
+        val index = operationalLayers.indexOf(entity.layer)
+        ArcGISOverlayStacking.inherit(entity.layer, layer)
+        if (index >= 0) operationalLayers.add(index + 1, layer) else operationalLayers.add(layer)
+        localRouteOf(state)?.let { routeId ->
+            if (isSceneView) {
+                localRoutes[layer] = routeId
+                TileServerRegistry.get().setLevelGate(routeId) { level ->
+                    ancestors.isAncestor(level).also { if (it) ancestors.markStubbed(level) }
+                }
+            }
+        }
+        val old = entity.layer
+        coroutine.launch {
+            kotlinx.coroutines.delay(HANDOVER_MS)
+            operationalLayers.remove(old)
+            forgetGate(old)
+        }
+        return layer
     }
 
     private fun buildWebTiledLayer(
@@ -131,22 +289,19 @@ class ArcGISRasterLayerOverlayRenderer(
     ): TileInfo {
         val spatialReference = SpatialReference(WEB_MERCATOR_WKID)
         val origin = Point(WEB_MERCATOR_MIN, WEB_MERCATOR_MAX, spatialReference)
-        // LOD の基準は 2D と 3D で**逆**。実機（Lenovo TB520FU）で両方向を計測した:
+        // LOD の解像度は **必ず tileSize 基準**で刻む。1 枚のタイルが覆う地面は
+        // `resolution * tileWidth` なので、ここを 256 基準にしたまま tileWidth に
+        // 512 を渡すと、レベル L のタイルが L-1 の広さを覆う。**番号だけ 1 段深い
+        // 格子**になり、ArcGIS は「z=13, x=3637」のような噛み合わない組を要求する
+        // （東京の z=13 は x=7276、x=3637 は z=12 の値）。実機の Pixel 5a では
+        // ベクタータイルのサンプルが大西洋のタイルを引いて真っ青になった。
         //
-        // | ビュー | 素直な tileSize 基準 | 256 基準（旧 workaround） |
-        // |---|---|---|
-        // | 3D SceneView | 何も要求しない | 描画される |
-        // | 2D MapView | 描画される（線 6px = MapLibre と一致） | z=0 を 1 枚だけ要求して止まる |
-        //
-        // 旧コメントの「WebTiledLayer は tileWidth に関係なく 256 グリッドで (col,row) を
-        // 計算する」は **SceneView の挙動**で、MapView には当てはまらない。iOS の 2D も
-        // 素直な TileInfo で位置まで一致することを確認済み（ios-for-arcgis の同名レンダラ）。
-        val levels =
-            if (holder.usesSceneView) {
-                buildWebMercatorLevels(resolveLodReferenceTileSize(tileSize), minZoom, maxZoom)
-            } else {
-                buildWebMercatorLevels(tileSize, minZoom, maxZoom)
-            }
+        // 以前ここには「3D SceneView は 256 基準でないと何も要求しない」という
+        // 計測メモがあり、512 のときだけ 256 へ読み替えていた。ArcGIS 300 では
+        // 再現しない: 素直な tileSize 基準で 3D も 2D も 256/512 の両方を正しく
+        // 引く（z=11 を要求し、MapLibre と一致）。256 のときは読み替えが恒等だった
+        // ので、この分岐が壊していたのは 512 だけだった。
+        val levels = buildWebMercatorLevels(tileSize, minZoom, maxZoom)
         return TileInfo(
             DEFAULT_DPI,
             TileImageFormat.Png,
@@ -158,27 +313,45 @@ class ArcGISRasterLayerOverlayRenderer(
         )
     }
 
+    /**
+     * レベルの梯子を**統一ズーム**（Google Maps 基準・256px タイル）から組む。
+     *
+     * MapConductor のズームはどのプロバイダでも Google のズームなので、level `z` の
+     * タイルが持つべき解像度も 1 本の物差しから出す:
+     * [AbstractZoomAltitudeConverter.WEB_MERCATOR_INITIAL_MPP_256] が統一ズーム 0 の
+     * 1px あたりメートル数（256px タイル基準）。
+     *
+     * 512px のタイルは 1 枚で 256px タイル 2 枚ぶんを覆うので、level `z` は統一ズーム
+     * `z + 1` に対応する（コアの `WebMercatorZoomAltitudeConverter` が言う
+     * `zoomOffset`。MapLibre / Mapbox / MapTiler が 1.0、Google / MapKit が 0.0）。
+     * その対応を [WebMercatorTileLevels.unifiedZoomForLevel] に書き下しておけば、解像度も縮尺も
+     * 「統一ズームいくつのときにこの level を引くか」から一意に決まる。
+     *
+     * 自前で `2πR / tileSize` と DPI を掛け合わせても同じ数にはなるが、どの物差しに
+     * 合わせているのかがコードから消える。実際、以前ここには 512 のときだけ 256 基準へ
+     * 読み替える細工が入っていて、(z,x,y) が噛み合わずに地球の裏側のタイルを引いていた。
+     */
     private fun buildWebMercatorLevels(
         tileSize: Int,
         minZoom: Int,
         maxZoom: Int,
     ): List<LevelOfDetail> {
-        val initialResolution =
-            (2.0 * PI * WEB_MERCATOR_RADIUS_METERS) / tileSize.toDouble()
         val levels = mutableListOf<LevelOfDetail>()
         for (level in minZoom..maxZoom) {
-            val resolution = initialResolution / 2.0.pow(level.toDouble())
-            val scale = resolution * DEFAULT_DPI * INCHES_PER_METER
+            val resolution = WebMercatorTileLevels.resolution(level, tileSize)
+            // 縮尺の分母。2D の MapView はこの梯子を見て level を選ぶので、
+            // 解像度と同じ比率で刻んでいないと 1 段ずれる。
+            //
+            // 3D の SceneView は**見ていない**。1 段浅い縮尺を申告して選択を
+            // 2D とそろえられないか実機で試したが、要求される level は変わらな
+            // かった（統一ズーム 6.5 で z=7 のまま）。SceneView は自前の
+            // 「タイルは 256px」という梯子で選ぶ。解像度のほうは見ているので、
+            // タイルの位置は申告どおりに決まる。
+            val scale = WebMercatorTileLevels.scale(resolution)
             levels.add(LevelOfDetail(level, resolution, scale))
         }
         return levels
     }
-
-    private fun resolveLodReferenceTileSize(tileSize: Int): Int =
-        when (tileSize) {
-            512 -> 256
-            else -> tileSize
-        }
 
     private fun buildWebMercatorExtent(): Envelope =
         Envelope(
@@ -190,12 +363,12 @@ class ArcGISRasterLayerOverlayRenderer(
         )
 
     companion object {
+        /** マーカーのタイルのラスターの id の頭（ArcGISMapViewController と同じ）。 */
+        private const val MARKER_TILE_PREFIX = "marker-tile-"
         private const val WEB_MERCATOR_WKID = 3857
-        private const val WEB_MERCATOR_RADIUS_METERS = Earth.RADIUS_METERS
         private const val WEB_MERCATOR_MAX = WEB_MERCATOR_MAX_EXTENT_METERS
         private const val WEB_MERCATOR_MIN = -WEB_MERCATOR_MAX
-        private const val DEFAULT_DPI = 96
-        private const val INCHES_PER_METER = 39.37
+        private const val DEFAULT_DPI = WebMercatorTileLevels.DEFAULT_DPI
         private const val DEFAULT_MIN_ZOOM = 0
         private const val DEFAULT_MAX_ZOOM = 22
     }

@@ -1,6 +1,9 @@
 package com.mapconductor.arcgis
 
-import com.arcgismaps.mapping.Basemap
+import com.mapconductor.core.circle.CIRCLE_TILE_LAYER_ID
+import com.mapconductor.core.circle.CircleTiler
+import com.mapconductor.core.circle.circleTileRasterLayerState
+import com.arcgismaps.LoadStatus
 import com.arcgismaps.mapping.view.GraphicsOverlay
 import com.mapconductor.arcgis.circle.ArcGISCircleOverlayController
 import com.mapconductor.arcgis.groundimage.ArcGISGroundImageController
@@ -17,6 +20,8 @@ import com.mapconductor.core.features.GeoRectBounds
 import com.mapconductor.core.groundimage.GroundImageState
 import com.mapconductor.core.groundimage.OnGroundImageEventHandler
 import com.mapconductor.core.map.MapCameraPosition
+import com.mapconductor.core.map.MapPaddings
+import com.mapconductor.core.map.MapPaddingsInterface
 import com.mapconductor.core.map.MapGesture
 import com.mapconductor.core.map.MapUISettings
 import com.mapconductor.core.map.MapUISettingsDiagnostics
@@ -27,8 +32,14 @@ import com.mapconductor.core.marker.OnMarkerEventHandler
 import com.mapconductor.core.marker.StrategyMarkerController
 import com.mapconductor.core.marker.dispatchGeoMarkerClick
 import com.mapconductor.core.polygon.OnPolygonEventHandler
+import com.mapconductor.core.polygon.POLYGON_TILE_LAYER_ID
+import com.mapconductor.core.polygon.PolygonTiler
+import com.mapconductor.core.polygon.polygonTileRasterLayerState
 import com.mapconductor.core.polyline.OnPolylineEventHandler
+import com.mapconductor.core.polyline.POLYLINE_TILE_LAYER_ID
 import com.mapconductor.core.polyline.PolylineState
+import com.mapconductor.core.polyline.PolylineTiler
+import com.mapconductor.core.polyline.polylineTileRasterLayerState
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -58,12 +69,33 @@ class ArcGISMapViewController(
     // ArcGIS updates the viewpoint asynchronously; firing "move end" immediately after setViewpointCamera()
     // can read a stale camera and cause feedback loops in camera sync scenarios.
     internal var cameraMoveEndJob: Job? = null
+
+    /**
+     * 今カメラに付いているパディング（dp）。
+     *
+     * 3D の SceneView にはパディング（インセット）の口が無いので、カメラが見る点を
+     * ずらして再現し（[CameraPaddingEmulation]）、読むときに元へ戻すためにここで覚えておく。
+     */
+    internal var cameraPaddings: MapPaddingsInterface = MapPaddings.Zeros
     internal val cameraMoveEndDebounceMs = 180L
+
+    /**
+     * Collectors of the GeoView's event flows. The GeoView outlives this
+     * controller as long as the Activity does (ArcGIS keeps its touch flows
+     * on the lifecycle it was created with), and a suspended collector keeps
+     * this controller -- with every overlay -- reachable from it. Cancelled in
+     * [destroy]; mainCoroutine itself is not, since overlay teardown may still
+     * post to it.
+     */
+    // Declared before init {}, which calls setupListeners().
+    private val listenerJobs = mutableListOf<Job>()
 
     init {
         holder.map.graphicsOverlays.clear()
-        holder.map.graphicsOverlays.add(circleController.renderer.circleLayer)
+        // 重なり順（下から）: ポリゴン < サークル < ポリライン < マーカー。
+        // ラスターと GroundImage は operational layer で、GraphicsOverlay はすべてその上に描かれる。
         holder.map.graphicsOverlays.add(polygonController.renderer.polygonLayer)
+        holder.map.graphicsOverlays.add(circleController.renderer.circleLayer)
         holder.map.graphicsOverlays.add(polylineController.renderer.polylineLayer)
         holder.map.graphicsOverlays.add((markerController.renderer as ArcGISMarkerRenderer).markerLayer)
         setupListeners()
@@ -86,6 +118,41 @@ class ArcGISMapViewController(
                 markerTileLayers.forEach { entity -> rasterLayerController.removeById(entity.state.id) }
             }
         }
+
+        // Many polygons are drawn as raster tiles, shown through the same RasterLayer
+        // controller as the marker tiles (upsert / removeById, never the app's layers).
+        polygonController.tiler =
+            PolygonTiler().apply {
+                onTemplate = { template, tileSize ->
+                    if (template != null) {
+                        rasterLayerController.upsert(polygonTileRasterLayerState(template, tileSize))
+                    } else {
+                        rasterLayerController.removeById(POLYGON_TILE_LAYER_ID)
+                    }
+                }
+            }
+
+        // Many polylines too: the same raster layer path, in the polyline band.
+        polylineController.tiler =
+            PolylineTiler().apply {
+                onTemplate = { template, tileSize ->
+                    if (template != null) {
+                        rasterLayerController.upsert(polylineTileRasterLayerState(template, tileSize))
+                    } else {
+                        rasterLayerController.removeById(POLYLINE_TILE_LAYER_ID)
+                    }
+                }
+            }
+        circleController.tiler =
+            CircleTiler().apply {
+                onTemplate = { template, tileSize ->
+                    if (template != null) {
+                        rasterLayerController.upsert(circleTileRasterLayerState(template, tileSize))
+                    } else {
+                        rasterLayerController.removeById(CIRCLE_TILE_LAYER_ID)
+                    }
+                }
+            }
     }
 
     override fun moveCamera(position: MapCameraPosition) = handleMoveCamera(position)
@@ -134,27 +201,36 @@ class ArcGISMapViewController(
         cameraRestrictionCorrection(current)
 
     fun setupListeners() {
-        mainCoroutine.launch {
-            holder.map.onSingleTapConfirmed.collect { onMapTap(it) }
-        }
-        defaultCoroutine.launch {
-            holder.map.viewpointChanged.collect { onViewpointChange() }
-        }
-        defaultCoroutine.launch {
-            holder.map.onInteractiveZooming.collect { invokeCameraMoveCallback() }
-        }
-        defaultCoroutine.launch {
-            holder.map.onRotate.collect { invokeCameraMoveCallback() }
-        }
-        mainCoroutine.launch {
-            holder.map.onLongPress.collect { onMapLongPress(it) }
-        }
-        mainCoroutine.launch {
-            holder.map.onUp.collect { onMapUp(it) }
-        }
-        mainCoroutine.launch {
-            holder.map.onPan.collect { onMapPan(it) }
-        }
+        listenerJobs +=
+            listOf(
+                mainCoroutine.launch {
+                    holder.map.onSingleTapConfirmed.collect { onMapTap(it) }
+                },
+                defaultCoroutine.launch {
+                    holder.map.viewpointChanged.collect { onViewpointChange() }
+                },
+                defaultCoroutine.launch {
+                    holder.map.onInteractiveZooming.collect { invokeCameraMoveCallback() }
+                },
+                defaultCoroutine.launch {
+                    holder.map.onRotate.collect { invokeCameraMoveCallback() }
+                },
+                mainCoroutine.launch {
+                    holder.map.onLongPress.collect { onMapLongPress(it) }
+                },
+                mainCoroutine.launch {
+                    holder.map.onUp.collect { onMapUp(it) }
+                },
+                mainCoroutine.launch {
+                    holder.map.onPan.collect { onMapPan(it) }
+                },
+            )
+    }
+
+    override fun destroy() {
+        listenerJobs.forEach { it.cancel() }
+        listenerJobs.clear()
+        super.destroy()
     }
 
     override fun hasPolyline(state: PolylineState): Boolean =
@@ -189,6 +265,8 @@ class ArcGISMapViewController(
         polygonController.clear()
         circleController.clear()
         rasterLayerController.clear()
+        // 拡張モジュール（クラスタリングなど）が登録した Strategy のマーカーも消す。
+        clearStrategyMarkerControllers()
     }
 
     override fun setMarkerAnimationOverlayHost(host: MarkerAnimationOverlayHost?) {
@@ -255,11 +333,15 @@ class ArcGISMapViewController(
     internal var mapDesignTypeChangeListener: ArcGISDesignTypeChangeHandler? = null
 
     override fun setMapDesignType(value: ArcGISDesignTypeInterface) {
+        mapDesignType = value
         holder.map.scene?.let { scene ->
-            val baseMapStyle = ArcGISDesign.toBasemapStyle(value)
-            val baseMap = Basemap(baseMapStyle)
+            val baseMap = ArcGISDesign.toBasemap(value)
             defaultCoroutine.launch {
                 scene.setBasemap(baseMap)
+                // A scene that failed to load -- its basemap was out of
+                // reach -- gets another go with the new basemap, or with
+                // none, which needs no network at all.
+                if (scene.loadStatus.value is LoadStatus.FailedToLoad) scene.retryLoad()
                 // Basemap changes can reset the viewpoint; mark the current request as pending so that
                 // the next viewpointChanged can restore the last requested camera if needed.
 //                pendingCameraRestoreRequest = cameraRequestGeneration.get()

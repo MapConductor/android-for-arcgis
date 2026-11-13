@@ -8,18 +8,24 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.node.Ref
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.compose.LocalLifecycleOwner
+import androidx.lifecycle.findViewTreeLifecycleOwner
+import androidx.lifecycle.setViewTreeLifecycleOwner
 import com.arcgismaps.LoadStatus
+import com.arcgismaps.geometry.SpatialReference
 import com.arcgismaps.mapping.ArcGISMap
+import com.arcgismaps.mapping.Basemap
 import com.arcgismaps.mapping.view.GraphicsOverlay
 import com.arcgismaps.mapping.view.GraphicsRenderingMode
 import com.arcgismaps.mapping.view.MapView
 import com.mapconductor.compose.map.MapViewBase
+import com.mapconductor.compose.map.MapViewLifecycleOwner
 import com.mapconductor.core.OnCameraMoveHandler
 import com.mapconductor.core.OnMapEventHandler
 import com.mapconductor.core.OnMapLoadedHandler
 import com.mapconductor.core.map.CameraRestriction
 import com.mapconductor.core.map.MapCameraPosition
 import com.mapconductor.core.map.MapCameraPositionInterface
+import com.mapconductor.core.map.MapViewStyle
 import com.mapconductor.core.marker.MarkerEventControllerInterface
 import com.mapconductor.core.marker.MarkerOverlayRendererInterface
 import com.mapconductor.core.marker.MarkerRenderingStrategyInterface
@@ -29,6 +35,7 @@ import com.mapconductor.core.marker.MarkerTilingOptions
 import com.mapconductor.core.marker.StrategyMarkerController
 import java.util.concurrent.atomic.AtomicLong
 import android.content.Context
+import android.util.Log
 import android.widget.FrameLayout
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -49,13 +56,24 @@ fun ArcGISMapView2D(
     onCameraMoveEnd: OnCameraMoveHandler? = null,
     onMapClick: OnMapEventHandler? = null,
     onMapLongClick: OnMapEventHandler? = null,
+    /**
+     * How the map looks, when the app states it rather than naming a design.
+     *
+     * A vector style *is* the basemap. `com.mapconductor:vectorstyle` builds
+     * one; what happens underneath depends on this backend and the app does
+     * not have to know.
+     */
+    style: MapViewStyle? = null,
+    onStyleDiagnostics: ((List<String>) -> Unit)? = null,
     content: (@Composable ArcGISMapViewScope.() -> Unit)? = null,
 ) {
     val scope = remember { ArcGISMapViewScope() }
     val context = LocalContext.current
     val registry = remember { scope.buildRegistry() }
     val owner = LocalLifecycleOwner.current
-    val basemapStyle = remember { ArcGISDesign.toBasemapStyle(state.mapDesignType) }
+    // The design the map was built with; a design set on the state before the
+    // controller existed is applied once it does.
+    val createdDesign = remember { Ref<String>() }
     val cameraState = remember { mutableStateOf<MapCameraPositionInterface?>(state.cameraPosition) }
     val controllerRef = remember { Ref<ArcGISMapView2DController>() }
     val controllerGeneration = remember { AtomicLong(0L) }
@@ -71,15 +89,32 @@ fun ArcGISMapView2D(
                     addView(mapView, FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.MATCH_PARENT)
                 }
             wrapView.arcGISMapView = mapView
-            mapView.onCreate(owner)
-            mapView.onResume(owner)
+            // The GeoView runs its touch flows in the given owner's lifecycleScope
+            // and keeps them until that lifecycle ends. Given the Activity's, every
+            // GeoView the user switched away from would stay until the Activity
+            // goes, so it gets a lifecycle of its own, ended in onDestroyMapView.
+            val viewOwner = MapViewLifecycleOwner(owner.lifecycle)
+            wrapView.setViewTreeLifecycleOwner(viewOwner)
+            mapView.onCreate(viewOwner)
+            mapView.onResume(viewOwner)
             wrapView
         },
         scope = scope,
         registry = registry,
         holderProvider = { wrapView ->
-            val map = ArcGISMap(basemapStyle)
+            // The map is told its spatial reference up front instead of
+            // learning it from the basemap: a basemap style lives on
+            // arcgis.com, and a map that waited for it to find out where it
+            // is can draw nothing while the network is away. Told, it loads
+            // at once with no basemap, and with one it keeps drawing its own
+            // layers (a raster layer served on the device, say) when the
+            // basemap is out of reach.
+            val design = state.mapDesignType
+            createdDesign.value = design.getValue()
+            val map = ArcGISMap(SpatialReference.webMercator())
+            ArcGISDesign.toBasemapStyleOrNull(design)?.let { map.setBasemap(Basemap(it)) }
             wrapView.arcGISMapView.map = map
+            var retried = false
 
             val coroutine = CoroutineScope(Dispatchers.Default)
             suspendCancellableCoroutine { cont ->
@@ -96,6 +131,16 @@ fun ArcGISMapView2D(
                                 ) { _, _, _ -> }
                             }
                             is LoadStatus.FailedToLoad -> {
+                                Log.w("ArcGISMapView2D", "map failed to load: ${it.error.message}")
+                                // The basemap was taken away while it was being
+                                // fetched (the app went basemap-less, say for an
+                                // offline raster): without one the map needs no
+                                // network, so it gets one more go.
+                                if (map.basemap.value == null && !retried) {
+                                    retried = true
+                                    map.retryLoad()
+                                    return@collect
+                                }
                                 if (cont.isActive) {
                                     cont.resume(
                                         ArcGISMapView2DHolder(
@@ -168,8 +213,17 @@ fun ArcGISMapView2D(
                 controllerRef.value = mapController
                 mapController.setMapClickListener(onMapClick)
                 mapController.setMapLongClickListener(onMapLongClick)
+                // 地図は state のデザインで作ってある。コントローラの既定値（Streets）のままだと、
+                // 次の行のリスナー登録でそれが state へ返り、アプリが渡した（あるいは
+                // 回転後に復元した）デザインが Streets に化ける。
+                mapController.mapDesignType = state.mapDesignType
                 mapController.setMapDesignTypeChangeListener(state::onMapDesignTypeChange)
                 state.setController(mapController)
+                if (state.mapDesignType.getValue() !=
+                    createdDesign.value
+                ) {
+                    mapController.setMapDesignType(state.mapDesignType)
+                }
                 // 他プロバイダの *MapView と同じく、コントローラ生成直後に適用する。
                 cameraRestriction?.let { mapController.setCameraRestriction(it) }
 
@@ -205,7 +259,7 @@ fun ArcGISMapView2D(
             sdkInitialize?.invoke(context) ?: defaultArcGISInitialize(context)
         },
         onMapLoaded = onMapLoaded,
-        customDisposableEffect = { _, holderRef ->
+        customDisposableEffect = { _, _ ->
             DisposableEffect(state.id) {
                 onDispose {
                     controllerGeneration.incrementAndGet()
@@ -217,15 +271,22 @@ fun ArcGISMapView2D(
                         setMapLongClickListener(null)
                     }
                     controllerRef.value = null
-                    state.clearController()
-                    holderRef.value?.mapView?.apply {
-                        onPause(owner)
-                        onStop(owner)
-                        onDestroy(owner)
-                    }
+                    // MapViewBase detaches it from the state once the map is gone.
                 }
             }
         },
+        // Created resumed in viewProvider. Released by MapViewBase after the
+        // controller, also when the map goes before its holder exists.
+        onDestroyMapView = { wrapView ->
+            val viewOwner = wrapView.findViewTreeLifecycleOwner() as? MapViewLifecycleOwner
+            val geoViewOwner = viewOwner ?: owner
+            wrapView.onPause(geoViewOwner)
+            wrapView.onStop(geoViewOwner)
+            wrapView.onDestroy(geoViewOwner)
+            viewOwner?.destroy()
+        },
+        style = style,
+        onStyleDiagnostics = onStyleDiagnostics,
         content = content,
     )
 }

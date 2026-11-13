@@ -9,6 +9,7 @@ import com.arcgismaps.mapping.view.Graphic
 import com.arcgismaps.mapping.view.GraphicsOverlay
 import com.mapconductor.arcgis.ArcGISActualMarker
 import com.mapconductor.arcgis.ArcGISGeoViewHolder
+import com.mapconductor.arcgis.ArcGISGraphicsZIndex
 import com.mapconductor.arcgis.WrapMapView
 import com.mapconductor.arcgis.toPoint
 import com.mapconductor.core.ResourceProvider
@@ -16,6 +17,7 @@ import com.mapconductor.core.features.GeoPoint
 import com.mapconductor.core.marker.AbstractMarkerOverlayRenderer
 import com.mapconductor.core.marker.MarkerEntityInterface
 import com.mapconductor.core.marker.MarkerOverlayRendererInterface
+import java.util.IdentityHashMap
 import kotlin.math.abs
 import kotlin.math.cos
 import kotlin.math.max
@@ -33,6 +35,8 @@ class ArcGISMarkerRenderer(
         coroutine = coroutine,
     ) {
     override val supportsAnimationOverlay: Boolean = true
+
+    private val stackOrder = ArcGISGraphicsZIndex()
 
     /**
      * マーカーのアイコンを縦へ引き伸ばす倍率。
@@ -129,6 +133,7 @@ class ArcGISMarkerRenderer(
                                 it.attributes[BASE_HEIGHT_KEY] = height
                                 it.attributes[BASE_OFFSET_Y_KEY] = anchorY.toFloat()
                             }
+                        stackOrder.placeAt(marker, drawOrderOf(params.state))
                         return@map marker
                     }.also {
                         markerLayer.graphics.addAll(it)
@@ -137,10 +142,18 @@ class ArcGISMarkerRenderer(
         }
     }
 
+    // 地図が回ったら、今ある全マーカーの重なり順を付け直す。
+    override suspend fun applyDrawOrder(entities: List<MarkerEntityInterface<ArcGISActualMarker>>) {
+        val orders = IdentityHashMap<Graphic, Double>()
+        entities.forEach { entity -> entity.marker?.let { orders[it] = drawOrderOf(entity.state) } }
+        withContext(coroutine.coroutineContext) { stackOrder.replaceAll { orders[it] } }
+    }
+
     override suspend fun onRemove(data: List<MarkerEntityInterface<ArcGISActualMarker>>) {
         coroutine.launch {
             val elements = data.map { params -> params.marker }
             markerLayer.graphics.removeAll(elements.toSet())
+            elements.forEach { it?.let(stackOrder::forget) }
         }
     }
 
@@ -206,6 +219,10 @@ class ArcGISMarkerRenderer(
                     marker.geometry = GeoPoint.from(params.current.state.position).toViewPoint()
                     // Always set visibility explicitly like Google Maps (remove conditional check)
                     marker.isVisible = params.current.visible
+                    stackOrder.placeAt(
+                        marker,
+                        drawOrderOf(params.current.state),
+                    )
 
                     // ArcGISはマーカーを再作成しなくてよいので、同じマーカーのインスタンスを返す
                     marker

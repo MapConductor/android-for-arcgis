@@ -1,8 +1,13 @@
 package com.mapconductor.arcgis
 
+import com.mapconductor.core.circle.CIRCLE_TILE_LAYER_ID
+import com.mapconductor.core.circle.CircleTiler
+import com.mapconductor.core.circle.circleTileRasterLayerState
+import com.arcgismaps.LoadStatus
 import com.arcgismaps.geometry.SpatialReference
-import com.arcgismaps.mapping.Basemap
+import com.arcgismaps.geometry.Point
 import com.arcgismaps.mapping.Viewpoint
+import com.arcgismaps.mapping.ViewpointType
 import com.arcgismaps.mapping.view.GraphicsOverlay
 import com.mapconductor.arcgis.circle.ArcGISCircleOverlayController
 import com.mapconductor.arcgis.groundimage.ArcGISGroundImageController
@@ -20,8 +25,11 @@ import com.mapconductor.core.features.GeoPointInterface
 import com.mapconductor.core.features.GeoRectBounds
 import com.mapconductor.core.groundimage.GroundImageState
 import com.mapconductor.core.groundimage.OnGroundImageEventHandler
+import com.mapconductor.core.map.CameraBearing
 import com.mapconductor.core.map.CameraRestriction
 import com.mapconductor.core.map.MapCameraPosition
+import com.mapconductor.core.map.MapPaddings
+import com.mapconductor.core.map.MapPaddingsInterface
 import com.mapconductor.core.map.MapGesture
 import com.mapconductor.core.map.MapUISettings
 import com.mapconductor.core.map.MapUISettingsDiagnostics
@@ -32,13 +40,23 @@ import com.mapconductor.core.marker.OnMarkerEventHandler
 import com.mapconductor.core.marker.StrategyMarkerController
 import com.mapconductor.core.marker.dispatchGeoMarkerClick
 import com.mapconductor.core.polygon.OnPolygonEventHandler
+import com.mapconductor.core.polygon.POLYGON_TILE_LAYER_ID
 import com.mapconductor.core.polygon.PolygonState
+import com.mapconductor.core.polygon.PolygonTiler
+import com.mapconductor.core.polygon.polygonTileRasterLayerState
 import com.mapconductor.core.polyline.OnPolylineEventHandler
+import com.mapconductor.core.polyline.POLYLINE_TILE_LAYER_ID
 import com.mapconductor.core.polyline.PolylineState
+import com.mapconductor.core.polyline.PolylineTiler
+import com.mapconductor.core.polyline.polylineTileRasterLayerState
 import com.mapconductor.core.projection.Earth
+import com.mapconductor.core.spherical.Spherical
 import com.mapconductor.core.raster.RasterLayerState
+import kotlin.math.abs
+import kotlin.math.cos
 import kotlin.math.ln
 import kotlin.math.pow
+import android.util.Log
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -70,14 +88,37 @@ class ArcGISMapView2DController(
     // カメラ状態の読み戻し時に元の tilt・位置・ズームを復元するヒントとして保持する
     // （android-for-tomtom / ios-for-arcgis と同方針）。
     internal var lastLogicalCameraPosition: MapCameraPosition? = null
+
+    /**
+     * 今カメラに付いているパディング（dp）。
+     *
+     * `MapView.setViewInsets` は使わない。傾きのエミュレーションでは内側の MapView が
+     * 2 倍の大きさで回っているので、インセットが画面上のパディングと一致しないため。
+     * 代わりに中心をずらして再現し（[CameraPaddingEmulation]）、読むときに元へ戻すために
+     * ここで覚えておく。
+     */
+    internal var cameraPaddings: MapPaddingsInterface = MapPaddings.Zeros
     internal val cameraMoveEndDebounceMs = 180L
     internal var mapDesignType: ArcGISDesignTypeInterface = ArcGISDesign.Streets
     internal var mapDesignTypeChangeListener: ArcGISDesignTypeChangeHandler? = null
 
+    /**
+     * Collectors of the GeoView's event flows. The GeoView outlives this
+     * controller as long as the Activity does (ArcGIS keeps its touch flows
+     * on the lifecycle it was created with), and a suspended collector keeps
+     * this controller -- with every overlay -- reachable from it. Cancelled in
+     * [destroy]; mainCoroutine itself is not, since overlay teardown may still
+     * post to it.
+     */
+    // Declared before init {}, which calls setupListeners().
+    private val listenerJobs = mutableListOf<Job>()
+
     init {
         holder.map.graphicsOverlays.clear()
-        holder.map.graphicsOverlays.add(circleController.renderer.circleLayer)
+        // 重なり順（下から）: ポリゴン < サークル < ポリライン < マーカー。
+        // ラスターと GroundImage は operational layer で、GraphicsOverlay はすべてその上に描かれる。
         holder.map.graphicsOverlays.add(polygonController.renderer.polygonLayer)
+        holder.map.graphicsOverlays.add(circleController.renderer.circleLayer)
         holder.map.graphicsOverlays.add(polylineController.renderer.polylineLayer)
         holder.map.graphicsOverlays.add((markerController.renderer as ArcGISMarkerRenderer).markerLayer)
         setupListeners()
@@ -99,6 +140,41 @@ class ArcGISMapView2DController(
                     .forEach { entity -> rasterLayerController.removeById(entity.state.id) }
             }
         }
+
+        // Many polygons are drawn as raster tiles, shown through the same RasterLayer
+        // controller as the marker tiles (upsert / removeById, never the app's layers).
+        polygonController.tiler =
+            PolygonTiler().apply {
+                onTemplate = { template, tileSize ->
+                    if (template != null) {
+                        rasterLayerController.upsert(polygonTileRasterLayerState(template, tileSize))
+                    } else {
+                        rasterLayerController.removeById(POLYGON_TILE_LAYER_ID)
+                    }
+                }
+            }
+
+        // Many polylines too: the same raster layer path, in the polyline band.
+        polylineController.tiler =
+            PolylineTiler().apply {
+                onTemplate = { template, tileSize ->
+                    if (template != null) {
+                        rasterLayerController.upsert(polylineTileRasterLayerState(template, tileSize))
+                    } else {
+                        rasterLayerController.removeById(POLYLINE_TILE_LAYER_ID)
+                    }
+                }
+            }
+        circleController.tiler =
+            CircleTiler().apply {
+                onTemplate = { template, tileSize ->
+                    if (template != null) {
+                        rasterLayerController.upsert(circleTileRasterLayerState(template, tileSize))
+                    } else {
+                        rasterLayerController.removeById(CIRCLE_TILE_LAYER_ID)
+                    }
+                }
+            }
     }
 
     override fun moveCamera(position: MapCameraPosition) = handleMoveCamera(position)
@@ -147,13 +223,22 @@ class ArcGISMapView2DController(
         cameraRestrictionCorrection(current)
 
     fun setupListeners() {
-        mainCoroutine.launch { holder.map.onSingleTapConfirmed.collect { onMapTap(it) } }
-        defaultCoroutine.launch { holder.map.viewpointChanged.collect { onViewpointChange() } }
-        defaultCoroutine.launch { holder.map.onInteractiveZooming.collect { invokeCameraMoveCallback() } }
-        defaultCoroutine.launch { holder.map.onRotate.collect { invokeCameraMoveCallback() } }
-        mainCoroutine.launch { holder.map.onLongPress.collect { onMapLongPress(it) } }
-        mainCoroutine.launch { holder.map.onUp.collect { onMapUp(it) } }
-        mainCoroutine.launch { holder.map.onPan.collect { onMapPan(it) } }
+        listenerJobs +=
+            listOf(
+                mainCoroutine.launch { holder.map.onSingleTapConfirmed.collect { onMapTap(it) } },
+                defaultCoroutine.launch { holder.map.viewpointChanged.collect { onViewpointChange() } },
+                defaultCoroutine.launch { holder.map.onInteractiveZooming.collect { invokeCameraMoveCallback() } },
+                defaultCoroutine.launch { holder.map.onRotate.collect { invokeCameraMoveCallback() } },
+                mainCoroutine.launch { holder.map.onLongPress.collect { onMapLongPress(it) } },
+                mainCoroutine.launch { holder.map.onUp.collect { onMapUp(it) } },
+                mainCoroutine.launch { holder.map.onPan.collect { onMapPan(it) } },
+            )
+    }
+
+    override fun destroy() {
+        listenerJobs.forEach { it.cancel() }
+        listenerJobs.clear()
+        super.destroy()
     }
 
     override fun hasMarker(state: MarkerState): Boolean = markerController.markerManager.hasEntity(state.id)
@@ -228,6 +313,8 @@ class ArcGISMapView2DController(
         polygonController.clear()
         circleController.clear()
         rasterLayerController.clear()
+        // 拡張モジュール（クラスタリングなど）が登録した Strategy のマーカーも消す。
+        clearStrategyMarkerControllers()
     }
 
     @Deprecated("Use CircleState.onClick instead.")
@@ -246,14 +333,56 @@ class ArcGISMapView2DController(
      * 指定位置がそのまま画面中心に来る。
      */
     internal fun toViewpoint(position: MapCameraPosition): Viewpoint {
-        val (center, zoom) = ArcGIS2DTiltEmulation.shiftedCamera(position)
+        val (shifted, zoom) = ArcGIS2DTiltEmulation.shiftedCamera(position)
+        val center = centeredOnView(shifted, zoom, position.bearing)
         val point = GeoPoint.from(center).toPoint(SpatialReference.wgs84())
         return Viewpoint(
             center = point,
             scale = zoomToScale(zoom),
-            rotation = position.bearing,
+            // ArcGIS Maps SDK for Kotlin の Viewpoint.rotation は反時計回り、つまり
+            // カメラの heading と同じ向きである（**JS の MapView.rotation とは逆**。
+            // @arcgis/core の型定義は "due north is rotated 90 degrees, pointing to the
+            // right side of the view" と書いており、そちらは rotation 系）。
+            // 実機（TB520FU / Tilt ページ）で MapLibre と並べて確認した結果がこれ。
+            rotation = CameraBearing.toNativeHeading(position.bearing),
         )
     }
+
+    /**
+     * ArcGIS は Viewpoint の中心をビューの中央ではなく、帰属表示バーを除いた領域の中央に描く
+     * （TB520FU では 25.5px 上）。そのままでは position が画面中央に来ず、読み戻すと
+     * 45m ほどずれていた。ずれを今の地図から測り、その分だけ中心を画面の上方向
+     * （カメラの向き）へずらして、position が画面中央に来るようにする。
+     */
+    private fun centeredOnView(
+        center: GeoPointInterface,
+        zoom: Double,
+        bearing: Double,
+    ): GeoPointInterface {
+        val offsetPx = viewpointCenterOffsetPx() ?: return center
+        if (abs(offsetPx) < 0.5) return center
+        val density = holder.mapView.resources.displayMetrics.density
+        val metersPerDp =
+            WEB_MERCATOR_CIRCUMFERENCE_METERS / (TILE_SIZE * 2.0.pow(zoom)) *
+                cos(Math.toRadians(center.latitude))
+        return Spherical.computeOffset(
+            center,
+            -offsetPx / density * metersPerDp,
+            CameraBearing.toNativeHeading(bearing),
+        )
+    }
+
+    /** Viewpoint の中心が内側の MapView の中央から縦に何 px ずれて描かれているか。上が負。 */
+    private fun viewpointCenterOffsetPx(): Double? =
+        runCatching {
+            val height = holder.map.height
+            if (height <= 0) return null
+            val center =
+                holder.map.getCurrentViewpoint(ViewpointType.CenterAndScale)?.targetGeometry as? Point
+                    ?: return null
+            val screen = holder.map.locationToScreen(center) ?: return null
+            screen.y - height / 2.0
+        }.getOrNull()
 
     @Deprecated("Use MarkerState.onDragStart instead.")
     override fun setOnMarkerDragStart(listener: OnMarkerEventHandler?) {
@@ -302,8 +431,19 @@ class ArcGISMapView2DController(
     }
 
     override fun setMapDesignType(value: ArcGISDesignTypeInterface) {
-        val baseMap = Basemap(ArcGISDesign.toBasemapStyle(value))
-        holder.map.map?.setBasemap(baseMap)
+        mapDesignType = value
+        val map = holder.map.map ?: return
+        map.setBasemap(ArcGISDesign.toBasemap(value))
+        // A map that failed to load -- its basemap was out of reach -- gets
+        // another go with the new basemap, or with none, which needs no
+        // network at all.
+        if (map.loadStatus.value is LoadStatus.FailedToLoad) {
+            defaultCoroutine.launch {
+                val result = map.retryLoad()
+                Log
+                    .d("ArcGISMapView2D", "map reloaded with basemap=${value.getValue()}: ${result.isSuccess} ${result.exceptionOrNull()?.message ?: ""}")
+            }
+        }
     }
 
     override fun setMapDesignTypeChangeListener(listener: ArcGISDesignTypeChangeHandler) {
